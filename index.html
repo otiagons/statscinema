@@ -119,8 +119,12 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .bio-grid{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
 .spiralbox{flex:1 1 300px;min-width:270px;isolation:isolate}
 #spiral{position:relative;width:100%;overflow:hidden;background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--acc1) 14%,transparent),transparent 72%);border-radius:12px}
-.tag{position:absolute;transform:translate(-50%,-50%);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);border-radius:13px;padding:3px 9px;font-weight:700;white-space:nowrap;cursor:pointer;transition:transform .15s,border-color .15s;max-width:40%;overflow:hidden;text-overflow:ellipsis}
-.tag:hover,.tag:active{transform:translate(-50%,-50%) scale(1.14);border-color:currentColor;z-index:50!important}
+.spiral-bg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;transform-origin:50% 50%;animation:spiralMotion 150s linear infinite}
+@keyframes spiralMotion{0%{transform:rotate(0deg) scale(1)}50%{transform:rotate(180deg) scale(1.06)}100%{transform:rotate(360deg) scale(1)}}
+.tag{position:absolute;transform:translate(-50%,-50%);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);border-radius:13px;padding:3px 9px;font-weight:700;white-space:nowrap;cursor:pointer;transition:border-color .15s;max-width:40%;overflow:hidden;text-overflow:ellipsis;animation:tagFall var(--dur,16s) linear infinite;animation-delay:var(--del,0s)}
+@keyframes tagFall{0%{transform:translate(-50%,-50%) translate(0,0) scale(1) rotate(0deg);opacity:1}72%{opacity:.85}100%{transform:translate(-50%,-50%) translate(var(--dx),var(--dy)) scale(.06) rotate(45deg);opacity:0}}
+.tag:hover,.tag:active{animation-play-state:paused;transform:translate(-50%,-50%) scale(1.14)!important;border-color:currentColor;z-index:50!important}
+@media (prefers-reduced-motion: reduce){.spiral-bg,.tag{animation:none!important}}
 .biolist{flex:1 1 230px;position:relative;z-index:1}
 .blrow{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--line);cursor:pointer}
 .blrow .brk{width:20px;color:var(--dim);font-weight:800;font-size:12px;text-align:center}
@@ -152,7 +156,7 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
   <div id="view"></div>
 </div>
 
-<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+<div class="modal" id="modal"><div class="sheet" id="sheet"></div><button class="icon-btn" id="modalClose" style="position:fixed;top:calc(env(safe-area-inset-top) + 12px);right:13px;z-index:45">✕</button></div>
 <div class="toast" id="toast"></div>
 
 <!-- BUSCAR / AVALIAR -->
@@ -305,7 +309,7 @@ function renderFilms(){
     </div><div class="chips" id="pDec"><button class="chip ${pDec==null?'on':''}" data-d="all">Todas</button>${decs.map(d=>`<button class="chip ${pDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div></div>`;
   const cells=list.map(x=>{const r=x.rec;const po=(r&&r.po)?`<img loading="lazy" src="${IMG}/w185${r.po}"/>`:`<div class="ph">${x.t}<br><span style="opacity:.6">(${x.y})</span></div>`;
     return `<div class="po" data-k="${(x.t+'|'+x.y).replace(/"/g,'&quot;')}">${po}${x.r!=null?`<span class="rt">${star(x.r)}</span>`:''}</div>`;}).join('');
-  $('#view').innerHTML=ctrl+`<div class="grid">${cells}</div><div class="note">${fmt(list.length)} filmes${pDec!=null?' nos '+pDec+'s':''}. Toque num pôster para ver elenco e direção.</div>`;
+  $('#view').innerHTML=ctrl+`<div class="grid">${cells}</div><div class="note">${fmt(list.length)} filmes${pDec!=null?' nos '+pDec+'s':''}. Toque num pôster para ver elenco, direção e alterar sua nota.</div>`;
   $('#pSort').onclick=e=>{const b=e.target.closest('button');if(b){pSort=b.dataset.s;renderFilms();}};
   $('#pDec').onclick=e=>{const b=e.target.closest('button');if(b){pDec=b.dataset.d==='all'?null:+b.dataset.d;renderFilms();}};
   $$('.po').forEach(el=>el.onclick=()=>openFilm(el.dataset.k));
@@ -405,8 +409,9 @@ function renderSpiral(items){const host=$('#spiral');if(!host)return;
   const cx=W/2,cy=H/2;let theta=2.2;const pts=[];
   for(let i=0;i<n;i++){const r=8+i*(W*0.022);pts.push({x:cx+r*Math.cos(theta),y:cy+r*Math.sin(theta)});theta+=(W*0.36)/(r+18);}
   const pal=palette(n);
-  host.innerHTML=SPIRAL_BG+items.slice(0,n).map((e,i)=>{const p=pts[i];const sz=Math.max(10,19-i*0.6);const col=pal[i];
-    return `<button class="tag" data-i="${i}" style="left:${p.x}px;top:${p.y}px;font-size:${sz}px;color:${col};z-index:${50-i}">${e.label}</button>`;}).join('');
+  host.innerHTML=`<div class="spiral-bg">${SPIRAL_BG}</div>`+items.slice(0,n).map((e,i)=>{const p=pts[i];const sz=Math.max(10,19-i*0.6);const col=pal[i];
+    const dx=(cx-p.x).toFixed(1),dy=(cy-p.y).toFixed(1);const dur=13+((i*53)%17);const del=-((i*31)%dur);
+    return `<button class="tag" data-i="${i}" style="left:${p.x}px;top:${p.y}px;font-size:${sz}px;color:${col};z-index:${50-i};--dx:${dx}px;--dy:${dy}px;--dur:${dur}s;--del:${del}s">${e.label}</button>`;}).join('');
   $$('#spiral .tag').forEach(el=>el.onclick=()=>openEntity(items[+el.dataset.i]));}
 function renderBio(){
   const cats=[['films','Filmes'],['dir','Diretores'],['actor','Atores'],['actress','Atrizes'],['genre','Gêneros']];
@@ -466,7 +471,8 @@ $('#sheet').addEventListener('click',e=>{
   const rec=cache[k];if(!rec)return;rec.r=val;rec.s=1;put(k,rec);PEOPLE=null;
   toast('Avaliado: '+rec.t+' '+star(val));openFilm(k);
 });
-$('#modal').onclick=e=>{if(e.target.id==='modal')$('#modal').classList.remove('show');};
+$('#modal').onclick=e=>{if(e.target.id==='modal'){$('#modal').classList.remove('show');render();}};
+$('#modalClose').onclick=()=>{$('#modal').classList.remove('show');render();};
 
 /* ---------- buscar & avaliar ---------- */
 let searchTimer=null;
