@@ -1,0 +1,51 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{background:#080808;color:#f4f0e6;font-family:-apple-system,sans-serif;margin:0;padding:24px}
+:root{--acc1:#1ec98a;--acc2:#ff2e43}
+h2{font-size:16px;margin:0 0 4px}.sub{color:#9a958c;font-size:12px;margin:0 0 16px}
+.logos{display:flex;gap:24px;align-items:flex-end;margin-bottom:30px;flex-wrap:wrap}
+.lo{display:flex;flex-direction:column;align-items:center;gap:6px}
+.lo span{font-size:10px;color:#5f5b54}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.cell{background:#0c0c0e;border:1px solid #26262b;border-radius:12px;padding:10px}
+.cell .cap{font-size:12px;font-weight:700;margin-bottom:6px;text-align:center}
+.sp{position:relative;width:100%;aspect-ratio:1/0.95;overflow:hidden;border-radius:8px;background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--acc1) 14%,transparent),transparent 72%)}
+.tag{position:absolute;transform:translate(-50%,-50%);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);border-radius:13px;padding:2px 7px;font-weight:700;white-space:nowrap}
+</style></head><body>
+<h2>Logo / Ícone — arcos elípticos opostos</h2>
+<p class="sub">verde + vermelho, núcleo branco</p>
+<div class="logos">
+  <div class="lo"><svg width="64" height="64" viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="#000"/><path d="M 6 24 A 18 11 0 0 1 42 24" stroke="#1ec98a" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M 42 24 A 18 11 0 0 1 6 24" stroke="#ff2e43" stroke-width="3.5" fill="none" stroke-linecap="round"/><circle cx="24" cy="24" r="3" fill="#f4f0e6"/></svg><span>64px</span></div>
+  <div class="lo"><svg width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#000"/><path d="M 4 16 A 12 7.5 0 0 1 28 16" stroke="#1ec98a" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M 28 16 A 12 7.5 0 0 1 4 16" stroke="#ff2e43" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="16" cy="16" r="2.3" fill="#f4f0e6"/></svg><span>32px</span></div>
+  <div class="lo"><svg width="16" height="16" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#000"/><path d="M 4 16 A 12 7.5 0 0 1 28 16" stroke="#1ec98a" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M 28 16 A 12 7.5 0 0 1 4 16" stroke="#ff2e43" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="16" cy="16" r="2.3" fill="#f4f0e6"/></svg><span>16px (aba)</span></div>
+</div>
+
+<h2>Espiral de favoritos — sentido por categoria</h2>
+<p class="sub">arcos elípticos opostos + tags caindo ao núcleo. Cada categoria tem inclinação e sentido próprios.</p>
+<div class="grid" id="grid"></div>
+
+<script>
+const SPIRAL_VARIANTS={films:{tilt:-18,dir:1,squash:0.62},dir:{tilt:24,dir:-1,squash:0.70},actor:{tilt:-32,dir:1,squash:0.55},actress:{tilt:38,dir:-1,squash:0.58},genre:{tilt:8,dir:1,squash:0.74}};
+const LBL={films:'Filmes',dir:'Diretores',actor:'Atores',actress:'Atrizes',genre:'Gêneros'};
+function spiralBG(cat){const v=SPIRAL_VARIANTS[cat];const c1='var(--acc1)',c2='var(--acc2)';const rad=d=>d*Math.PI/180;let p='';const rings=8;
+  for(let i=0;i<rings;i++){const t=i/(rings-1);const rx=7+t*43;const ry=rx*v.squash;const col=(i%2===0)?c1:c2;const dir=(i%2===0)?v.dir:-v.dir;const op=(0.6-t*0.32).toFixed(2);const sw=(0.95-t*0.45).toFixed(2);const rot=v.tilt+(dir>0?0:16)+i*4;const a0=dir>0?15:195,a1=dir>0?315:-105;const x0=(50+rx*Math.cos(rad(a0))).toFixed(2),y0=(50+ry*Math.sin(rad(a0))).toFixed(2);const x1=(50+rx*Math.cos(rad(a1))).toFixed(2),y1=(50+ry*Math.sin(rad(a1))).toFixed(2);const large=Math.abs(a1-a0)>180?1:0,sweep=dir>0?1:0;
+    p+='<path transform="rotate('+rot+' 50 50)" d="M'+x0+' '+y0+' A'+rx.toFixed(2)+' '+ry.toFixed(2)+' 0 '+large+' '+sweep+' '+x1+' '+y1+'" stroke="'+col+'" stroke-width="'+sw+'" opacity="'+op+'" fill="none" stroke-linecap="round"/>';}
+  p+='<circle cx="50" cy="50" r="1.6" fill="#f4f0e6" opacity="0.9"/>';
+  return '<svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" fill="none">'+p+'</svg>';}
+const sample=['Vertigo','Carol','Moonlight','Suspiria','Persona','Akira','Alien','Drive','Her','Amour','Roma','Heat','Fargo','Solaris'];
+function mix(a,b,t){const h=x=>parseInt(x,16);const r1=h(a.slice(1,3)),g1=h(a.slice(3,5)),b1=h(a.slice(5,7));const r2=h(b.slice(1,3)),g2=h(b.slice(3,5)),b2=h(b.slice(5,7));const r=Math.round(r1+(r2-r1)*t),g=Math.round(g1+(g2-g1)*t),bb=Math.round(b1+(b2-b1)*t);return 'rgb('+r+','+g+','+bb+')';}
+const grid=document.getElementById('grid');
+Object.keys(SPIRAL_VARIANTS).forEach(cat=>{
+  const cell=document.createElement('div');cell.className='cell';
+  cell.innerHTML='<div class="cap">'+LBL[cat]+'</div><div class="sp" id="sp_'+cat+'"></div>';
+  grid.appendChild(cell);
+});
+requestAnimationFrame(()=>{
+Object.keys(SPIRAL_VARIANTS).forEach(cat=>{
+  const host=document.getElementById('sp_'+cat);const v=SPIRAL_VARIANTS[cat];
+  const W=host.clientWidth,H=W*0.95;const cx=W/2,cy=H/2;const tilt=v.tilt*Math.PI/180,cosT=Math.cos(tilt),sinT=Math.sin(tilt);
+  const n=sample.length;const pts=[];let theta=v.dir>0?2.2:-2.2;
+  for(let i=0;i<n;i++){const r=7+i*(W*0.024);let ex=r*Math.cos(theta),ey=r*Math.sin(theta)*v.squash;const rxp=ex*cosT-ey*sinT,ryp=ex*sinT+ey*cosT;pts.push({x:cx+rxp,y:cy+ryp});theta+=v.dir*((W*0.40)/(r+18));}
+  host.innerHTML=spiralBG(cat)+sample.map((e,i)=>{const p=pts[i];const sz=Math.max(9,16-i*0.6);const col=mix('#1ec98a','#ff2e43',i/(n-1));return '<button class="tag" style="left:'+p.x+'px;top:'+p.y+'px;font-size:'+sz+'px;color:'+col+';z-index:'+(50-i)+'">'+e+'</button>';}).join('');
+});
+});
+</script></body></html>

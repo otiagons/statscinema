@@ -1,0 +1,153 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CineStats — Espirais animadas</title>
+<style>
+:root{--acc1:#1ec98a;--acc2:#ff2e43}
+*{box-sizing:border-box}
+body{background:#080808;color:#f4f0e6;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;padding:24px}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:20px;margin:0 0 4px;font-weight:800}
+.sub{color:#9a958c;font-size:13px;margin:0 0 8px;line-height:1.5}
+.ctrl{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 22px;align-items:center}
+.seg{display:inline-flex;background:#0c0c0e;border:1px solid #26262b;border-radius:9px;overflow:hidden}
+.seg button{background:none;border:0;color:#9a958c;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.seg button.on{background:#161618;color:#f4f0e6}
+.speed{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:#9a958c}
+.speed input{accent-color:var(--acc1)}
+.stage{position:relative;width:100%;max-width:440px;margin:0 auto;aspect-ratio:1/0.95;border-radius:16px;overflow:hidden;
+  background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--acc1) 16%,transparent),transparent 70%)}
+.stage svg{position:absolute;inset:0;width:100%;height:100%}
+.tag{position:absolute;transform:translate(-50%,-50%);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);
+  border-radius:13px;padding:3px 9px;font-weight:700;white-space:nowrap;pointer-events:none;will-change:transform,left,top}
+.core{position:absolute;left:50%;top:50%;width:13px;height:13px;border-radius:50%;background:#f4f0e6;
+  transform:translate(-50%,-50%);box-shadow:0 0 14px rgba(244,240,230,.6);z-index:99}
+.note{font-size:12px;color:#5f5b54;margin-top:18px;line-height:1.6;text-align:center}
+.cap{text-align:center;font-size:13px;color:#9a958c;margin-top:12px}
+.cap b{color:var(--acc1)}
+</style></head><body>
+<div class="wrap">
+  <h1>Espirais animadas — CineStats</h1>
+  <p class="sub">Prévia de como ficariam com movimento: arcos elípticos girando em sentidos opostos (efeito vertigem) e as tags orbitando lentamente em direção ao núcleo. Cada categoria tem sentido e inclinação próprios.</p>
+
+  <div class="ctrl">
+    <div class="seg" id="cats">
+      <button data-c="films" class="on">Filmes</button>
+      <button data-c="dir">Diretores</button>
+      <button data-c="actor">Atores</button>
+      <button data-c="actress">Atrizes</button>
+      <button data-c="genre">Gêneros</button>
+    </div>
+    <label class="speed">Velocidade <input id="speed" type="range" min="0" max="3" step="0.1" value="1"></label>
+  </div>
+
+  <div class="stage" id="stage">
+    <svg id="bg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" fill="none"></svg>
+    <div class="core"></div>
+  </div>
+  <div class="cap" id="cap"></div>
+
+  <p class="note">As tags caem em espiral até o núcleo branco e reaparecem na borda — laço contínuo, como um GIF.<br>No app real isso roda direto no navegador (CSS/requestAnimationFrame), sem precisar de arquivo .gif.</p>
+</div>
+
+<script>
+const SPIRAL_VARIANTS={
+  films:{tilt:-18,dir:1,squash:0.62,label:'inclina à esquerda · giro horário'},
+  dir:{tilt:24,dir:-1,squash:0.70,label:'inclina à direita · giro anti-horário'},
+  actor:{tilt:-32,dir:1,squash:0.55,label:'bem inclinado · giro horário'},
+  actress:{tilt:38,dir:-1,squash:0.58,label:'inclinação oposta · giro anti-horário'},
+  genre:{tilt:8,dir:1,squash:0.74,label:'quase reto e aberto · giro horário'}
+};
+const LBL={films:'Filmes',dir:'Diretores',actor:'Atores',actress:'Atrizes',genre:'Gêneros'};
+const sample=['Vertigo','Carol','Moonlight','Suspiria','Persona','Akira','Alien','Drive','Her','Amour','Roma','Heat','Fargo','Solaris'];
+
+let cat='films', speed=1;
+const bg=document.getElementById('bg'), stage=document.getElementById('stage'), cap=document.getElementById('cap');
+let tags=[];
+
+function mix(a,b,t){const h=x=>parseInt(x,16);
+  const r=Math.round(h(a.slice(1,3))+(h(b.slice(1,3))-h(a.slice(1,3)))*t);
+  const g=Math.round(h(a.slice(3,5))+(h(b.slice(3,5))-h(a.slice(3,5)))*t);
+  const bl=Math.round(h(a.slice(5,7))+(h(b.slice(5,7))-h(a.slice(5,7)))*t);
+  return `rgb(${r},${g},${bl})`;}
+
+// Cria os anéis de fundo (paths) uma vez; depois só rotacionamos via transform animado
+function buildBG(){
+  const v=SPIRAL_VARIANTS[cat];const rad=d=>d*Math.PI/180;let html='';const rings=8;
+  for(let i=0;i<rings;i++){
+    const t=i/(rings-1);const rx=7+t*43;const ry=rx*v.squash;
+    const col=(i%2===0)?'var(--acc1)':'var(--acc2)';
+    const dir=(i%2===0)?v.dir:-v.dir;
+    const op=(0.6-t*0.30).toFixed(2);const sw=(0.95-t*0.45).toFixed(2);
+    const a0=dir>0?15:195,a1=dir>0?315:-105;
+    const x0=(50+rx*Math.cos(rad(a0))).toFixed(2),y0=(50+ry*Math.sin(rad(a0))).toFixed(2);
+    const x1=(50+rx*Math.cos(rad(a1))).toFixed(2),y1=(50+ry*Math.sin(rad(a1))).toFixed(2);
+    const large=Math.abs(a1-a0)>180?1:0,sweep=dir>0?1:0;
+    // data-spin guarda o sentido p/ animação; data-base a rotação inicial
+    html+=`<path class="ring" data-spin="${dir}" data-base="${v.tilt+i*4}" data-tilt="${v.tilt}" d="M${x0} ${y0} A${rx.toFixed(2)} ${ry.toFixed(2)} 0 ${large} ${sweep} ${x1} ${y1}" stroke="${col}" stroke-width="${sw}" opacity="${op}" fill="none" stroke-linecap="round"/>`;
+  }
+  bg.innerHTML=html;
+  cap.innerHTML=`<b>${LBL[cat]}</b> — ${v.label}`;
+}
+
+function buildTags(){
+  tags.forEach(t=>t.el.remove());tags=[];
+  const v=SPIRAL_VARIANTS[cat];const n=sample.length;
+  for(let i=0;i<n;i++){
+    const el=document.createElement('div');el.className='tag';
+    el.textContent=sample[i];
+    el.style.color=mix('#1ec98a','#ff2e43',i/(n-1));
+    el.style.zIndex=String(50-i);
+    stage.appendChild(el);
+    // fase inicial distribuída ao longo da espiral
+    tags.push({el, phase:i/n, idx:i});
+  }
+}
+
+function setCat(c){cat=c;buildBG();buildTags();}
+
+let start=performance.now();
+function frame(now){
+  const v=SPIRAL_VARIANTS[cat];
+  const W=stage.clientWidth, H=stage.clientHeight;
+  const cx=W/2, cy=H/2;
+  const tiltRad=v.tilt*Math.PI/180, cosT=Math.cos(tiltRad), sinT=Math.sin(tiltRad);
+  const elapsed=(now-start)/1000;
+
+  // anima a rotação dos anéis de fundo (sentidos opostos)
+  bg.querySelectorAll('.ring').forEach(p=>{
+    const spin=+p.dataset.spin, base=+p.dataset.base;
+    const ang=base + spin*elapsed*speed*22;   // graus
+    p.setAttribute('transform',`rotate(${ang} 50 50)`);
+  });
+
+  // anima as tags caindo em espiral até o núcleo (loop)
+  const n=tags.length;
+  tags.forEach(t=>{
+    // progresso 0->1: 1 = borda, 0 = núcleo; decresce com o tempo => "cai" pro centro
+    let prog=(t.phase - elapsed*0.05*speed) % 1;
+    if(prog<0) prog+=1;
+    const r=7+prog*(W*0.024)*13;                 // raio em px
+    const theta=v.dir*(prog*Math.PI*4) + elapsed*speed*v.dir*0.4; // gira + avança
+    let ex=r*Math.cos(theta), ey=r*Math.sin(theta)*v.squash;
+    const rxp=ex*cosT-ey*sinT, ryp=ex*sinT+ey*cosT;
+    const sz=Math.max(9, 9+prog*11);             // maior na borda, menor no centro
+    const op=Math.min(1, 0.25+prog*1.1);         // some perto do núcleo
+    t.el.style.left=(cx+rxp)+'px';
+    t.el.style.top=(cy+ryp)+'px';
+    t.el.style.fontSize=sz+'px';
+    t.el.style.opacity=op.toFixed(2);
+  });
+
+  requestAnimationFrame(frame);
+}
+
+document.getElementById('cats').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  [...e.currentTarget.children].forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');setCat(b.dataset.c);
+};
+document.getElementById('speed').oninput=e=>{speed=+e.target.value;};
+
+setCat('films');
+requestAnimationFrame(frame);
+</script></body></html>
