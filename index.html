@@ -1,5 +1,10 @@
 <!DOCTYPE html><!--
   CineStats — Changelog
+  v3.0 [2026-06]: Constelação nebulosa — 6 espirais (Filmes/Diretores/Atores/Atrizes/Gêneros/Países)
+                  animadas por Canvas: nebulosa drifting, 55 estrelas piscantes, linhas de constelação,
+                  tags sugadas ao núcleo com scintillação. Header card-style + logo espiral multi-volta
+                  com CSS vars (acc1/acc2). Tema sincroniza categoria de espiral. Top 20 favoritos com
+                  mín. 3 aparições. Favicon atualiza com tema. Pausa disponível.
   v2.4 [2026-06]: Ícone de tela inicial via ARQUIVOS PNG (apple-touch-icon.png, icon-192/512,
                   icon-maskable-512) + manifest.webmanifest externo. iOS ignora data: URIs para
                   apple-touch-icon — por isso o ícone falhava. Agora usa arquivos reais.
@@ -45,7 +50,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Arial,sans-serif;font-size:15px;line-height:1.4}
 .wrap{max-width:680px;margin:0 auto;padding:0 13px;padding-bottom:env(safe-area-inset-bottom)}
-header{padding:calc(env(safe-area-inset-top) + 15px) 0 8px;display:flex;align-items:center;gap:10px}
+header{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:13px 15px;margin:calc(env(safe-area-inset-top) + 10px) 0 0;display:flex;align-items:center;gap:10px}
 .logo{display:flex;align-items:center;gap:9px;flex:1}
 .logo svg{width:27px;height:27px;flex:none}
 .logo h1{font-size:20px;margin:0;font-weight:800;letter-spacing:-.01em}
@@ -147,9 +152,9 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .favslot img{width:100%;height:100%;object-fit:cover}.favslot .ph2{font-size:9px;padding:4px;text-align:center;color:var(--dim);line-height:1.2}
 .bio-grid{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
 .spiralbox{flex:1 1 300px;min-width:270px;isolation:isolate}
-#spiral{position:relative;width:100%;overflow:hidden;background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--acc1) 14%,transparent),transparent 72%);border-radius:12px}
-.tag{position:absolute;transform:translate(-50%,-50%);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);border-radius:13px;padding:3px 9px;font-weight:700;white-space:nowrap;cursor:pointer;transition:transform .15s,border-color .15s;max-width:40%;overflow:hidden;text-overflow:ellipsis}
-.tag:hover,.tag:active{transform:translate(-50%,-50%) scale(1.14);border-color:currentColor;z-index:50!important}
+#spiral{position:relative;width:100%;overflow:hidden;background:var(--bg);border-radius:12px}
+.tag{position:absolute;transform:translate(-50%,-50%);background:none;border:none;padding:2px 7px;font-weight:800;white-space:nowrap;cursor:pointer;max-width:46%;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 6px currentColor,0 0 16px currentColor,0 0 34px currentColor;transition:transform .12s;letter-spacing:.01em;font-size:13px}
+.tag:hover,.tag:active{transform:translate(-50%,-50%) scale(1.22);z-index:50!important}
 .biolist{flex:1 1 230px;position:relative;z-index:1}
 .blrow{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--line);cursor:pointer}
 .blrow .brk{width:20px;color:var(--dim);font-weight:800;font-size:12px;text-align:center}
@@ -169,7 +174,7 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 <div class="wrap">
   <header>
     <div class="logo">
-      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M 6 24 A 18 11 0 0 1 42 24" stroke="#1ec98a" stroke-width="3.5" stroke-linecap="round"/><path d="M 42 24 A 18 11 0 0 1 6 24" stroke="#ff2e43" stroke-width="3.5" stroke-linecap="round"/><circle cx="24" cy="24" r="3" fill="#f4f0e6"/></svg>
+      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M25.5 24.0 L25.68 24.37 L25.76 24.81 L25.71 25.3 L25.53 25.8 L25.21 26.28 L24.75 26.7 L24.17 27.01 L23.48 27.19 L22.73 27.21 L21.95 27.04 L21.19 26.68 L20.49 26.12 L19.91 25.39 L19.49 24.51 L19.28 23.5 L19.29 22.43 L19.55 21.35 L20.06 20.3 L20.83 19.37 L21.81 18.59 L22.99 18.03 L24.31 17.74 L25.7 17.74 L27.1 18.06 L28.45 18.7 L29.65 19.65 L30.65 20.87 L31.38 22.32 L31.78 23.95 L31.83 25.66 L31.48 27.39 L30.75 29.05 L29.65 30.55 L28.22 31.8 L26.5 32.73 L24.58 33.28 L22.54 33.4 L20.48 33.07 L18.49 32.29 L16.69 31.06 L15.16 29.44 L13.99 27.49 L13.26 25.28 L13.02 22.92 L13.3 20.52 L14.11 18.2 L15.43 16.06 L17.21 14.23 L19.38 12.8 L21.86 11.85 L24.53 11.46 L27.26 11.66 L29.93 12.45 L32.41 13.83 L34.57 15.74 L36.29 18.11 L37.48 20.84 L38.07 23.8 L37.99 26.87 L37.25 29.9 L35.85 32.73 L33.84 35.24 L31.3 37.28 L28.34 38.74 L25.09 39.55 L21.69 39.63 L18.31 38.97 L15.11 37.58 L12.25 35.51 L9.87 32.83 L8.09 29.66 L7.03 26.14 L6.75 22.43 L7.29 18.7 L8.63 15.13 L10.73 11.89 L13.52 9.14 L16.87 7.04 L20.64 5.69 L24.66 5.18 L28.74 5.55 L32.69 6.8 L36.31 8.9 L39.44 11.76 L41.9 15.27 L43.57 19.27 L44.35 23.57 L44.17 27.99 L43.05 32.32 L40.99 36.34" stroke="var(--acc1)" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M25.5 24.0 L25.68 23.63 L25.76 23.19 L25.71 22.7 L25.53 22.2 L25.21 21.72 L24.75 21.3 L24.17 20.99 L23.48 20.81 L22.73 20.79 L21.95 20.96 L21.19 21.32 L20.49 21.88 L19.91 22.61 L19.49 23.49 L19.28 24.5 L19.29 25.57 L19.55 26.65 L20.06 27.7 L20.83 28.63 L21.81 29.41 L22.99 29.97 L24.31 30.26 L25.7 30.26 L27.1 29.94 L28.45 29.3 L29.65 28.35 L30.65 27.13 L31.38 25.68 L31.78 24.05 L31.83 22.34 L31.48 20.61 L30.75 18.95 L29.65 17.45 L28.22 16.2 L26.5 15.27 L24.58 14.72 L22.54 14.6 L20.48 14.93 L18.49 15.71 L16.69 16.94 L15.16 18.56 L13.99 20.51 L13.26 22.72 L13.02 25.08 L13.3 27.48 L14.11 29.8 L15.43 31.94 L17.21 33.77 L19.38 35.2 L21.86 36.15 L24.53 36.54 L27.26 36.34 L29.93 35.55 L32.41 34.17 L34.57 32.26 L36.29 29.89 L37.48 27.16 L38.07 24.2 L37.99 21.13 L37.25 18.1 L35.85 15.27 L33.84 12.76 L31.3 10.72 L28.34 9.26 L25.09 8.45 L21.69 8.37 L18.31 9.03 L15.11 10.42 L12.25 12.49 L9.87 15.17 L8.09 18.34 L7.03 21.86 L6.75 25.57 L7.29 29.3 L8.63 32.87 L10.73 36.11 L13.52 38.86 L16.87 40.96 L20.64 42.31 L24.66 42.82 L28.74 42.45 L32.69 41.2 L36.31 39.1 L39.44 36.24 L41.9 32.73 L43.57 28.73 L44.35 24.43 L44.17 20.01 L43.05 15.68 L40.99 11.66" stroke="var(--acc2)" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="24" cy="24" r="2.3" fill="var(--ink)" opacity="0.95"/></svg>
       <h1><span style="color:var(--gold)">Cine</span><b>Stats</b></h1>
     </div>
     <button class="icon-btn" id="search" title="Buscar e avaliar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
@@ -422,49 +427,30 @@ function hexToRgb(h){h=h.replace('#','');return [parseInt(h.slice(0,2),16),parse
 function rgbToHex(r,g,b){return '#'+[r,g,b].map(x=>Math.max(0,Math.min(255,Math.round(x))).toString(16).padStart(2,'0')).join('');}
 function mixHex(c1,c2,t){const a=hexToRgb(c1),b=hexToRgb(c2);return rgbToHex(a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t);}
 function palette(n){const[c1,c2]=ACCENTS[bio.accent||'vertigo'];if(n<=1)return[c1];const out=[];for(let i=0;i<n;i++)out.push(mixHex(c1,c2,i/(n-1)));return out;}
-function applyAccent(){const[c1,c2]=ACCENTS[bio.accent||'vertigo'];document.documentElement.style.setProperty('--acc1',c1);document.documentElement.style.setProperty('--acc2',c2);}
-// Gera fundo de arcos elipticos em sentidos opostos, variando por categoria.
-// Cada categoria tem um sentido e inclinacao diferentes (a selecao e salva em bio.cat no localStorage).
+const THEME_SPIRAL={vertigo:'films',verde:'genre',vermelho:'dir',sonho:'actress',neon:'actor'};
+function applyAccent(){const a=bio.accent||'vertigo';const[c1,c2]=ACCENTS[a];document.documentElement.style.setProperty('--acc1',c1);document.documentElement.style.setProperty('--acc2',c2);const enc=s=>s.replace(/#/g,'%23');const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23000'/><path d='M 4 16 A 12 7.5 0 0 1 28 16' stroke='${enc(c1)}' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M 28 16 A 12 7.5 0 0 1 4 16' stroke='${enc(c2)}' stroke-width='3' fill='none' stroke-linecap='round'/><circle cx='16' cy='16' r='2.3' fill='%23f4f0e6'/></svg>`;const lnk=document.querySelector('link[rel="icon"][type="image/svg+xml"]');if(lnk)lnk.href='data:image/svg+xml,'+svg;}
 const SPIRAL_VARIANTS={
-  films:   {tilt:-18, dir:1,  squash:0.62},
-  dir:     {tilt:24,  dir:-1, squash:0.70},
-  actor:   {tilt:-32, dir:1,  squash:0.55},
-  actress: {tilt:38,  dir:-1, squash:0.58},
-  genre:   {tilt:8,   dir:1,  squash:0.74}
+  films:  {tilt:-18,dir:1, squash:0.62,baseSpeed:0.18,speedVar:0.10,inwardSpeed:1.0},
+  dir:    {tilt:24, dir:-1,squash:0.68,baseSpeed:0.28,speedVar:0.18,inwardSpeed:0.75},
+  actor:  {tilt:-32,dir:1, squash:0.52,baseSpeed:0.35,speedVar:0.22,inwardSpeed:1.4},
+  actress:{tilt:38, dir:-1,squash:0.60,baseSpeed:0.22,speedVar:0.12,inwardSpeed:0.9},
+  genre:  {tilt:8,  dir:1, squash:0.78,baseSpeed:0.14,speedVar:0.28,inwardSpeed:1.2},
+  country:{tilt:-50,dir:-1,squash:0.48,baseSpeed:0.20,speedVar:0.15,inwardSpeed:0.85}
 };
-function spiralBG(cat){
-  const v=SPIRAL_VARIANTS[cat]||SPIRAL_VARIANTS.films;
-  const c1='var(--acc1)',c2='var(--acc2)';
-  const rad=d=>d*Math.PI/180;
-  let paths='';
-  const rings=8;
-  for(let i=0;i<rings;i++){
-    const t=i/(rings-1);                 // 0 interno -> 1 externo
-    const rx=7+t*43;                     // raio horizontal cresce para fora
-    const ry=rx*v.squash;                // achatamento eliptico
-    const col=(i%2===0)?c1:c2;           // alterna verde / vermelho
-    const dir=(i%2===0)?v.dir:-v.dir;    // aneis alternam sentido (opostos)
-    const op=(0.6-t*0.32).toFixed(2);
-    const sw=(0.95-t*0.45).toFixed(2);
-    const rot=v.tilt+(dir>0?0:16)+i*4;   // giro progressivo => sensacao de espiral
-    const a0=dir>0?15:195, a1=dir>0?315:-105;   // arco aberto ~300 graus
-    const x0=(50+rx*Math.cos(rad(a0))).toFixed(2),y0=(50+ry*Math.sin(rad(a0))).toFixed(2);
-    const x1=(50+rx*Math.cos(rad(a1))).toFixed(2),y1=(50+ry*Math.sin(rad(a1))).toFixed(2);
-    const large=Math.abs(a1-a0)>180?1:0, sweep=dir>0?1:0;
-    paths+=`<path transform="rotate(${rot} 50 50)" d="M${x0} ${y0} A${rx.toFixed(2)} ${ry.toFixed(2)} 0 ${large} ${sweep} ${x1} ${y1}" stroke="${col}" stroke-width="${sw}" opacity="${op}" fill="none" stroke-linecap="round"/>`;
-  }
-  paths+='<circle cx="50" cy="50" r="1.6" fill="#f4f0e6" opacity="0.9"/>';  // nucleo central
-  return `<svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" fill="none">${paths}</svg>`;
-}
+function countryFlag(n){const M={'United States of America':'🇺🇸','France':'🇫🇷','United Kingdom':'🇬🇧','Germany':'🇩🇪','Italy':'🇮🇹','Japan':'🇯🇵','Brazil':'🇧🇷','Spain':'🇪🇸','South Korea':'🇰🇷','Sweden':'🇸🇪','Argentina':'🇦🇷','Mexico':'🇲🇽','Canada':'🇨🇦','Poland':'🇵🇱','Denmark':'🇩🇰','Australia':'🇦🇺','Ireland':'🇮🇪','Belgium':'🇧🇪','Portugal':'🇵🇹','USSR':'🇷🇺','Soviet Union':'🇷🇺','Russia':'🇷🇺','Austria':'🇦🇹','Netherlands':'🇳🇱','China':'🇨🇳','Romania':'🇷🇴','India':'🇮🇳','Taiwan':'🇹🇼','Iran':'🇮🇷','Greece':'🇬🇷','Czech Republic':'🇨🇿'};return M[n]||'🌍';}
 let bio=(()=>{try{return JSON.parse(localStorage.getItem('cs_bio'))||{};}catch(e){return {};}})();
 function saveBio(){try{localStorage.setItem('cs_bio',JSON.stringify(bio));}catch(e){}}
 let curFav=0;
 function entities(cat){
-  if(cat==='films')return films().filter(r=>r.r!=null).sort((a,b)=>b.r-a.r||b.y-a.y).slice(0,30).map(r=>({kind:'film',ref:key(r.t,r.y),label:r.ti||r.t,sub:star(r.r)}));
+  const m=3;  // min aparicoes/avaliacoes para entrar nos favoritos
+  if(cat==='films')return films().filter(r=>r.r!=null&&r.r>=3).sort((a,b)=>b.r-a.r||b.y-a.y).slice(0,20).map(r=>({kind:'film',ref:key(r.t,r.y),label:r.ti||r.t,sub:star(r.r)}));
   if(cat==='genre'){const P={};films().forEach(r=>(r.gids||[]).forEach(id=>{const g=GENRES[id]||('#'+id);P[g]=(P[g]||0)+1;}));
-    return Object.entries(P).sort((a,b)=>b[1]-a[1]).slice(0,30).map(([g,n])=>({kind:'genre',ref:g,label:g,sub:n+'f'}));}
+    return Object.entries(P).filter(([,n])=>n>=m).sort((a,b)=>b[1]-a[1]).slice(0,20).map(([g,n])=>({kind:'genre',ref:g,label:g,sub:n+'f'}));}
+  if(cat==='country'){const P={};films().forEach(r=>(r.co||[]).forEach(c=>{P[c]=(P[c]||0)+1;}));
+    if(!Object.keys(P).length)return[];
+    return Object.entries(P).filter(([,n])=>n>=m).sort((a,b)=>b[1]-a[1]).slice(0,20).map(([c,n])=>({kind:'country',ref:c,label:countryFlag(c)+' '+c,sub:n+'f'}));}
   const P=people();let arr=cat==='dir'?P.D:cat==='actor'?P.A.filter(p=>p.g===2):P.A.filter(p=>p.g===1);
-  return arr.map(p=>({...p,n_:p.f.length})).sort((a,b)=>b.n_-a.n_||a.n.localeCompare(b.n)).slice(0,30).map(p=>({kind:'person',ref:p.id,label:p.n,sub:p.n_+'f',_p:p}));
+  return arr.filter(p=>p.f.length>=m).sort((a,b)=>b.f.length-a.f.length||a.n.localeCompare(b.n)).slice(0,20).map(p=>({kind:'person',ref:p.id,label:p.n,sub:p.f.length+'f',_p:p}));
 }
 async function openPerson(p){const {mini,bf}=personDetail({fl:p.f});
   const ph=p.pic?`<img style="width:92px;border-radius:8px" src="${IMG}/w185${p.pic}"/>`:`<div style="width:92px;height:138px;border-radius:8px;background:var(--p2);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--dim);font-size:30px">${initials(p.n)}</div>`;
@@ -476,66 +462,155 @@ function openGenre(g){const fl=films().filter(r=>(r.gids||[]).some(id=>(GENRES[i
   const {mini,bf}=personDetail({fl});const rd=fl.filter(f=>f.r!=null);const avg=rd.length?rd.reduce((s,f)=>s+f.r,0)/rd.length:null;
   $('#sheet').innerHTML=`<div class="top"><div style="width:92px;height:138px;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:34px">🎬</div><div><h3>${g}</h3><div class="yr"><b>${fl.length}</b> filmes${avg!=null?' · média '+star(+avg.toFixed(2)):''}</div>${bf?`<div class="yr" style="margin-top:6px">Melhor: <b style="color:var(--gold)">${bf.t}</b> ${star(bf.r)}</div>`:''}</div></div><div class="lbl">Mais bem avaliados</div><div class="mini">${mini}</div>`;
   $('#modal').classList.add('show');}
-function openEntity(e){if(!e)return;if(e.kind==='film')openFilm(e.ref);else if(e.kind==='genre')openGenre(e.ref);else openPerson(e._p);}
-let spiralRAF=null;                 // id do loop de animacao (para cancelar e nao empilhar)
+function openCountry(c){const fl=films().filter(r=>(r.co||[]).includes(c)).map(r=>({t:r.ti||r.t,y:+(r.ye||r.y),r:r.r,p:r.po}));
+  const{mini,bf}=personDetail({fl});const rd=fl.filter(f=>f.r!=null);const avg=rd.length?rd.reduce((s,f)=>s+f.r,0)/rd.length:null;
+  $('#sheet').innerHTML=`<div class="top"><div style="width:92px;height:138px;border-radius:8px;background:linear-gradient(135deg,var(--acc1),var(--acc2));display:flex;align-items:center;justify-content:center;font-size:44px">${countryFlag(c)}</div><div><h3>${c}</h3><div class="yr"><b>${fl.length}</b> filmes${avg!=null?' · média '+star(+avg.toFixed(2)):''}</div>${bf?`<div class="yr" style="margin-top:6px">Melhor: <b style="color:var(--gold)">${bf.t}</b> ${star(bf.r)}</div>`:''}</div></div><div class="lbl">Mais bem avaliados</div><div class="mini">${mini}</div>`;
+  $('#modal').classList.add('show');}
+function openEntity(e){if(!e)return;if(e.kind==='film')openFilm(e.ref);else if(e.kind==='genre')openGenre(e.ref);else if(e.kind==='country')openCountry(e.ref);else openPerson(e._p);}
+let spiralRAF=null;
 function stopSpiralAnim(){if(spiralRAF){cancelAnimationFrame(spiralRAF);spiralRAF=null;}}
-function renderSpiral(items,cat){const host=$('#spiral');if(!host)return;
+function renderSpiral(items,cat){
+  const host=$('#spiral');if(!host)return;
   stopSpiralAnim();
   cat=cat||bio.cat||'films';
   const v=SPIRAL_VARIANTS[cat]||SPIRAL_VARIANTS.films;
-  const W=host.clientWidth||320,H=Math.round(W*0.95);host.style.height=H+'px';const n=Math.min(items.length,14);
-  const cx=W/2,cy=H/2;const tilt=v.tilt*Math.PI/180;const cosT=Math.cos(tilt),sinT=Math.sin(tilt);
+  const W=host.clientWidth||320,H=Math.round(W*1.08);
+  host.style.height=H+'px';
+  const n=Math.min(items.length,20);
+  const cx=W/2,cy=H/2;
   const pal=palette(n);
-  const animate=bio.animate!==false;   // animacao LIGADA por padrao; salva em bio.animate
-
+  const animate=bio.animate!==false;
+  const[c1,c2]=ACCENTS[bio.accent||'vertigo'];
+  const tilt=v.tilt*Math.PI/180;
+  const cosT=Math.cos(tilt),sinT=Math.sin(tilt);
+  function rgb(hex){const h=hexToRgb(hex);return h[0]+','+h[1]+','+h[2];}
+  // Build DOM
+  host.innerHTML='';
+  const cvs=document.createElement('canvas');
+  cvs.width=W;cvs.height=H;
+  cvs.style.cssText='position:absolute;inset:0;pointer-events:none;border-radius:12px';
+  host.appendChild(cvs);
+  const ctx=cvs.getContext('2d');
+  const tagEls=items.slice(0,n).map((e,i)=>{
+    const b=document.createElement('button');
+    b.className='tag';b.textContent=e.label;
+    b.style.color=pal[i];b.style.zIndex=n-i;
+    b.onclick=()=>openEntity(e);
+    host.appendChild(b);return b;
+  });
+  // Static mode
   if(!animate){
-    // --- modo estatico (sem movimento) ---
-    const pts=[];let theta=v.dir>0?2.2:-2.2;
-    for(let i=0;i<n;i++){
-      const r=7+i*(W*0.024);
-      let ex=r*Math.cos(theta), ey=r*Math.sin(theta)*v.squash;
-      const rxp=ex*cosT-ey*sinT, ryp=ex*sinT+ey*cosT;
-      pts.push({x:cx+rxp,y:cy+ryp});
-      theta+=v.dir*((W*0.40)/(r+18));
-    }
-    host.innerHTML=spiralBG(cat)+items.slice(0,n).map((e,i)=>{const p=pts[i];const sz=Math.max(10,20-i*0.7);
-      return `<button class="tag" data-i="${i}" style="left:${p.x}px;top:${p.y}px;font-size:${sz}px;color:${pal[i]};z-index:${50-i}">${e.label}</button>`;}).join('');
-    $$('#spiral .tag').forEach(el=>el.onclick=()=>openEntity(items[+el.dataset.i]));
+    const ns=Math.min(n,14);
+    items.slice(0,ns).forEach((_,i)=>{
+      const t=i/Math.max(1,ns-1);
+      const r=16+t*W*0.38;
+      const angle=v.dir*(i/ns*Math.PI*3.8);
+      const ex=r*Math.cos(angle),ey=r*Math.sin(angle)*v.squash;
+      const el=tagEls[i];
+      el.style.left=(cx+ex*cosT-ey*sinT)+'px';
+      el.style.top=(cy+ex*sinT+ey*cosT)+'px';
+      el.style.fontSize=Math.max(9,19-i*0.5)+'px';
+      el.style.opacity=(1-i/ns*0.35).toFixed(2);
+    });
+    const gd=ctx.createRadialGradient(cx,cy,0,cx,cy,W*0.5);
+    gd.addColorStop(0,'rgba('+rgb(c1)+',0.10)');gd.addColorStop(0.5,'rgba('+rgb(c2)+',0.04)');gd.addColorStop(1,'transparent');
+    ctx.fillStyle=gd;ctx.fillRect(0,0,W,H);
+    ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);
+    ctx.fillStyle='rgba('+rgb(c1)+',0.9)';ctx.fill();
     return;
   }
-
-  // --- modo animado (movimento contínuo, como um GIF) ---
-  host.innerHTML=spiralBG(cat)+items.slice(0,n).map((e,i)=>
-    `<button class="tag" data-i="${i}" style="left:${cx}px;top:${cy}px;color:${pal[i]};z-index:${50-i}">${e.label}</button>`).join('');
-  const bgSvg=host.querySelector('svg');
-  const rings=bgSvg?[...bgSvg.querySelectorAll('path')]:[];
-  // guarda parametros de cada anel para girar (sentidos alternados = opostos)
-  rings.forEach((p,i)=>{p._spin=(i%2===0)?v.dir:-v.dir;p._base=v.tilt+i*4;});
-  const tagEls=$$('#spiral .tag');
-  tagEls.forEach((el,i)=>{el.onclick=()=>openEntity(items[+el.dataset.i]);el._phase=i/n;});
-
+  // ── ANIMATED CONSTELLATION MODE ──
+  // 55 twinkling background stars
+  const STARS=Array.from({length:55},()=>({
+    x:Math.random()*W,y:Math.random()*H,
+    r:0.3+Math.random()*1.1,ba:0.10+Math.random()*0.38,
+    ph:Math.random()*Math.PI*2,spd:0.4+Math.random()*2.6
+  }));
+  // Per-tag orbital state (each tag = a planet being sucked to center)
+  const DIRS=[1,-0.9,1.1,-1,0.85,-1.15,1.05,-0.8,1.2,-0.95,0.75,-1.3,1.0,-0.7,1.25,-1.05,0.9,-1.2,1.15,-0.85];
+  const ORBS=Array.from({length:n},(_,i)=>{
+    const t=i/Math.max(1,n-1);
+    return{
+      ph:i/n*Math.PI*2+(Math.random()-0.5)*1.8,
+      maxR:W*(0.08+t*0.40),
+      life:Math.random(),            // 1=outer edge, 0=center
+      lSpd:(0.005+Math.random()*0.013)*(v.inwardSpeed||1),
+      omega:v.dir*(DIRS[i%20])*(v.baseSpeed+(Math.random()-0.5)*(v.speedVar||0.1)),
+      noise:0.10+Math.random()*0.32,nf:0.3+Math.random()*2.2,
+      sq:v.squash+(Math.random()-0.5)*0.13,
+      tw:Math.random()*Math.PI*2,twSpd:1.2+Math.random()*4.5
+    };
+  });
   const start=performance.now();
   function step(now){
     const t=(now-start)/1000;
-    // fundo gira (anéis em sentidos opostos)
-    rings.forEach(p=>{if(p._spin!==undefined)p.setAttribute('transform',`rotate(${p._base+p._spin*t*18} 50 50)`);});
-    // tags caem em espiral até o núcleo e reaparecem na borda (loop)
-    tagEls.forEach(el=>{
-      let prog=(el._phase - t*0.045) % 1; if(prog<0)prog+=1;
-      const r=7+prog*(W*0.024)*13;
-      const theta=v.dir*(prog*Math.PI*4)+t*v.dir*0.35;
-      let ex=r*Math.cos(theta), ey=r*Math.sin(theta)*v.squash;
-      const rxp=ex*cosT-ey*sinT, ryp=ex*sinT+ey*cosT;
-      el.style.left=(cx+rxp)+'px';el.style.top=(cy+ryp)+'px';
-      el.style.fontSize=Math.max(10,10+prog*10)+'px';
-      el.style.opacity=Math.min(1,0.28+prog*1.05).toFixed(2);
+    ctx.clearRect(0,0,W,H);
+    // Drifting primary nebula
+    const nx=cx+Math.sin(t*0.19)*W*0.06,ny=cy+Math.cos(t*0.14)*H*0.07;
+    const g1=ctx.createRadialGradient(nx,ny,0,nx,ny,W*0.54);
+    g1.addColorStop(0,'rgba('+rgb(c1)+',0.09)');g1.addColorStop(0.5,'rgba('+rgb(c2)+',0.04)');g1.addColorStop(1,'transparent');
+    ctx.fillStyle=g1;ctx.fillRect(0,0,W,H);
+    // Drifting secondary nebula blob
+    const bx=cx-Math.cos(t*0.11)*W*0.16,by=cy-Math.sin(t*0.17)*H*0.13;
+    const g2=ctx.createRadialGradient(bx,by,0,bx,by,W*0.32);
+    g2.addColorStop(0,'rgba('+rgb(c2)+',0.06)');g2.addColorStop(1,'transparent');
+    ctx.fillStyle=g2;ctx.fillRect(0,0,W,H);
+    // Twinkling stars
+    STARS.forEach(s=>{
+      const tw=0.4+0.6*Math.sin(s.ph+t*s.spd);
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(244,240,230,'+(s.ba*tw).toFixed(2)+')';ctx.fill();
+    });
+    // Orbital positions — tags sucked toward nucleus
+    const pos=ORBS.map((o,i)=>{
+      o.life-=o.lSpd;
+      if(o.life<=0){o.life=0.98+Math.random()*0.02;o.ph=Math.random()*Math.PI*2;}
+      const prog=o.life;           // 1=outer, 0=nucleus
+      const r=o.maxR*prog;
+      const angle=o.ph+o.omega*t+o.noise*Math.sin(o.nf*t+i*1.9);
+      const ex=r*Math.cos(angle),ey=r*Math.sin(angle)*o.sq;
+      o.tw+=0.018+Math.random()*0.006;
+      return{x:cx+ex*cosT-ey*sinT,y:cy+ex*sinT+ey*cosT,prog};
+    });
+    // Constellation lines (proximity)
+    for(let i=0;i<pos.length;i++){
+      for(let j=i+1;j<pos.length;j++){
+        const d=Math.hypot(pos[i].x-pos[j].x,pos[i].y-pos[j].y);
+        if(d<W*0.28){
+          const a=(1-d/(W*0.28))*0.14*Math.min(pos[i].prog,pos[j].prog);
+          ctx.beginPath();ctx.moveTo(pos[i].x,pos[i].y);ctx.lineTo(pos[j].x,pos[j].y);
+          ctx.strokeStyle='rgba('+rgb(c1)+','+a.toFixed(2)+')';ctx.lineWidth=0.5;ctx.stroke();
+        }
+      }
+    }
+    // Pulsing nucleus
+    const pulse=0.75+0.25*Math.sin(t*2.3);
+    const nc=ctx.createRadialGradient(cx,cy,0,cx,cy,11*pulse);
+    nc.addColorStop(0,'rgba('+rgb(c1)+',0.95)');nc.addColorStop(0.35,'rgba('+rgb(c1)+',0.3)');nc.addColorStop(1,'transparent');
+    ctx.fillStyle=nc;ctx.beginPath();ctx.arc(cx,cy,11*pulse,0,Math.PI*2);ctx.fill();
+    // Dot markers + tag text update
+    pos.forEach((p,i)=>{
+      const hh=hexToRgb(pal[i]);const rr=hh[0],gg=hh[1],bb=hh[2];
+      // Glowing dot on canvas
+      const dg=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,8);
+      dg.addColorStop(0,'rgba('+rr+','+gg+','+bb+','+(p.prog*0.68).toFixed(2)+')');dg.addColorStop(1,'transparent');
+      ctx.fillStyle=dg;ctx.beginPath();ctx.arc(p.x,p.y,8,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(p.x,p.y,1.8,0,Math.PI*2);
+      ctx.fillStyle='rgba('+rr+','+gg+','+bb+','+Math.min(1,p.prog*1.8).toFixed(2)+')';ctx.fill();
+      // Tag DOM
+      const el=tagEls[i];
+      el.style.left=p.x+'px';el.style.top=p.y+'px';
+      el.style.fontSize=Math.max(9,9+p.prog*10)+'px';
+      // Scintillation flicker
+      const flk=0.5+0.5*Math.sin(ORBS[i].tw*3.8);
+      el.style.opacity=(Math.min(1,p.prog*2.8)*flk).toFixed(2);
     });
     spiralRAF=requestAnimationFrame(step);
   }
   spiralRAF=requestAnimationFrame(step);
 }
 function renderBio(){
-  const cats=[['films','Filmes'],['dir','Diretores'],['actor','Atores'],['actress','Atrizes'],['genre','Gêneros']];
+  const cats=[['films','Filmes'],['dir','Diretores'],['actor','Atores'],['actress','Atrizes'],['genre','Gêneros'],['country','Países']];
   const cat=bio.cat||'films';
   const su=bio.site?bio.site.replace(/^https?:\/\//,''):'';
   const href=bio.site?(/^https?:/.test(bio.site)?bio.site:'https://'+bio.site):'';
@@ -549,7 +624,7 @@ function renderBio(){
     <span class="eyb" style="margin-top:18px">Espiral de favoritos</span>
     <div class="controls"><div class="seg" id="bioCat">${cats.map(([s,l])=>`<button data-s="${s}" class="${cat===s?'on':''}">${l}</button>`).join('')}</div><button class="anim-toggle ${bio.animate!==false?'on':''}" id="animToggle" title="Ligar/desligar movimento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.2-8.5"/><polyline points="21 3 21 9 15 9"/></svg>${bio.animate!==false?'Movimento':'Parado'}</button></div>
     <div class="bio-grid"><div class="spiralbox"><div id="spiral"></div></div><div class="biolist">${listHtml}</div></div>
-    <div class="note">A espiral mostra os primeiros nomes como tags clicáveis; a lista ao lado traz o top 30 completo. Toque em qualquer nome para ver foto, filmes vistos e o melhor avaliado.</div>`;
+    <div class="note">Constelação de favoritos — tags são clicáveis. Lista ao lado com top 20 (mín. 3 aparições). Mude o tema para explorar uma constelação diferente.</div>`;
   $('#bioCat').onclick=e=>{const b=e.target.closest('button');if(b){bio.cat=b.dataset.s;saveBio();renderBio();}};
   $('#animToggle').onclick=()=>{bio.animate=(bio.animate===false);saveBio();renderBio();};
   $('#bioEditBtn').onclick=openBioEdit;
@@ -563,7 +638,7 @@ function bioFavSlots(host){host.innerHTML=[0,1,2,3,4].map(i=>{const k=(bio.favs|
 function openBioEdit(){$('#bioName').value=bio.name||'';$('#bioSite').value=bio.site||'';
   $('#bioAccent').innerHTML=Object.keys(ACCENTS).map(a=>{const[c1,c2]=ACCENTS[a];return `<button class="chip theme-chip ${(bio.accent||'vertigo')===a?'on':''}" data-a="${a}"><span class="sw" style="background:linear-gradient(135deg,${c1},${c2})"></span>${ACC_LBL[a]}</button>`;}).join('');
   bioFavSlots($('#bioFavs'));$('#bioEdit').classList.add('show');}
-$('#bioAccent').onclick=e=>{const b=e.target.closest('button');if(!b)return;bio.accent=b.dataset.a;saveBio();applyAccent();$$('#bioAccent .chip').forEach(x=>x.classList.toggle('on',x.dataset.a===bio.accent));render();};
+$('#bioAccent').onclick=e=>{const b=e.target.closest('button');if(!b)return;bio.accent=b.dataset.a;bio.cat=THEME_SPIRAL[bio.accent]||bio.cat||'films';saveBio();applyAccent();$$('#bioAccent .chip').forEach(x=>x.classList.toggle('on',x.dataset.a===bio.accent));render();};
 $('#bioSave').onclick=()=>{bio.name=$('#bioName').value.trim();bio.site=$('#bioSite').value.trim();saveBio();$('#bioEdit').classList.remove('show');renderBio();};
 $('#bioEditClose').onclick=()=>{$('#bioEdit').classList.remove('show');renderBio();};
 function openFavPicker(i){curFav=i;$('#favIn').value='';renderFavRes('');$('#favOver').classList.add('show');setTimeout(()=>$('#favIn').focus(),100);}
