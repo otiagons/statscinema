@@ -432,7 +432,7 @@ function countryBreakdown(viewTab){
 function renderFilms(){
   if(fView==='country'){
     const body=countryBreakdown('films');
-    $('#view').innerHTML=`<div class="controls"><div class="seg"><button data-s="rt" id="fSortBack">Nota</button><button data-s="yr" id="">Ano</button><button data-s="az" id="">A–Z</button></div><button class="chip on" id="fCPais">${GLOBE_SVG} País</button></div><div style="margin-top:8px">${body}</div><div class="note">Top 30 países de produção principal · fonte TMDB</div>`;
+    $('#view').innerHTML=`<div class="controls"><div class="seg"><button data-s="rt" id="fSortBack">Nota</button><button data-s="yr" id="">Ano</button><button data-s="az" id="">A–Z</button></div><button class="chip on" id="fCPais">País</button></div><div style="margin-top:8px">${body}</div><div class="note">Top 30 países de produção principal · fonte TMDB</div>`;
     $('#fCPais').onclick=()=>{fView='list';renderFilms();};
     $$('.ctr').forEach(el=>el.onclick=()=>openCountry(el.dataset.c));
     return;
@@ -447,7 +447,7 @@ function renderFilms(){
   const ctrl=`<div class="controls"><div class="seg" id="pSort">
     ${[['rt','Nota'],['yr','Ano'],['az','A–Z'],['rnd','Aleatório']].map(([s,l])=>`<button data-s="${s}" class="${pSort===s?'on':''}">${l}</button>`).join('')}
     </div><div class="chips" id="pDec"><button class="chip ${pDec==null?'on':''}" data-d="all">Todas</button>${decs.map(d=>`<button class="chip ${pDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>
-    <button class="chip" id="fCPais">${GLOBE_SVG} País</button></div>`;
+    <button class="chip" id="fCPais">País</button></div>`;
   const cells=list.map(x=>{const r=x.rec;const po=(r&&r.po)?`<img loading="lazy" src="${IMG}/w185${r.po}"/>`:`<div class="ph">${x.t}<br><span style="opacity:.6">(${x.y})</span></div>`;
     return `<div class="po" data-k="${(x.t+'|'+x.y).replace(/"/g,'&quot;')}">${po}${x.r!=null?`<span class="rt">${star(x.r)}</span>`:''}</div>`;}).join('');
   $('#view').innerHTML=ctrl+`<div class="grid">${cells}</div><div class="note">${fmt(list.length)} filmes${pDec!=null?' nos '+pDec+'s':''}. Toque num pôster para ver elenco e direção.</div>`;
@@ -474,7 +474,7 @@ function renderRanking(){
   if(rView==='country'){
     const body=countryBreakdown(tab);
     const lbl=tab==='dir'?'Diretores':tab==='actor'?'Atores':'Atrizes';
-    $('#view').innerHTML=`<div class="controls"><div class="seg"><button data-s="all">Geral</button><button data-s="dec">Década</button><button data-s="yr">Ano</button></div><button class="chip on" id="rCPais">${GLOBE_SVG} País</button></div><div style="margin-top:8px">${body}</div><div class="note">Países agrupados pela produção dos filmes (fonte: TMDB).</div>`;
+    $('#view').innerHTML=`<div class="controls"><div class="seg"><button data-s="all">Geral</button><button data-s="dec">Década</button><button data-s="yr">Ano</button></div><button class="chip on" id="rCPais">País</button></div><div style="margin-top:8px">${body}</div><div class="note">Países agrupados pela produção dos filmes (fonte: TMDB).</div>`;
     $('#rCPais').onclick=()=>{rView='list';renderRanking();};
     $$('.ctr').forEach(el=>el.onclick=()=>openCountry(el.dataset.c));
     return;
@@ -484,7 +484,7 @@ function renderRanking(){
   if(rYr==null&&years.length)rYr=years[0];if(rDec==null&&decs.length)rDec=decs[0];
   const ctrl=`<div class="controls"><div class="seg" id="rScope">
     ${[['all','Geral'],['dec','Década'],['yr','Ano']].map(([s,l])=>`<button data-s="${s}" class="${rScope===s?'on':''}">${l}</button>`).join('')}
-    </div>${rScope==='dec'?`<div class="chips" id="rDec">${decs.map(d=>`<button class="chip ${rDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>`:''}${rScope==='yr'?`<select id="rYr">${years.map(y=>`<option ${y===rYr?'selected':''}>${y}</option>`).join('')}</select>`:''}<button class="chip" id="rCPais">${GLOBE_SVG} País</button></div>`;
+    </div>${rScope==='dec'?`<div class="chips" id="rDec">${decs.map(d=>`<button class="chip ${rDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>`:''}${rScope==='yr'?`<select id="rYr">${years.map(y=>`<option ${y===rYr?'selected':''}>${y}</option>`).join('')}</select>`:''}<button class="chip" id="rCPais">País</button></div>`;
   let body;
   if(!r.length)body=`<div class="empty">Ninguém nesse recorte.</div>`;
   else{
@@ -516,7 +516,7 @@ function renderGenre(){
   if(fl.length<20){$('#view').innerHTML=`<div class="empty">Os gêneros são carregados junto com os pôsteres.<br>Deixe a sincronização avançar e volte aqui.</div>`;return;}
   if(gView==='country'){
     const body=countryBreakdown('genre');
-    $('#view').innerHTML=`<div class="controls"><div class="seg"><button>Mais vistos</button><button>Melhor avaliados</button></div><button class="chip on" id="gCPais">${GLOBE_SVG} País</button></div><div style="margin-top:8px">${body}</div><div class="note">Top 30 países com gêneros predominantes · fonte TMDB</div>`;
+    $('#view').innerHTML=`<div class="controls"><div class="seg"><button>Mais vistos</button><button>Melhor avaliados</button></div><button class="chip on" id="gCPais">País</button></div><div style="margin-top:8px">${body}</div><div class="note">Top 30 países com gêneros predominantes · fonte TMDB</div>`;
     $('#gCPais').onclick=()=>{gView='list';renderGenre();};
     $$('.ctr').forEach(el=>el.onclick=()=>openCountry(el.dataset.c));
     return;
@@ -527,7 +527,7 @@ function renderGenre(){
   if(gSort==='count'){arr.sort((a,b)=>b.n-a.n);note=`Por quantidade de filmes vistos. Gêneros vêm do TMDB (cobertura total: ${fmt(fl.length)} filmes).`;}
   else{arr=arr.filter(x=>x.n>=5&&x.avg!=null);arr.sort((a,b)=>b.avg-a.avg);note='Pela sua nota média, só gêneros com 5+ filmes.';}
   const max=gSort==='count'?Math.max(...arr.map(x=>x.n)):5;
-  const ctrl=`<div class="controls"><div class="seg" id="gSort"><button data-s="count" class="${gSort==='count'?'on':''}">Mais vistos</button><button data-s="avg" class="${gSort==='avg'?'on':''}">Melhor avaliados</button></div><button class="chip" id="gCPais">${GLOBE_SVG} País</button></div>`;
+  const ctrl=`<div class="controls"><div class="seg" id="gSort"><button data-s="count" class="${gSort==='count'?'on':''}">Mais vistos</button><button data-s="avg" class="${gSort==='avg'?'on':''}">Melhor avaliados</button></div><button class="chip" id="gCPais">País</button></div>`;
   const pal=palette(arr.length);
   const bars=arr.map((x,i)=>{const w=gSort==='count'?x.n/max*100:x.avg/5*100;const bc=pal[i];const right=gSort==='count'?`<b>${fmt(x.n)}</b>${x.avg!=null?' · <span class="g">'+star(+x.avg.toFixed(2))+'</span>':''}`:`<span class="g">${star(+x.avg.toFixed(2))}</span> · ${fmt(x.n)}f`;
     return `<div class="barrow"><div class="bn">${x.g}</div><div class="track"><div class="fill" style="width:${w}%;background:linear-gradient(90deg,${bc}99,${bc})"></div></div><div class="bmeta">${right}</div></div>`;}).join('');
@@ -544,15 +544,54 @@ function rgbToHex(r,g,b){return '#'+[r,g,b].map(x=>Math.max(0,Math.min(255,Math.
 function mixHex(c1,c2,t){const a=hexToRgb(c1),b=hexToRgb(c2);return rgbToHex(a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t);}
 function palette(n){const[c1,c2]=ACCENTS[bio.accent||'vertigo'];if(n<=1)return[c1];const out=[];for(let i=0;i<n;i++)out.push(mixHex(c1,c2,i/(n-1)));return out;}
 const THEME_SPIRAL={vertigo:'films',verde:'genre',vermelho:'dir',sonho:'actress',neon:'actor'};
-function applyAccent(){const a=bio.accent||'vertigo';const[c1,c2]=ACCENTS[a];document.documentElement.style.setProperty('--acc1',c1);document.documentElement.style.setProperty('--acc2',c2);const enc=s=>s.replace(/#/g,'%23');const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23000'/><path d='M 4 16 A 12 7.5 0 0 1 28 16' stroke='${enc(c1)}' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M 28 16 A 12 7.5 0 0 1 4 16' stroke='${enc(c2)}' stroke-width='3' fill='none' stroke-linecap='round'/><circle cx='16' cy='16' r='2.3' fill='%23f4f0e6'/></svg>`;const lnk=document.querySelector('link[rel="icon"][type="image/svg+xml"]');if(lnk)lnk.href='data:image/svg+xml,'+svg;}
-// ── 5 constelações reais mapeiam os 5 temas ──
-// ── 5 GALÁXIAS — uma por categoria de favoritos ──
-const GALAXY_VARIANTS={
-  films:  {arms:2,turns:2.5,squash:0.65,rot:0.09,nS:22,core:0.13,dir:1},
-  dir:    {arms:2,turns:3.0,squash:0.55,rot:0.07,nS:26,core:0.11,dir:-1},
-  actor:  {arms:3,turns:2.0,squash:0.70,rot:0.13,nS:18,core:0.15,dir:1},
-  actress:{arms:2,turns:3.2,squash:0.46,rot:0.06,nS:30,core:0.10,dir:-1},
-  genre:  {arms:4,turns:1.8,squash:0.74,rot:0.11,nS:15,core:0.16,dir:1}
+function generateIcon(c1,c2,sz){
+  sz=sz||512;
+  const cv=document.createElement('canvas');cv.width=sz;cv.height=sz;
+  const cx2=cv.getContext('2d');
+  cx2.fillStyle='#000000';
+  if(cx2.roundRect){cx2.beginPath();cx2.roundRect(0,0,sz,sz,sz*0.18);cx2.fill();}
+  else cx2.fillRect(0,0,sz,sz);
+  const mx=sz/2,my=sz/2,rx=sz*0.37,ry=sz*0.23;
+  cx2.lineWidth=sz*0.085;cx2.lineCap='round';
+  cx2.beginPath();cx2.strokeStyle=c1;cx2.ellipse(mx,my,rx,ry,0,Math.PI,0,true);cx2.stroke();
+  cx2.beginPath();cx2.strokeStyle=c2;cx2.ellipse(mx,my,rx,ry,0,0,Math.PI,false);cx2.stroke();
+  cx2.beginPath();cx2.arc(mx,my,sz*0.07,0,Math.PI*2);cx2.fillStyle='#f4f0e6';cx2.fill();
+  return cv;
+}
+function applyAccent(){
+  const a=bio.accent||'vertigo';
+  const[c1,c2]=ACCENTS[a];
+  document.documentElement.style.setProperty('--acc1',c1);
+  document.documentElement.style.setProperty('--acc2',c2);
+  // theme-color meta (barra do navegador / status bar)
+  const tm=document.querySelector('meta[name="theme-color"]');
+  if(tm)tm.content=c1;
+  // Favicon SVG (aba do navegador)
+  const enc=s=>s.replace(/#/g,'%23');
+  const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23000'/><path d='M 4 16 A 12 7.5 0 0 1 28 16' stroke='${enc(c1)}' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M 28 16 A 12 7.5 0 0 1 4 16' stroke='${enc(c2)}' stroke-width='3' fill='none' stroke-linecap='round'/><circle cx='16' cy='16' r='2.3' fill='%23f4f0e6'/></svg>`;
+  const lnk=document.querySelector('link[rel="icon"][type="image/svg+xml"]');
+  if(lnk)lnk.href='data:image/svg+xml,'+svg;
+  // Ícone PWA/atalho — gera PNG com as cores do tema via canvas e usa blob URL
+  try{
+    generateIcon(c1,c2).toBlob(blob=>{
+      if(!blob)return;
+      const url=URL.createObjectURL(blob);
+      document.querySelectorAll('link[rel*="apple-touch-icon"]').forEach(l=>{l.href=url;});
+      const i192=document.querySelector('link[rel="icon"][sizes="192x192"]');
+      const i512=document.querySelector('link[rel="icon"][sizes="512x512"]');
+      if(i192)i192.href=url;if(i512)i512.href=url;
+    },'image/png');
+  }catch(e){}
+}
+// ── ESPIRAL VERTIGO — 5 temas com características visuais distintas ──
+// turns=voltas, squash=achatamento Y, rotSpd=veloc.rotação Hz, dir=sentido,
+// lineW=espessura, totalLines=qtd linhas paralelas, nTags=tags simultâneas
+const SPIRAL_VARIANTS={
+  films:   {turns:3.0,squash:0.75,rotSpd:0.055,dir: 1,lineW:1.4,totalLines: 8,nTags:2},
+  genre:   {turns:4.5,squash:1.00,rotSpd:0.090,dir:-1,lineW:1.7,totalLines:10,nTags:2},
+  dir:     {turns:2.5,squash:0.60,rotSpd:0.120,dir: 1,lineW:1.2,totalLines: 9,nTags:3},
+  actress: {turns:5.0,squash:0.45,rotSpd:0.032,dir:-1,lineW:1.9,totalLines:12,nTags:2},
+  actor:   {turns:2.0,squash:0.90,rotSpd:0.155,dir: 1,lineW:1.0,totalLines: 7,nTags:4}
 };
 // Mapas ISO ↔ nomes (suporta dados antigos no formato "XX,Nome" e novos "XX")
 const ISO_NAME={US:'Estados Unidos',GB:'Reino Unido',FR:'França',DE:'Alemanha',IT:'Itália',JP:'Japão',BR:'Brasil',ES:'Espanha',KR:'Coreia do Sul',SE:'Suécia',AR:'Argentina',MX:'México',CA:'Canadá',PL:'Polônia',DK:'Dinamarca',AU:'Austrália',IE:'Irlanda',BE:'Bélgica',PT:'Portugal',SU:'União Soviética',RU:'Rússia',AT:'Áustria',NL:'Holanda',CN:'China',RO:'Romênia',IN:'Índia',TW:'Taiwan',IR:'Irã',GR:'Grécia',CZ:'Tchéquia',HK:'Hong Kong',CH:'Suíça',NO:'Noruega',FI:'Finlândia',HU:'Hungria',TR:'Turquia',IS:'Islândia',NZ:'Nova Zelândia',CL:'Chile',CO:'Colômbia',TH:'Tailândia',ZA:'África do Sul',IL:'Israel',UA:'Ucrânia',YU:'Iugoslávia',CU:'Cuba',PH:'Filipinas',EG:'Egito',ID:'Indonésia',VN:'Vietnã',SG:'Singapura',MA:'Marrocos',BG:'Bulgária',RS:'Sérvia',HR:'Croácia',LU:'Luxemburgo',EE:'Estônia',LT:'Lituânia',LV:'Letônia',SK:'Eslováquia',SI:'Eslovênia'};
@@ -578,13 +617,14 @@ function displayCountry(c){
 }
 // Chave normalizada (ISO) para agrupamento
 function normalizeKey(c){return extractIso(c)||c;}
-// Imagem de bandeira com fallback SVG (sem emoji)
-const GLOBE_ICON='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 2.5 15.4 0 18M12 3c-2.5 2.6-2.5 15.4 0 18"/></svg>';
+// Imagem de bandeira — fallback: crachá com código ISO (sem emoji de globo)
 function flagImg(c,sz){
   sz=sz||22;
   const iso=extractIso(c);
-  if(!iso)return'<span class="flag-fb" style="width:'+sz+'px">'+GLOBE_ICON+'</span>';
-  const fb='this.onerror=null;this.style.display=\'none\';this.insertAdjacentHTML(\'afterend\',\'<span class=\"flag-fb\" style=\"width:'+sz+'px\">'+GLOBE_ICON.replace(/'/g,"\'")+'</span>\')';
+  const fbh=Math.round(sz*0.67);
+  const badge='<span style="display:inline-flex;align-items:center;justify-content:center;width:'+sz+'px;height:'+fbh+'px;border-radius:3px;background:var(--p2);color:var(--dim);font-size:8px;font-weight:800;flex:none">'+(iso||'?')+'</span>';
+  if(!iso)return badge;
+  const fb='this.onerror=null;this.style.display=\'none\';this.insertAdjacentHTML(\'afterend\',\''+badge.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')'  ;
   return'<img class="flag" src="https://flagcdn.com/w80/'+iso.toLowerCase()+'.png" width="'+sz+'" loading="lazy" onerror="'+fb+'" alt="'+displayCountry(c)+'"/>';
 }
 function flagImgLarge(c,w){
@@ -652,17 +692,15 @@ function renderSpiral(items,cat){
   const host=$('#spiral');if(!host)return;
   stopSpiralAnim();
   cat=cat||bio.cat||'films';
-  const v=GALAXY_VARIANTS[cat]||GALAXY_VARIANTS.films;
+  const v=SPIRAL_VARIANTS[cat]||SPIRAL_VARIANTS.films;
   const W=host.clientWidth||320,H=Math.round(W*1.05);
   host.style.height=H+'px';
-  const cx=W/2,cy=H/2;
-  const n=Math.min(items.length,14);
-  const pal=palette(n);
-  const animate=bio.animate!==false;
+  const cx=W/2,cy=H/2,maxR=Math.min(cx,cy)*0.88;
   const[c1,c2]=ACCENTS[bio.accent||'vertigo'];
   const r1=hexToRgb(c1),r2=hexToRgb(c2);
-  const s1=r1[0]+','+r1[1]+','+r1[2];
-  const s2=r2[0]+','+r2[1]+','+r2[2];
+  const s1=r1.join(','),s2=r2.join(',');
+  const animate=bio.animate!==false;
+  const pal=palette(Math.min(items.length,12));
 
   host.innerHTML='';
   const cvs=document.createElement('canvas');
@@ -671,143 +709,117 @@ function renderSpiral(items,cat){
   host.appendChild(cvs);
   const ctx=cvs.getContext('2d');
 
-  // Planet label buttons
-  const tagEls=items.slice(0,n).map((e,i)=>{
-    const b=document.createElement('button');
-    b.className='tag';b.textContent=e.label;b.style.color=pal[i];b.style.zIndex=n-i;
-    b.onclick=()=>openEntity(e);
-    host.appendChild(b);return b;
+  // Slots: cada slot viaja por uma lane dedicada da espiral (do bordo → centro)
+  // A lane é um offset angular distribuído entre as totalLines da espiral
+  const TAG_SPD=0.032;  // progress/s → ~31s de borda ao centro
+  const slots=Array.from({length:v.nTags},(_,i)=>{
+    const laneIdx=Math.round(i*v.totalLines/v.nTags)%v.totalLines;
+    const itemIdx=i%items.length;
+    return{lane:laneIdx/v.totalLines,progress:i/v.nTags,itemIdx,el:null};
+  });
+  slots.forEach(slot=>{
+    const btn=document.createElement('button');
+    btn.className='tag';
+    const item=items[slot.itemIdx];
+    btn.textContent=item.label;
+    btn.style.color=pal[slot.itemIdx%pal.length];
+    btn.onclick=()=>openEntity(item);
+    host.appendChild(btn);
+    slot.el=btn;
   });
 
-  // ── Galaxy drawing function (called each frame) ──
-  function drawGalaxy(t){
+  // Posição de uma tag na espiral: lane fixa + rotação global + progresso inward
+  function tagPos(lane,progress,rotAngle){
+    const r=maxR*(1-progress*0.97);
+    const theta=rotAngle*v.dir+lane*Math.PI*2+progress*v.turns*Math.PI*2;
+    return{x:cx+r*Math.cos(theta),y:cy+r*Math.sin(theta)*v.squash};
+  }
+
+  // Desenha a ilusão óptica: totalLines espirais paralelas alternando acc1/acc2
+  function drawSpiral(rotAngle){
     ctx.clearRect(0,0,W,H);
-    const ga=t*v.rot;  // global galaxy rotation angle
-
-    // Outer ambient halo
-    const halo=ctx.createRadialGradient(cx,cy,0,cx,cy,W*0.56);
-    halo.addColorStop(0,'rgba('+s1+',0.10)');halo.addColorStop(0.45,'rgba('+s2+',0.04)');halo.addColorStop(1,'transparent');
-    ctx.fillStyle=halo;ctx.fillRect(0,0,W,H);
-
-    // Spiral arms — many overlapping thin strokes create the dense galactic look
-    for(let arm=0;arm<v.arms;arm++){
-      const base=arm/v.arms*Math.PI*2;
-      const armCol=arm%2===0?s1:s2;
-      for(let stroke=0;stroke<v.nS;stroke++){
-        const sr=stroke/v.nS;
-        const angOff=(sr-0.5)*0.32;
-        const op=((1-sr)*0.18+0.012).toFixed(3);
-        const lw=(0.4+(1-sr)*0.9).toFixed(2);
-        ctx.beginPath();let first=true;
-        for(let s=2;s<=72;s++){
-          const p=s/72;
-          const th=ga+base+angOff+p*v.turns*Math.PI*2;
-          const r=p*W*0.44;
-          const x=cx+r*Math.cos(th),y=cy+r*Math.sin(th)*v.squash;
-          if(first){ctx.moveTo(x,y);first=false;}else ctx.lineTo(x,y);
-        }
-        ctx.strokeStyle='rgba('+armCol+','+op+')';
-        ctx.lineWidth=+lw;ctx.stroke();
+    // Brilho ambiente
+    const bg=ctx.createRadialGradient(cx,cy,0,cx,cy,maxR*1.05);
+    bg.addColorStop(0,'rgba('+s1+',0.12)');
+    bg.addColorStop(0.45,'rgba('+s2+',0.05)');
+    bg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+    // Linhas espirais — espaçadas uniformemente para efeito de ilusão óptica
+    const STEPS=280;
+    for(let li=0;li<v.totalLines;li++){
+      const laneOff=(li/v.totalLines)*Math.PI*2;
+      const rgb=li%2===0?s1:s2;
+      const op=li%2===0?0.34:0.26;
+      ctx.beginPath();
+      let first=true;
+      for(let s=1;s<=STEPS;s++){
+        const p=s/STEPS;
+        const r=maxR*(1-p*0.97);
+        if(r<2)break;
+        const theta=rotAngle*v.dir+laneOff+p*v.turns*Math.PI*2;
+        const x=cx+r*Math.cos(theta);
+        const y=cy+r*Math.sin(theta)*v.squash;
+        if(first){ctx.moveTo(x,y);first=false;}else ctx.lineTo(x,y);
       }
+      ctx.strokeStyle='rgba('+rgb+','+op+')';
+      ctx.lineWidth=v.lineW;
+      ctx.stroke();
     }
-
-    // Core bar glow (elongated, squashed like a galactic bulge)
-    const coreR=W*v.core;
-    ctx.save();
-    const sy=v.squash*0.45;
-    ctx.transform(1,0,0,sy,0,cy*(1-sy));
-    const cg=ctx.createRadialGradient(cx,cy/sy,0,cx,cy/sy,coreR*3);
-    cg.addColorStop(0,'rgba('+s1+',0.55)');cg.addColorStop(0.4,'rgba('+s1+',0.18)');cg.addColorStop(1,'transparent');
-    ctx.fillStyle=cg;ctx.fillRect(0,0,W,H/sy+1);
-    ctx.restore();
-
-    // Bright nucleus point
-    const nc=ctx.createRadialGradient(cx,cy,0,cx,cy,coreR*0.55);
-    nc.addColorStop(0,'rgba(248,246,236,0.98)');nc.addColorStop(0.4,'rgba('+s1+',0.80)');nc.addColorStop(1,'transparent');
+    // Núcleo central
+    const nc=ctx.createRadialGradient(cx,cy,0,cx,cy,maxR*0.10);
+    nc.addColorStop(0,'rgba(248,246,236,0.97)');
+    nc.addColorStop(0.45,'rgba('+s1+',0.55)');
+    nc.addColorStop(1,'rgba(0,0,0,0)');
     ctx.fillStyle=nc;ctx.fillRect(0,0,W,H);
   }
 
-  // ── Static mode: galaxy + fixed planet positions ──
+  // Modo parado
   if(!animate){
-    drawGalaxy(0);
-    items.slice(0,n).forEach((_,i)=>{
-      const t=i/Math.max(1,n-1);
-      const r=(0.10+t*0.36)*W*0.5;
-      const angle=i/n*Math.PI*2;
-      const el=tagEls[i];
-      el.style.left=(cx+r*Math.cos(angle))+'px';
-      el.style.top=(cy+r*Math.sin(angle)*v.squash)+'px';
-      el.style.fontSize='11px';el.style.opacity='0.92';
+    drawSpiral(0);
+    slots.forEach(slot=>{
+      const p=Math.max(0.15,slot.progress||0.3);
+      const pos=tagPos(slot.lane,p,0);
+      slot.el.style.left=pos.x+'px';slot.el.style.top=pos.y+'px';
+      slot.el.style.opacity='0.85';slot.el.style.fontSize='11px';
     });
     return;
   }
 
-  // ── Background star field (50 twinkling stars) ──
-  const STARS=Array.from({length:50},()=>({
-    x:Math.random()*W,y:Math.random()*H,r:0.2+Math.random()*1.0,
-    a:0.05+Math.random()*0.22,ph:Math.random()*7,spd:0.3+Math.random()*1.5
-  }));
-
-  // ── Planet (tag) orbital parameters ──
-  // Keplerian-ish: inner planets orbit faster, slight ellipticity
-  const ORBS=Array.from({length:n},(_,i)=>{
-    const t=i/Math.max(1,n-1);
-    const R=0.10+t*0.37;  // orbital radius (fraction of W/2)
-    const dir=i%5!==3?v.dir:-v.dir;  // ~1 retrograde per 5
-    return{
-      R, ang:i/n*Math.PI*2+(Math.random()-0.5)*0.6,
-      spd:dir*(v.rot*7)/Math.sqrt(R+0.01)*(0.82+Math.random()*0.36),
-      ecc:0.04+Math.random()*0.11,  // orbital ellipticity
-      incl:(Math.random()-0.5)*0.28  // plane tilt
-    };
-  });
-
   const t0=performance.now();
   let lastNow=null;
-
   function step(now){
-    const t=(now-t0)/1000;
-    const dt=lastNow?Math.min((now-lastNow)/1000,0.033):0.016;
+    const dt=lastNow?Math.min((now-lastNow)/1000,0.05):0.016;
     lastNow=now;
-
-    // Draw galaxy background
-    drawGalaxy(t);
-
-    // Twinkling stars
-    STARS.forEach(s=>{
-      const tw=0.5+0.5*Math.sin(s.ph+t*s.spd);
-      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,7);
-      ctx.fillStyle='rgba(244,240,230,'+(s.a*tw).toFixed(2)+')';ctx.fill();
-    });
-
-    // Update planet orbits
-    ORBS.forEach((o,i)=>{
-      o.ang+=o.spd*dt;
-      const r=o.R*W*0.5*(1+o.ecc*Math.cos(o.ang*2));
-      const x=cx+r*Math.cos(o.ang);
-      const y=cy+r*Math.sin(o.ang)*v.squash*Math.cos(o.incl);
-      // Depth cue: back half dimmer/smaller (pseudo-3D orbit)
-      const depth=Math.sin(o.ang)*v.squash*Math.cos(o.incl); // -squash..+squash
-      const ahead=depth>0;
-      // Planet glow dot on canvas
-      const col=hexToRgb(pal[i]);
-      const pg=ctx.createRadialGradient(x,y,0,x,y,7);
-      pg.addColorStop(0,'rgba('+col[0]+','+col[1]+','+col[2]+','+(0.6+depth*0.3).toFixed(2)+')');
-      pg.addColorStop(1,'transparent');
-      ctx.fillStyle=pg;ctx.beginPath();ctx.arc(x,y,7,0,7);ctx.fill();
-      ctx.beginPath();ctx.arc(x,y,2,0,7);
-      ctx.fillStyle='rgba('+col[0]+','+col[1]+','+col[2]+',0.9)';ctx.fill();
-      // Tag label
-      const el=tagEls[i];
-      el.style.left=x+'px';el.style.top=y+'px';
-      el.style.fontSize=Math.max(10,11+depth*2.5)+'px';
-      el.style.opacity=Math.max(0.40,(0.72+depth*0.38)).toFixed(2);
-      el.style.zIndex=Math.round(20+(depth+1.5)*12+i);
+    const rotAngle=(now-t0)/1000*v.rotSpd*Math.PI*2;
+    drawSpiral(rotAngle);
+    slots.forEach(slot=>{
+      slot.progress+=TAG_SPD*dt;
+      if(slot.progress>=1){
+        // Tag chegou ao núcleo → reinicia no bordo com próximo item
+        slot.progress-=1;
+        slot.itemIdx=(slot.itemIdx+v.nTags)%items.length;
+        const item=items[slot.itemIdx];
+        slot.el.textContent=item.label;
+        slot.el.onclick=()=>openEntity(item);
+        slot.el.style.color=pal[slot.itemIdx%pal.length];
+      }
+      const p=slot.progress;
+      const pos=tagPos(slot.lane,p,rotAngle);
+      // Fade in no bordo, pleno no meio, fade out no centro
+      const opacity=p<0.08?p/0.08:p>0.83?(1-p)/0.17:1;
+      // Tamanho diminui levemente ao se aproximar do núcleo
+      const fs=Math.max(9.5,Math.round(12.5*(1-p*0.30)));
+      slot.el.style.left=pos.x+'px';
+      slot.el.style.top=pos.y+'px';
+      slot.el.style.opacity=Math.max(0,opacity).toFixed(2);
+      slot.el.style.fontSize=fs+'px';
+      slot.el.style.zIndex=Math.round((1-p)*20+1);
     });
     spiralRAF=requestAnimationFrame(step);
   }
   spiralRAF=requestAnimationFrame(step);
 }
+
 function renderBio(){
   const cats=[['films','Filmes'],['dir','Diretores'],['actor','Atores'],['actress','Atrizes'],['genre','Gêneros']];
   const cat=bio.cat||'films';
