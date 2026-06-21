@@ -1,11 +1,14 @@
 <!DOCTYPE html><!--
   CineStats — Changelog
-  v3.0 [2026-06]: Constelação nebulosa — 6 espirais (Filmes/Diretores/Atores/Atrizes/Gêneros/Países)
-                  animadas por Canvas: nebulosa drifting, 55 estrelas piscantes, linhas de constelação,
-                  tags sugadas ao núcleo com scintillação. Header card-style + logo espiral multi-volta
-                  com CSS vars (acc1/acc2). Tema sincroniza categoria de espiral. Top 20 favoritos com
-                  mín. 3 aparições. Favicon atualiza com tema. Pausa disponível.
-  v2.4 [2026-06]: Ícone de tela inicial via ARQUIVOS PNG (apple-touch-icon.png, icon-192/512,
+  v3.1 [2026-06]: Espirais de favoritos reconstruídas como CONSTELAÇÕES reais — cada tema usa uma
+                  constelação conhecida (Órion, Cassiopeia, Cygnus, Scorpius, Ursa Maior). As tags
+                  orbitam em elipses, giram mais rápido ao "cair" e desaparecem no núcleo, sobre um
+                  esqueleto estelar com linhas de constelação e campo de estrelas piscantes. Título
+                  CineStats agora segue as cores do tema (acc1/acc2). Filtro de País reformulado:
+                  bandeiras reais (flagcdn) no lugar de emojis, miniaturas do top 3 (pôsteres/rostos),
+                  linhas clicáveis abrindo painel detalhado por país (estatísticas, década-pico,
+                  gêneros predominantes). Emojis decorativos substituídos por ícones SVG do tema.
+  v3.0 [2026-06]:   v2.4 [2026-06]: Ícone de tela inicial via ARQUIVOS PNG (apple-touch-icon.png, icon-192/512,
                   icon-maskable-512) + manifest.webmanifest externo. iOS ignora data: URIs para
                   apple-touch-icon — por isso o ícone falhava. Agora usa arquivos reais.
                   PERSISTÊNCIA AUDITADA: avaliações/reavaliações e dados de filme -> IndexedDB
@@ -46,7 +49,8 @@
 <style>
 :root{--bg:#000000;--panel:#0c0c0e;--p2:#141418;--line:#26262b;--ink:#f4f0e6;--mut:#9a958c;--dim:#5f5b54;
 --gold:#1ec98a;--gold2:#13a06c;--cyan:#ff2e43;--rose:#ff6a1f;--blue:#2f7bff;--purple:#8a3ff0;--magenta:#ff3d9a;
---acc1:#1ec98a;--acc2:#ff2e43}
+--acc1:#1ec98a;--acc2:#ff2e43;
+--star-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M12 2l3 6.5 7 .9-5 4.8 1.3 7L12 17.8 5.4 21.2 6.7 14.2 1.7 9.4l7-.9z'/%3E%3C/svg%3E")}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Arial,sans-serif;font-size:15px;line-height:1.4}
 .wrap{max-width:680px;margin:0 auto;padding:0 13px;padding-bottom:env(safe-area-inset-bottom)}
@@ -54,7 +58,7 @@ header{background:var(--panel);border:1px solid var(--line);border-radius:16px;p
 .logo{display:flex;align-items:center;gap:9px;flex:1}
 .logo svg{width:27px;height:27px;flex:none}
 .logo h1{font-size:20px;margin:0;font-weight:800;letter-spacing:-.01em}
-.logo h1 b{color:var(--cyan)}
+.logo h1 b{color:var(--acc2)}
 .icon-btn{background:var(--panel);border:1px solid var(--line);color:var(--mut);border-radius:9px;width:38px;height:38px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .icon-btn svg{width:18px;height:18px}
 .tabs{position:sticky;top:0;z-index:15;background:rgba(16,17,21,.95);backdrop-filter:blur(8px);display:flex;gap:2px;margin:6px -13px 0;padding:0 13px;border-bottom:1px solid var(--line);overflow-x:auto}
@@ -170,19 +174,37 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .anim-toggle.on svg{animation:animspin 3s linear infinite}
 @keyframes animspin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.anim-toggle.on svg{animation:none}}
-.ctr{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 13px;margin-bottom:6px}
-.ctr-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.ctr-rk{width:20px;color:var(--dim);font-weight:800;font-size:12px;text-align:center;flex:none}
-.ctr-flag{font-size:17px;flex:none}
-.ctr-nm{flex:1;font-weight:700;font-size:13.5px;min-width:80px}
+.ctr{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:7px;cursor:pointer;transition:border-color .15s,transform .12s}
+.ctr:active{transform:scale(.99)}
+.ctr:hover{border-color:color-mix(in srgb,var(--acc1) 45%,var(--line))}
+.ctr-head{display:flex;align-items:center;gap:9px}
+.ctr-rk{width:18px;color:var(--dim);font-weight:800;font-size:12px;text-align:center;flex:none}
+.flag{border-radius:3px;display:block;height:auto;box-shadow:0 0 0 1px rgba(255,255,255,.10);flex:none}
+.ctr-nm{flex:1;font-weight:700;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ctr-ct{font-size:12px;color:var(--mut);white-space:nowrap}
-.ctr-top{font-size:11.5px;color:var(--dim);margin-top:4px;padding-left:28px;line-height:1.5}
+.ctr-ct .sstar{display:inline-block;width:9px;height:9px;margin-left:1px;background:var(--acc1);-webkit-mask:var(--star-mask) center/contain no-repeat;mask:var(--star-mask) center/contain no-repeat;vertical-align:-1px}
+.ctr-arr{flex:none;width:14px;height:14px;border-right:2px solid var(--dim);border-top:2px solid var(--dim);transform:rotate(45deg);margin-left:2px;opacity:.6}
+.ctr-thumbs{display:flex;gap:5px;margin-top:9px;padding-left:27px}
+.ctr-th{width:38px;height:57px;border-radius:5px;object-fit:cover;background:var(--p2);flex:none}
+.ctr-th.rnd{width:46px;height:46px;border-radius:50%}
+.ctr-th.ph{display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:11px;font-weight:700}
+.ctr-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;padding-left:27px}
+.ctr-chip{font-size:11px;color:var(--mut);background:var(--p2);border:1px solid var(--line);border-radius:20px;padding:3px 9px;white-space:nowrap}
+.cflag-wrap{width:92px;height:62px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--p2)}
+.cflag-wrap .flag{width:92px;border-radius:0;box-shadow:none}
+.cflag-ph{width:92px;height:62px;background:linear-gradient(135deg,var(--acc1),var(--acc2))}
+.cstats{display:flex;gap:8px;flex-wrap:wrap;padding:4px 14px 6px}
+.cstat{flex:1;min-width:64px;background:var(--p2);border:1px solid var(--line);border-radius:9px;padding:9px 6px;text-align:center}
+.cstat-v{font-size:15px;font-weight:800;color:var(--acc1)}
+.cstat-l{font-size:10.5px;color:var(--dim);margin-top:2px;text-transform:uppercase;letter-spacing:.03em}
+.gicon{width:15px;height:15px;vertical-align:-2px;margin-right:2px}
+.car svg{width:13px;height:13px}
 </style></head><body>
 <div class="wrap">
   <header>
     <div class="logo">
       <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M25.5 24.0 L25.68 24.37 L25.76 24.81 L25.71 25.3 L25.53 25.8 L25.21 26.28 L24.75 26.7 L24.17 27.01 L23.48 27.19 L22.73 27.21 L21.95 27.04 L21.19 26.68 L20.49 26.12 L19.91 25.39 L19.49 24.51 L19.28 23.5 L19.29 22.43 L19.55 21.35 L20.06 20.3 L20.83 19.37 L21.81 18.59 L22.99 18.03 L24.31 17.74 L25.7 17.74 L27.1 18.06 L28.45 18.7 L29.65 19.65 L30.65 20.87 L31.38 22.32 L31.78 23.95 L31.83 25.66 L31.48 27.39 L30.75 29.05 L29.65 30.55 L28.22 31.8 L26.5 32.73 L24.58 33.28 L22.54 33.4 L20.48 33.07 L18.49 32.29 L16.69 31.06 L15.16 29.44 L13.99 27.49 L13.26 25.28 L13.02 22.92 L13.3 20.52 L14.11 18.2 L15.43 16.06 L17.21 14.23 L19.38 12.8 L21.86 11.85 L24.53 11.46 L27.26 11.66 L29.93 12.45 L32.41 13.83 L34.57 15.74 L36.29 18.11 L37.48 20.84 L38.07 23.8 L37.99 26.87 L37.25 29.9 L35.85 32.73 L33.84 35.24 L31.3 37.28 L28.34 38.74 L25.09 39.55 L21.69 39.63 L18.31 38.97 L15.11 37.58 L12.25 35.51 L9.87 32.83 L8.09 29.66 L7.03 26.14 L6.75 22.43 L7.29 18.7 L8.63 15.13 L10.73 11.89 L13.52 9.14 L16.87 7.04 L20.64 5.69 L24.66 5.18 L28.74 5.55 L32.69 6.8 L36.31 8.9 L39.44 11.76 L41.9 15.27 L43.57 19.27 L44.35 23.57 L44.17 27.99 L43.05 32.32 L40.99 36.34" stroke="var(--acc1)" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M25.5 24.0 L25.68 23.63 L25.76 23.19 L25.71 22.7 L25.53 22.2 L25.21 21.72 L24.75 21.3 L24.17 20.99 L23.48 20.81 L22.73 20.79 L21.95 20.96 L21.19 21.32 L20.49 21.88 L19.91 22.61 L19.49 23.49 L19.28 24.5 L19.29 25.57 L19.55 26.65 L20.06 27.7 L20.83 28.63 L21.81 29.41 L22.99 29.97 L24.31 30.26 L25.7 30.26 L27.1 29.94 L28.45 29.3 L29.65 28.35 L30.65 27.13 L31.38 25.68 L31.78 24.05 L31.83 22.34 L31.48 20.61 L30.75 18.95 L29.65 17.45 L28.22 16.2 L26.5 15.27 L24.58 14.72 L22.54 14.6 L20.48 14.93 L18.49 15.71 L16.69 16.94 L15.16 18.56 L13.99 20.51 L13.26 22.72 L13.02 25.08 L13.3 27.48 L14.11 29.8 L15.43 31.94 L17.21 33.77 L19.38 35.2 L21.86 36.15 L24.53 36.54 L27.26 36.34 L29.93 35.55 L32.41 34.17 L34.57 32.26 L36.29 29.89 L37.48 27.16 L38.07 24.2 L37.99 21.13 L37.25 18.1 L35.85 15.27 L33.84 12.76 L31.3 10.72 L28.34 9.26 L25.09 8.45 L21.69 8.37 L18.31 9.03 L15.11 10.42 L12.25 12.49 L9.87 15.17 L8.09 18.34 L7.03 21.86 L6.75 25.57 L7.29 29.3 L8.63 32.87 L10.73 36.11 L13.52 38.86 L16.87 40.96 L20.64 42.31 L24.66 42.82 L28.74 42.45 L32.69 41.2 L36.31 39.1 L39.44 36.24 L41.9 32.73 L43.57 28.73 L44.35 24.43 L44.17 20.01 L43.05 15.68 L40.99 11.66" stroke="var(--acc2)" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="24" cy="24" r="2.3" fill="var(--ink)" opacity="0.95"/></svg>
-      <h1><span style="color:var(--gold)">Cine</span><b>Stats</b></h1>
+      <h1><span style="color:var(--acc1)">Cine</span><b style="color:var(--acc2)">Stats</b></h1>
     </div>
     <button class="icon-btn" id="search" title="Buscar e avaliar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
     <button class="icon-btn" id="gear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="18" r="1.4" fill="currentColor" stroke="none"/><circle cx="6" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></button>
@@ -210,7 +232,7 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 
 <!-- ONBOARDING -->
 <div class="over" id="onb" style="justify-content:center"><div class="box">
-  <div class="logo" style="margin-bottom:14px"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M25.20 24.00 L25.29 24.12 L25.36 24.25 L25.42 24.40 L25.46 24.56 L25.48 24.73 L25.49 24.91 L25.47 25.10 L25.43 25.29 L25.37 25.48 L25.29 25.67 L25.18 25.86 L25.05 26.04 L24.89 26.21 L24.71 26.37 L24.51 26.51 L24.29 26.64 L24.05 26.75 L23.79 26.83 L23.52 26.89 L23.23 26.92 L22.94 26.92 L22.64 26.90 L22.33 26.84 L22.03 26.75 L21.73 26.62 L21.43 26.47 L21.14 26.28 L20.87 26.06 L20.62 25.81 L20.38 25.53 L20.17 25.22 L19.99 24.88 L19.83 24.53 L19.71 24.15 L19.63 23.75 L19.58 23.34 L19.57 22.92 L19.60 22.49 L19.67 22.05 L19.79 21.62 L19.95 21.20 L20.15 20.78 L20.40 20.38 L20.69 19.99 L21.01 19.63 L21.38 19.30 L21.78 19.00 L22.22 18.73 L22.69 18.50 L23.18 18.31 L23.70 18.17 L24.24 18.08 L24.79 18.03 L25.35 18.04 L25.92 18.10 L26.48 18.22 L27.04 18.39 L27.59 18.62 L28.13 18.90 L28.64 19.23 L29.12 19.61 L29.58 20.05 L29.99 20.52 L30.37 21.05 L30.70 21.61 L30.97 22.21 L31.20 22.84 L31.36 23.49 L31.47 24.17 L31.51 24.86 L31.49 25.56 L31.41 26.27 L31.25 26.97 L31.03 27.66 L30.75 28.33 L30.39 28.99 L29.98 29.61 L29.50 30.20 L28.97 30.75 L28.38 31.26 L27.73 31.71 L27.05 32.10 L26.32 32.43 L25.56 32.70 L24.76 32.89 L23.95 33.02 L23.12 33.07 L22.28 33.04 L21.43 32.93 L20.60 32.74 L19.77 32.48 L18.97 32.13 L18.19 31.71 L17.45 31.22 L16.75 30.65 L16.10 30.02 L15.51 29.32 L14.98 28.56 L14.52 27.75 L14.13 26.90 L13.81 26.00 L13.58 25.07 L13.44 24.12 L13.38 23.15 L13.41 22.17 L13.54 21.19 L13.75 20.21 L14.06 19.25 L14.45 18.32 L14.94 17.42 L15.51 16.56 L16.16 15.75 L16.89 15.00 L17.69 14.31 L18.56 13.69 L19.49 13.16 L20.47 12.70 L21.50 12.34 L22.56 12.07 L23.65 11.90 L24.77 11.82 L25.89 11.85 L27.01 11.99 L28.12 12.23 L29.22 12.57 L30.29 13.02 L31.31 13.56 L32.29 14.20 L33.22 14.94 L34.08 15.76 L34.86 16.66 L35.57 17.64 L36.18 18.69 L36.70 19.79 L37.12 20.95 L37.44 22.15 L37.64 23.38 L37.73 24.63 L37.71 25.89 L37.57 27.15 L37.31 28.41 L36.93 29.64 L36.44 30.84 L35.84 32.00 L35.13 33.10 L34.32 34.15 L33.41 35.11 L32.41 36.00 L31.32 36.80 L30.16 37.50 L28.94 38.09 L27.65 38.57 L26.32 38.93 L24.95 39.17 L23.56 39.28 L22.16 39.27 L20.75 39.13 L19.36 38.86 L17.99 38.45 L16.65 37.93 L15.36 37.27 L14.13 36.50 L12.97 35.61 L11.89 34.62 L10.89 33.52 L10.00 32.33 L9.22 31.06 L8.55 29.71 L8.00 28.30 L7.59 26.84 L7.31 25.34 L7.16 23.81 L7.16 22.26 L7.30 20.72 L7.58 19.18 L8.01 17.67 L8.57 16.19 L9.27 14.77 L10.10 13.41 L11.06 12.12 L12.14 10.93 L13.33 9.82 L14.62 8.83 L16.00 7.96 L17.46 7.21 L19.00 6.60 L20.59 6.12 L22.23 5.80 L23.90 5.62 L25.58 5.60 L27.27 5.73 L28.95 6.01 L30.60 6.46 L32.21 7.05 L33.77 7.79 L35.27 8.68 L36.68 9.70 L38.00 10.86 L39.21 12.13 L40.31 13.52 L41.27 15.01 L42.11 16.59 L42.79 18.25 L43.33 19.97 L43.71 21.74 L43.92 23.54 L43.97 25.37 L43.85 27.20 L43.57 29.02 L43.11 30.82 L42.49 32.57 L41.71 34.27 L40.77 35.90 L39.69 37.44 L38.46 38.88 L37.10 40.21 L35.61 41.41 L34.02 42.48 L32.33 43.40 L30.55 44.16" stroke="#1ec98a" stroke-width="1.7" stroke-linecap="round"/><path d="M25.20 24.00 L25.29 23.88 L25.36 23.75 L25.42 23.60 L25.46 23.44 L25.48 23.27 L25.49 23.09 L25.47 22.90 L25.43 22.71 L25.37 22.52 L25.29 22.33 L25.18 22.14 L25.05 21.96 L24.89 21.79 L24.71 21.63 L24.51 21.49 L24.29 21.36 L24.05 21.25 L23.79 21.17 L23.52 21.11 L23.23 21.08 L22.94 21.08 L22.64 21.10 L22.33 21.16 L22.03 21.25 L21.73 21.38 L21.43 21.53 L21.14 21.72 L20.87 21.94 L20.62 22.19 L20.38 22.47 L20.17 22.78 L19.99 23.12 L19.83 23.47 L19.71 23.85 L19.63 24.25 L19.58 24.66 L19.57 25.08 L19.60 25.51 L19.67 25.95 L19.79 26.38 L19.95 26.80 L20.15 27.22 L20.40 27.62 L20.69 28.01 L21.01 28.37 L21.38 28.70 L21.78 29.00 L22.22 29.27 L22.69 29.50 L23.18 29.69 L23.70 29.83 L24.24 29.92 L24.79 29.97 L25.35 29.96 L25.92 29.90 L26.48 29.78 L27.04 29.61 L27.59 29.38 L28.13 29.10 L28.64 28.77 L29.12 28.39 L29.58 27.95 L29.99 27.48 L30.37 26.95 L30.70 26.39 L30.97 25.79 L31.20 25.16 L31.36 24.51 L31.47 23.83 L31.51 23.14 L31.49 22.44 L31.41 21.73 L31.25 21.03 L31.03 20.34 L30.75 19.67 L30.39 19.01 L29.98 18.39 L29.50 17.80 L28.97 17.25 L28.38 16.74 L27.73 16.29 L27.05 15.90 L26.32 15.57 L25.56 15.30 L24.76 15.11 L23.95 14.98 L23.12 14.93 L22.28 14.96 L21.43 15.07 L20.60 15.26 L19.77 15.52 L18.97 15.87 L18.19 16.29 L17.45 16.78 L16.75 17.35 L16.10 17.98 L15.51 18.68 L14.98 19.44 L14.52 20.25 L14.13 21.10 L13.81 22.00 L13.58 22.93 L13.44 23.88 L13.38 24.85 L13.41 25.83 L13.54 26.81 L13.75 27.79 L14.06 28.75 L14.45 29.68 L14.94 30.58 L15.51 31.44 L16.16 32.25 L16.89 33.00 L17.69 33.69 L18.56 34.31 L19.49 34.84 L20.47 35.30 L21.50 35.66 L22.56 35.93 L23.65 36.10 L24.77 36.18 L25.89 36.15 L27.01 36.01 L28.12 35.77 L29.22 35.43 L30.29 34.98 L31.31 34.44 L32.29 33.80 L33.22 33.06 L34.08 32.24 L34.86 31.34 L35.57 30.36 L36.18 29.31 L36.70 28.21 L37.12 27.05 L37.44 25.85 L37.64 24.62 L37.73 23.37 L37.71 22.11 L37.57 20.85 L37.31 19.59 L36.93 18.36 L36.44 17.16 L35.84 16.00 L35.13 14.90 L34.32 13.85 L33.41 12.89 L32.41 12.00 L31.32 11.20 L30.16 10.50 L28.94 9.91 L27.65 9.43 L26.32 9.07 L24.95 8.83 L23.56 8.72 L22.16 8.73 L20.75 8.87 L19.36 9.14 L17.99 9.55 L16.65 10.07 L15.36 10.73 L14.13 11.50 L12.97 12.39 L11.89 13.38 L10.89 14.48 L10.00 15.67 L9.22 16.94 L8.55 18.29 L8.00 19.70 L7.59 21.16 L7.31 22.66 L7.16 24.19 L7.16 25.74 L7.30 27.28 L7.58 28.82 L8.01 30.33 L8.57 31.81 L9.27 33.23 L10.10 34.59 L11.06 35.88 L12.14 37.07 L13.33 38.18 L14.62 39.17 L16.00 40.04 L17.46 40.79 L19.00 41.40 L20.59 41.88 L22.23 42.20 L23.90 42.38 L25.58 42.40 L27.27 42.27 L28.95 41.99 L30.60 41.54 L32.21 40.95 L33.77 40.21 L35.27 39.32 L36.68 38.30 L38.00 37.14 L39.21 35.87 L40.31 34.48 L41.27 32.99 L42.11 31.41 L42.79 29.75 L43.33 28.03 L43.71 26.26 L43.92 24.46 L43.97 22.63 L43.85 20.80 L43.57 18.98 L43.11 17.18 L42.49 15.43 L41.71 13.73 L40.77 12.10 L39.69 10.56 L38.46 9.12 L37.10 7.79 L35.61 6.59 L34.02 5.52 L32.33 4.60 L30.55 3.84" stroke="#ff2e43" stroke-width="1.7" stroke-linecap="round"/><circle cx="24" cy="24" r="1.8" fill="#f4f0e6"/></svg><h1 style="font-size:20px;margin:0">Cine<b style="color:var(--gold)">Stats</b></h1></div>
+  <div class="logo" style="margin-bottom:14px"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M25.20 24.00 L25.29 24.12 L25.36 24.25 L25.42 24.40 L25.46 24.56 L25.48 24.73 L25.49 24.91 L25.47 25.10 L25.43 25.29 L25.37 25.48 L25.29 25.67 L25.18 25.86 L25.05 26.04 L24.89 26.21 L24.71 26.37 L24.51 26.51 L24.29 26.64 L24.05 26.75 L23.79 26.83 L23.52 26.89 L23.23 26.92 L22.94 26.92 L22.64 26.90 L22.33 26.84 L22.03 26.75 L21.73 26.62 L21.43 26.47 L21.14 26.28 L20.87 26.06 L20.62 25.81 L20.38 25.53 L20.17 25.22 L19.99 24.88 L19.83 24.53 L19.71 24.15 L19.63 23.75 L19.58 23.34 L19.57 22.92 L19.60 22.49 L19.67 22.05 L19.79 21.62 L19.95 21.20 L20.15 20.78 L20.40 20.38 L20.69 19.99 L21.01 19.63 L21.38 19.30 L21.78 19.00 L22.22 18.73 L22.69 18.50 L23.18 18.31 L23.70 18.17 L24.24 18.08 L24.79 18.03 L25.35 18.04 L25.92 18.10 L26.48 18.22 L27.04 18.39 L27.59 18.62 L28.13 18.90 L28.64 19.23 L29.12 19.61 L29.58 20.05 L29.99 20.52 L30.37 21.05 L30.70 21.61 L30.97 22.21 L31.20 22.84 L31.36 23.49 L31.47 24.17 L31.51 24.86 L31.49 25.56 L31.41 26.27 L31.25 26.97 L31.03 27.66 L30.75 28.33 L30.39 28.99 L29.98 29.61 L29.50 30.20 L28.97 30.75 L28.38 31.26 L27.73 31.71 L27.05 32.10 L26.32 32.43 L25.56 32.70 L24.76 32.89 L23.95 33.02 L23.12 33.07 L22.28 33.04 L21.43 32.93 L20.60 32.74 L19.77 32.48 L18.97 32.13 L18.19 31.71 L17.45 31.22 L16.75 30.65 L16.10 30.02 L15.51 29.32 L14.98 28.56 L14.52 27.75 L14.13 26.90 L13.81 26.00 L13.58 25.07 L13.44 24.12 L13.38 23.15 L13.41 22.17 L13.54 21.19 L13.75 20.21 L14.06 19.25 L14.45 18.32 L14.94 17.42 L15.51 16.56 L16.16 15.75 L16.89 15.00 L17.69 14.31 L18.56 13.69 L19.49 13.16 L20.47 12.70 L21.50 12.34 L22.56 12.07 L23.65 11.90 L24.77 11.82 L25.89 11.85 L27.01 11.99 L28.12 12.23 L29.22 12.57 L30.29 13.02 L31.31 13.56 L32.29 14.20 L33.22 14.94 L34.08 15.76 L34.86 16.66 L35.57 17.64 L36.18 18.69 L36.70 19.79 L37.12 20.95 L37.44 22.15 L37.64 23.38 L37.73 24.63 L37.71 25.89 L37.57 27.15 L37.31 28.41 L36.93 29.64 L36.44 30.84 L35.84 32.00 L35.13 33.10 L34.32 34.15 L33.41 35.11 L32.41 36.00 L31.32 36.80 L30.16 37.50 L28.94 38.09 L27.65 38.57 L26.32 38.93 L24.95 39.17 L23.56 39.28 L22.16 39.27 L20.75 39.13 L19.36 38.86 L17.99 38.45 L16.65 37.93 L15.36 37.27 L14.13 36.50 L12.97 35.61 L11.89 34.62 L10.89 33.52 L10.00 32.33 L9.22 31.06 L8.55 29.71 L8.00 28.30 L7.59 26.84 L7.31 25.34 L7.16 23.81 L7.16 22.26 L7.30 20.72 L7.58 19.18 L8.01 17.67 L8.57 16.19 L9.27 14.77 L10.10 13.41 L11.06 12.12 L12.14 10.93 L13.33 9.82 L14.62 8.83 L16.00 7.96 L17.46 7.21 L19.00 6.60 L20.59 6.12 L22.23 5.80 L23.90 5.62 L25.58 5.60 L27.27 5.73 L28.95 6.01 L30.60 6.46 L32.21 7.05 L33.77 7.79 L35.27 8.68 L36.68 9.70 L38.00 10.86 L39.21 12.13 L40.31 13.52 L41.27 15.01 L42.11 16.59 L42.79 18.25 L43.33 19.97 L43.71 21.74 L43.92 23.54 L43.97 25.37 L43.85 27.20 L43.57 29.02 L43.11 30.82 L42.49 32.57 L41.71 34.27 L40.77 35.90 L39.69 37.44 L38.46 38.88 L37.10 40.21 L35.61 41.41 L34.02 42.48 L32.33 43.40 L30.55 44.16" stroke="#1ec98a" stroke-width="1.7" stroke-linecap="round"/><path d="M25.20 24.00 L25.29 23.88 L25.36 23.75 L25.42 23.60 L25.46 23.44 L25.48 23.27 L25.49 23.09 L25.47 22.90 L25.43 22.71 L25.37 22.52 L25.29 22.33 L25.18 22.14 L25.05 21.96 L24.89 21.79 L24.71 21.63 L24.51 21.49 L24.29 21.36 L24.05 21.25 L23.79 21.17 L23.52 21.11 L23.23 21.08 L22.94 21.08 L22.64 21.10 L22.33 21.16 L22.03 21.25 L21.73 21.38 L21.43 21.53 L21.14 21.72 L20.87 21.94 L20.62 22.19 L20.38 22.47 L20.17 22.78 L19.99 23.12 L19.83 23.47 L19.71 23.85 L19.63 24.25 L19.58 24.66 L19.57 25.08 L19.60 25.51 L19.67 25.95 L19.79 26.38 L19.95 26.80 L20.15 27.22 L20.40 27.62 L20.69 28.01 L21.01 28.37 L21.38 28.70 L21.78 29.00 L22.22 29.27 L22.69 29.50 L23.18 29.69 L23.70 29.83 L24.24 29.92 L24.79 29.97 L25.35 29.96 L25.92 29.90 L26.48 29.78 L27.04 29.61 L27.59 29.38 L28.13 29.10 L28.64 28.77 L29.12 28.39 L29.58 27.95 L29.99 27.48 L30.37 26.95 L30.70 26.39 L30.97 25.79 L31.20 25.16 L31.36 24.51 L31.47 23.83 L31.51 23.14 L31.49 22.44 L31.41 21.73 L31.25 21.03 L31.03 20.34 L30.75 19.67 L30.39 19.01 L29.98 18.39 L29.50 17.80 L28.97 17.25 L28.38 16.74 L27.73 16.29 L27.05 15.90 L26.32 15.57 L25.56 15.30 L24.76 15.11 L23.95 14.98 L23.12 14.93 L22.28 14.96 L21.43 15.07 L20.60 15.26 L19.77 15.52 L18.97 15.87 L18.19 16.29 L17.45 16.78 L16.75 17.35 L16.10 17.98 L15.51 18.68 L14.98 19.44 L14.52 20.25 L14.13 21.10 L13.81 22.00 L13.58 22.93 L13.44 23.88 L13.38 24.85 L13.41 25.83 L13.54 26.81 L13.75 27.79 L14.06 28.75 L14.45 29.68 L14.94 30.58 L15.51 31.44 L16.16 32.25 L16.89 33.00 L17.69 33.69 L18.56 34.31 L19.49 34.84 L20.47 35.30 L21.50 35.66 L22.56 35.93 L23.65 36.10 L24.77 36.18 L25.89 36.15 L27.01 36.01 L28.12 35.77 L29.22 35.43 L30.29 34.98 L31.31 34.44 L32.29 33.80 L33.22 33.06 L34.08 32.24 L34.86 31.34 L35.57 30.36 L36.18 29.31 L36.70 28.21 L37.12 27.05 L37.44 25.85 L37.64 24.62 L37.73 23.37 L37.71 22.11 L37.57 20.85 L37.31 19.59 L36.93 18.36 L36.44 17.16 L35.84 16.00 L35.13 14.90 L34.32 13.85 L33.41 12.89 L32.41 12.00 L31.32 11.20 L30.16 10.50 L28.94 9.91 L27.65 9.43 L26.32 9.07 L24.95 8.83 L23.56 8.72 L22.16 8.73 L20.75 8.87 L19.36 9.14 L17.99 9.55 L16.65 10.07 L15.36 10.73 L14.13 11.50 L12.97 12.39 L11.89 13.38 L10.89 14.48 L10.00 15.67 L9.22 16.94 L8.55 18.29 L8.00 19.70 L7.59 21.16 L7.31 22.66 L7.16 24.19 L7.16 25.74 L7.30 27.28 L7.58 28.82 L8.01 30.33 L8.57 31.81 L9.27 33.23 L10.10 34.59 L11.06 35.88 L12.14 37.07 L13.33 38.18 L14.62 39.17 L16.00 40.04 L17.46 40.79 L19.00 41.40 L20.59 41.88 L22.23 42.20 L23.90 42.38 L25.58 42.40 L27.27 42.27 L28.95 41.99 L30.60 41.54 L32.21 40.95 L33.77 40.21 L35.27 39.32 L36.68 38.30 L38.00 37.14 L39.21 35.87 L40.31 34.48 L41.27 32.99 L42.11 31.41 L42.79 29.75 L43.33 28.03 L43.71 26.26 L43.92 24.46 L43.97 22.63 L43.85 20.80 L43.57 18.98 L43.11 17.18 L42.49 15.43 L41.71 13.73 L40.77 12.10 L39.69 10.56 L38.46 9.12 L37.10 7.79 L35.61 6.59 L34.02 5.52 L32.33 4.60 L30.55 3.84" stroke="#ff2e43" stroke-width="1.7" stroke-linecap="round"/><circle cx="24" cy="24" r="1.8" fill="#f4f0e6"/></svg><h1 style="font-size:20px;margin:0"><span style="color:var(--acc1)">Cine</span><b style="color:var(--acc2)">Stats</b></h1></div>
   <h2>Quase lá</h2>
   <p>O painel busca pôsteres, elenco e gêneros dos seus <b id="onbN"></b> filmes no TMDB. Cole sua chave gratuita uma vez — fica só no seu aparelho.</p>
   <input class="tin" id="keyIn" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="API Key (v3) do TMDB"/>
@@ -261,6 +283,8 @@ const initials=n=>(n||'').split(' ').filter(Boolean).slice(0,2).map(x=>x[0]).joi
 const key=(t,y)=>t+'|'+y;
 const IMG='https://image.tmdb.org/t/p';
 const STAR_SVG='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.5 7 .9-5 4.8 1.3 7L12 17.8 5.4 21.2 6.7 14.2 1.7 9.4l7-.9z"/></svg>';
+// ícone globo estilizado (herda a cor do tema via currentColor)
+const GLOBE_SVG='<svg class="gicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 2.5 15.4 0 18M12 3c-2.5 2.6-2.5 15.4 0 18"/></svg>';
 let KEY=null, cache={}, db=null, tab='bio', busy=false, PEOPLE=null;
 let pSort='rt', pDec=null, rScope='all', rDec=null, rYr=null, gSort='count', expanded={};
 let fView='list', rView='list', gView='list';  // 'list' or 'country'
@@ -305,10 +329,12 @@ async function searchFilm(t,y){
   } return null;
 }
 async function credits(id){
-  const j=await tmdb('/movie/'+id+'/credits',{}); if(!j)return null;
-  const ca=(j.cast||[]).slice().sort((a,b)=>(a.order??999)-(b.order??999)).slice(0,8).map(c=>[c.id,c.name,c.gender||0,c.profile_path||null,c.character||'']);
-  const di=(j.crew||[]).filter(c=>c.job==='Director').map(c=>[c.id,c.name,c.profile_path||null]);
-  return {ca,di};
+  const j=await tmdb('/movie/'+id,{append_to_response:'credits'}); if(!j)return null;
+  const cr=j.credits||{};
+  const ca=(cr.cast||[]).slice().sort((a,b)=>(a.order??999)-(b.order??999)).slice(0,8).map(c=>[c.id,c.name,c.gender||0,c.profile_path||null,c.character||'']);
+  const di=(cr.crew||[]).filter(c=>c.job==='Director').map(c=>[c.id,c.name,c.profile_path||null]);
+  const co=(j.production_countries||[]).map(c=>c.iso_3166_1);
+  return {ca,di,co};
 }
 async function movieDetails(id){
   const j=await tmdb('/movie/'+id,{language:'pt-BR'}); if(!j)return null;
@@ -331,7 +357,10 @@ async function sync(){
     const n1=films().filter(r=>!r.id&&!r.nf);
     if(n1.length){let n=0;await runPool(n1,async r=>{const m=await searchFilm(r.t,r.y);if(m)Object.assign(r,m);else r.nf=1;r.s=1;put(key(r.t,r.y),r);if(++n%18===0&&tab==='films')renderFilms();},6,(d,t)=>showProg('Buscando pôsteres '+fmt(d)+'/'+fmt(t),d/t*0.5));if(tab==='films')renderFilms();}
     const n2=films().filter(r=>r.id&&!r.cc);
-    if(n2.length){let n=0;await runPool(n2,async r=>{const c=await credits(r.id);if(c){r.ca=c.ca;r.di=c.di;}r.cc=1;put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0&&tab!=='films'&&tab!=='genre')render();},6,(d,t)=>showProg('Buscando elenco '+fmt(d)+'/'+fmt(t),0.5+d/t*0.5));}
+    if(n2.length){let n=0;await runPool(n2,async r=>{const c=await credits(r.id);if(c){r.ca=c.ca;r.di=c.di;r.co=c.co;}r.cc=1;put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0&&tab!=='films'&&tab!=='genre')render();},6,(d,t)=>showProg('Buscando elenco '+fmt(d)+'/'+fmt(t),0.5+d/t*0.55));}
+    // backfill: filmes já sincronizados antes da feature de país (sem r.co)
+    const n3=films().filter(r=>r.id&&r.cc&&r.co===undefined);
+    if(n3.length){let n=0;await runPool(n3,async r=>{const c=await credits(r.id);if(c){r.co=c.co;if(!r.ca)r.ca=c.ca;if(!r.di)r.di=c.di;}else r.co=[];put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0&&rView==='country'||fView==='country'||gView==='country')render();},6,(d,t)=>showProg('Buscando países '+fmt(d)+'/'+fmt(t),0.55+d/t*0.45));}
     hideProg();PEOPLE=null;render();
   }catch(e){hideProg();if(e&&e.code===401)openOnb('Chave recusada pelo TMDB. Cole de novo.');}
   finally{busy=false;}
@@ -350,54 +379,60 @@ function decadesOf(){return [...new Set(films().map(r=>Math.floor(r.y/10)*10))].
 /* ---------- PAÍS (filtro) ---------- */
 function countryBreakdown(viewTab){
   const fl=films();
-  const noData='<div class="empty">Dados de países ainda em sincronização com o TMDB.<br>Aguarde a sincronização terminar.</div>';
+  const noData='<div class="empty">Dados de país ainda em sincronização com o TMDB.<br>Aguarde a sincronização concluir e retorne a esta aba.</div>';
+  // poster thumb helper
+  const pth=(p,title)=>p?'<img class="ctr-th" loading="lazy" src="'+IMG+'/w92'+p+'" title="'+(title||'').replace(/"/g,'')+'"/>':'<div class="ctr-th ph"></div>';
+  const faceThumb=(pic,nm)=>pic?'<img class="ctr-th rnd" loading="lazy" src="'+IMG+'/w92'+pic+'" title="'+(nm||'').replace(/"/g,'')+'"/>':'<div class="ctr-th rnd ph">'+initials(nm||'?')+'</div>';
+
   if(viewTab==='films'||viewTab==='genre'){
     const P={};
-    fl.forEach(r=>{
-      const c=(r.co||[])[0];if(!c)return;
-      P[c]=P[c]||{n:0,rated:[],gMap:{}};P[c].n++;
+    fl.forEach(r=>{const c=(r.co||[])[0];if(!c)return;
+      P[c]=P[c]||{n:0,rated:[],all:[],gMap:{}};P[c].n++;P[c].all.push(r);
       if(r.r!=null)P[c].rated.push(r);
-      (r.gids||[]).forEach(id=>{const g=GENRES[id];if(g)P[c].gMap[g]=(P[c].gMap[g]||0)+1;});
-    });
+      (r.gids||[]).forEach(id=>{const g=GENRES[id];if(g)P[c].gMap[g]=(P[c].gMap[g]||0)+1;});});
     const arr=Object.entries(P).sort((a,b)=>b[1].n-a[1].n).slice(0,30);
     if(!arr.length)return noData;
     return arr.map(([c,v],idx)=>{
       const avg=v.rated.length?(v.rated.reduce((s,r)=>s+r.r,0)/v.rated.length).toFixed(1):null;
-      let sub;
+      const top3=[...v.rated].sort((a,b)=>b.r-a.r).slice(0,3);
+      const pool=top3.length?top3:v.all.slice(0,3);
+      const thumbs=pool.map(r=>pth(r.po,(r.ti||r.t)+' ('+r.y+')')).join('');
+      let chips='';
       if(viewTab==='genre'){
-        sub=Object.entries(v.gMap).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([g,n])=>g+' ('+n+')').join(' · ');
-      } else {
-        sub=v.rated.sort((a,b)=>b.r-a.r).slice(0,3).map(r=>r.ti||r.t).join(' · ');
+        chips=Object.entries(v.gMap).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([g,gn])=>'<span class="ctr-chip">'+g+' · '+gn+'</span>').join('');
       }
-      return '<div class="ctr"><div class="ctr-head"><span class="ctr-rk">'+(idx+1)+'</span><span class="ctr-flag">'+countryFlag(c)+'</span><span class="ctr-nm">'+c+'</span><span class="ctr-ct">'+fmt(v.n)+' filmes'+(avg?' · '+avg+'★':'')+'</span></div>'+(sub?'<div class="ctr-top">'+(viewTab==='genre'?'🎭 ':'🎬 ')+sub+'</div>':'')+'</div>';
+      return '<div class="ctr" data-c="'+c+'"><div class="ctr-head"><span class="ctr-rk">'+(idx+1)+'</span>'+flagImg(c,26)+'<span class="ctr-nm">'+countryName(c)+'</span><span class="ctr-ct">'+fmt(v.n)+' filmes'+(avg?' · '+avg+'<span class="sstar"></span>':'')+'</span><span class="ctr-arr"></span></div><div class="ctr-thumbs">'+thumbs+'</div>'+(chips?'<div class="ctr-chips">'+chips+'</div>':'')+'</div>';
     }).join('');
   }
-  // dir/actor/actress: group by primary country of their films
+
+  // dir / actor / actress: group people by primary production country of their films
   const P2=people();
   let persons=viewTab==='dir'?P2.D:viewTab==='actor'?P2.A.filter(p=>p.g===2):P2.A.filter(p=>p.g===1);
   const byC={};
   persons.forEach(person=>{
-    const cCounts={};
-    person.f.forEach(f=>{const cached=cache[key(f.t,f.y)];const c=cached&&(cached.co||[])[0];if(c)cCounts[c]=(cCounts[c]||0)+1;});
-    const primC=Object.entries(cCounts).sort((a,b)=>b[1]-a[1])[0];
-    if(!primC)return;
-    const c=primC[0];
-    byC[c]=byC[c]||{persons:[],nFilms:0};byC[c].persons.push(person);byC[c].nFilms+=person.f.length;
-  });
+    const cc={};
+    person.f.forEach(f=>{const cached=cache[key(f.t,f.y)];const c=cached&&(cached.co||[])[0];if(c)cc[c]=(cc[c]||0)+1;});
+    const prim=Object.entries(cc).sort((a,b)=>b[1]-a[1])[0];
+    if(!prim)return;const c=prim[0];
+    byC[c]=byC[c]||{persons:[]};byC[c].persons.push(person);});
   const arr2=Object.entries(byC).sort((a,b)=>b[1].persons.length-a[1].persons.length).slice(0,30);
   if(!arr2.length)return noData;
   const lbl=viewTab==='dir'?'diretores':viewTab==='actor'?'atores':'atrizes';
   return arr2.map(([c,v],idx)=>{
-    const top3=[...v.persons].sort((a,b)=>b.f.length-a.f.length).slice(0,3).map(p=>p.n+' ('+p.f.length+'f)').join(' · ');
-    return '<div class="ctr"><div class="ctr-head"><span class="ctr-rk">'+(idx+1)+'</span><span class="ctr-flag">'+countryFlag(c)+'</span><span class="ctr-nm">'+c+'</span><span class="ctr-ct">'+v.persons.length+' '+lbl+'</span></div>'+(top3?'<div class="ctr-top">▶ '+top3+'</div>':'')+'</div>';
+    const top3=[...v.persons].sort((a,b)=>b.f.length-a.f.length).slice(0,3);
+    const thumbs=top3.map(p=>faceThumb(p.pic,p.n)).join('');
+    const names=top3.map(p=>'<span class="ctr-chip">'+p.n+' · '+p.f.length+'f</span>').join('');
+    return '<div class="ctr" data-c="'+c+'"><div class="ctr-head"><span class="ctr-rk">'+(idx+1)+'</span>'+flagImg(c,26)+'<span class="ctr-nm">'+countryName(c)+'</span><span class="ctr-ct">'+v.persons.length+' '+lbl+'</span><span class="ctr-arr"></span></div><div class="ctr-thumbs">'+thumbs+'</div><div class="ctr-chips">'+names+'</div></div>';
   }).join('');
 }
+
 /* ---------- FILMES ---------- */
 function renderFilms(){
   if(fView==='country'){
     const body=countryBreakdown('films');
-    $('#view').innerHTML=`<div class="controls"><div class="seg"><button data-s="rt" id="fSortBack">Nota</button><button data-s="yr" id="">Ano</button><button data-s="az" id="">A–Z</button></div><button class="chip on" id="fCPais">🌍 País</button></div><div style="margin-top:8px">${body}</div><div class="note">Top 30 países de produção principal · fonte TMDB</div>`;
+    $('#view').innerHTML=`<div class="controls"><div class="seg"><button data-s="rt" id="fSortBack">Nota</button><button data-s="yr" id="">Ano</button><button data-s="az" id="">A–Z</button></div><button class="chip on" id="fCPais">${GLOBE_SVG} País</button></div><div style="margin-top:8px">${body}</div><div class="note">Top 30 países de produção principal · fonte TMDB</div>`;
     $('#fCPais').onclick=()=>{fView='list';renderFilms();};
+    $$('.ctr').forEach(el=>el.onclick=()=>openCountry(el.dataset.c));
     return;
   }
   let list=films().map(r=>({t:r.t,y:r.y,r:r.r,rec:r}));
@@ -410,7 +445,7 @@ function renderFilms(){
   const ctrl=`<div class="controls"><div class="seg" id="pSort">
     ${[['rt','Nota'],['yr','Ano'],['az','A–Z'],['rnd','Aleatório']].map(([s,l])=>`<button data-s="${s}" class="${pSort===s?'on':''}">${l}</button>`).join('')}
     </div><div class="chips" id="pDec"><button class="chip ${pDec==null?'on':''}" data-d="all">Todas</button>${decs.map(d=>`<button class="chip ${pDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>
-    <button class="chip" id="fCPais">🌍 País</button></div>`;
+    <button class="chip" id="fCPais">${GLOBE_SVG} País</button></div>`;
   const cells=list.map(x=>{const r=x.rec;const po=(r&&r.po)?`<img loading="lazy" src="${IMG}/w185${r.po}"/>`:`<div class="ph">${x.t}<br><span style="opacity:.6">(${x.y})</span></div>`;
     return `<div class="po" data-k="${(x.t+'|'+x.y).replace(/"/g,'&quot;')}">${po}${x.r!=null?`<span class="rt">${star(x.r)}</span>`:''}</div>`;}).join('');
   $('#view').innerHTML=ctrl+`<div class="grid">${cells}</div><div class="note">${fmt(list.length)} filmes${pDec!=null?' nos '+pDec+'s':''}. Toque num pôster para ver elenco e direção.</div>`;
@@ -437,8 +472,9 @@ function renderRanking(){
   if(rView==='country'){
     const body=countryBreakdown(tab);
     const lbl=tab==='dir'?'Diretores':tab==='actor'?'Atores':'Atrizes';
-    $('#view').innerHTML=`<div class="controls"><div class="seg"><button data-s="all">Geral</button><button data-s="dec">Década</button><button data-s="yr">Ano</button></div><button class="chip on" id="rCPais">🌍 País</button></div><div style="margin-top:8px">${body}</div><div class="note">Países agrupados pela produção dos filmes (fonte: TMDB).</div>`;
+    $('#view').innerHTML=`<div class="controls"><div class="seg"><button data-s="all">Geral</button><button data-s="dec">Década</button><button data-s="yr">Ano</button></div><button class="chip on" id="rCPais">${GLOBE_SVG} País</button></div><div style="margin-top:8px">${body}</div><div class="note">Países agrupados pela produção dos filmes (fonte: TMDB).</div>`;
     $('#rCPais').onclick=()=>{rView='list';renderRanking();};
+    $$('.ctr').forEach(el=>el.onclick=()=>openCountry(el.dataset.c));
     return;
   }
   const r=rankList(),top=r.slice(0,5),rest=r.slice(5,30);
@@ -446,7 +482,7 @@ function renderRanking(){
   if(rYr==null&&years.length)rYr=years[0];if(rDec==null&&decs.length)rDec=decs[0];
   const ctrl=`<div class="controls"><div class="seg" id="rScope">
     ${[['all','Geral'],['dec','Década'],['yr','Ano']].map(([s,l])=>`<button data-s="${s}" class="${rScope===s?'on':''}">${l}</button>`).join('')}
-    </div>${rScope==='dec'?`<div class="chips" id="rDec">${decs.map(d=>`<button class="chip ${rDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>`:''}${rScope==='yr'?`<select id="rYr">${years.map(y=>`<option ${y===rYr?'selected':''}>${y}</option>`).join('')}</select>`:''}<button class="chip" id="rCPais">🌍 País</button></div>`;
+    </div>${rScope==='dec'?`<div class="chips" id="rDec">${decs.map(d=>`<button class="chip ${rDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>`:''}${rScope==='yr'?`<select id="rYr">${years.map(y=>`<option ${y===rYr?'selected':''}>${y}</option>`).join('')}</select>`:''}<button class="chip" id="rCPais">${GLOBE_SVG} País</button></div>`;
   let body;
   if(!r.length)body=`<div class="empty">Ninguém nesse recorte.</div>`;
   else{
@@ -457,7 +493,7 @@ function renderRanking(){
     const rows=rest.map((p,i)=>{const rank=i+6;const op=expanded[tab+rank];const av=p.pic?`<img class="av" loading="lazy" src="${IMG}/w185${p.pic}"/>`:`<div class="av ini">${initials(p.n)}</div>`;
       const {mini,bf}=personDetail(p);
       return `<div class="rw ${op?'open':''}" data-r="${rank}"><div class="rk">${rank}</div>${av}<div class="nm">${p.n}</div>
-        <div class="ct"><b>${p.n_}</b> f${p.avg!=null?' · <span class="g">'+star(+p.avg.toFixed(2))+'</span>':''}</div><div class="car">▶</div></div>
+        <div class="ct"><b>${p.n_}</b> f${p.avg!=null?' · <span class="g">'+star(+p.avg.toFixed(2))+'</span>':''}</div><div class="car"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></div></div>
         <div class="exp ${op?'show':''}" data-e="${rank}">${bf?`<div class="best">Melhor: <b>${bf.t}</b> (${bf.y}) ${star(bf.r)}</div>`:''}<div class="mini">${mini}</div></div>`;}).join('');
     let note=`Top ${Math.min(30,r.length)} de ${fmt(r.length)} pessoas com 2+ filmes neste recorte. Toque do 6º ao 30º para ver os filmes.`;
     if(tab==='actor'||tab==='actress')note+=' Divisão por gênero vem do TMDB e pode falhar.';
@@ -478,8 +514,9 @@ function renderGenre(){
   if(fl.length<20){$('#view').innerHTML=`<div class="empty">Os gêneros são carregados junto com os pôsteres.<br>Deixe a sincronização avançar e volte aqui.</div>`;return;}
   if(gView==='country'){
     const body=countryBreakdown('genre');
-    $('#view').innerHTML=`<div class="controls"><div class="seg"><button>Mais vistos</button><button>Melhor avaliados</button></div><button class="chip on" id="gCPais">🌍 País</button></div><div style="margin-top:8px">${body}</div><div class="note">Top 30 países com gêneros predominantes · fonte TMDB</div>`;
+    $('#view').innerHTML=`<div class="controls"><div class="seg"><button>Mais vistos</button><button>Melhor avaliados</button></div><button class="chip on" id="gCPais">${GLOBE_SVG} País</button></div><div style="margin-top:8px">${body}</div><div class="note">Top 30 países com gêneros predominantes · fonte TMDB</div>`;
     $('#gCPais').onclick=()=>{gView='list';renderGenre();};
+    $$('.ctr').forEach(el=>el.onclick=()=>openCountry(el.dataset.c));
     return;
   }
   const agg={};fl.forEach(r=>r.gids.forEach(id=>{const g=GENRES[id]||('#'+id);(agg[g]=agg[g]||{n:0,s:0,c:0});agg[g].n++;if(r.r!=null){agg[g].s+=r.r;agg[g].c++;}}));
@@ -488,7 +525,7 @@ function renderGenre(){
   if(gSort==='count'){arr.sort((a,b)=>b.n-a.n);note=`Por quantidade de filmes vistos. Gêneros vêm do TMDB (cobertura total: ${fmt(fl.length)} filmes).`;}
   else{arr=arr.filter(x=>x.n>=5&&x.avg!=null);arr.sort((a,b)=>b.avg-a.avg);note='Pela sua nota média, só gêneros com 5+ filmes.';}
   const max=gSort==='count'?Math.max(...arr.map(x=>x.n)):5;
-  const ctrl=`<div class="controls"><div class="seg" id="gSort"><button data-s="count" class="${gSort==='count'?'on':''}">Mais vistos</button><button data-s="avg" class="${gSort==='avg'?'on':''}">Melhor avaliados</button></div><button class="chip" id="gCPais">🌍 País</button></div>`;
+  const ctrl=`<div class="controls"><div class="seg" id="gSort"><button data-s="count" class="${gSort==='count'?'on':''}">Mais vistos</button><button data-s="avg" class="${gSort==='avg'?'on':''}">Melhor avaliados</button></div><button class="chip" id="gCPais">${GLOBE_SVG} País</button></div>`;
   const pal=palette(arr.length);
   const bars=arr.map((x,i)=>{const w=gSort==='count'?x.n/max*100:x.avg/5*100;const bc=pal[i];const right=gSort==='count'?`<b>${fmt(x.n)}</b>${x.avg!=null?' · <span class="g">'+star(+x.avg.toFixed(2))+'</span>':''}`:`<span class="g">${star(+x.avg.toFixed(2))}</span> · ${fmt(x.n)}f`;
     return `<div class="barrow"><div class="bn">${x.g}</div><div class="track"><div class="fill" style="width:${w}%;background:linear-gradient(90deg,${bc}99,${bc})"></div></div><div class="bmeta">${right}</div></div>`;}).join('');
@@ -506,14 +543,27 @@ function mixHex(c1,c2,t){const a=hexToRgb(c1),b=hexToRgb(c2);return rgbToHex(a[0
 function palette(n){const[c1,c2]=ACCENTS[bio.accent||'vertigo'];if(n<=1)return[c1];const out=[];for(let i=0;i<n;i++)out.push(mixHex(c1,c2,i/(n-1)));return out;}
 const THEME_SPIRAL={vertigo:'films',verde:'genre',vermelho:'dir',sonho:'actress',neon:'actor'};
 function applyAccent(){const a=bio.accent||'vertigo';const[c1,c2]=ACCENTS[a];document.documentElement.style.setProperty('--acc1',c1);document.documentElement.style.setProperty('--acc2',c2);const enc=s=>s.replace(/#/g,'%23');const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23000'/><path d='M 4 16 A 12 7.5 0 0 1 28 16' stroke='${enc(c1)}' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M 28 16 A 12 7.5 0 0 1 4 16' stroke='${enc(c2)}' stroke-width='3' fill='none' stroke-linecap='round'/><circle cx='16' cy='16' r='2.3' fill='%23f4f0e6'/></svg>`;const lnk=document.querySelector('link[rel="icon"][type="image/svg+xml"]');if(lnk)lnk.href='data:image/svg+xml,'+svg;}
-const SPIRAL_VARIANTS={
-  films:  {tilt:-18,dir:1, squash:0.62,baseSpeed:0.18,inwardSpeed:1.0,turns:2.5},
-  dir:    {tilt:24, dir:-1,squash:0.68,baseSpeed:0.28,inwardSpeed:0.75,turns:3.0},
-  actor:  {tilt:-32,dir:1, squash:0.52,baseSpeed:0.36,inwardSpeed:1.4, turns:2.2},
-  actress:{tilt:38, dir:-1,squash:0.60,baseSpeed:0.22,inwardSpeed:0.9, turns:3.5},
-  genre:  {tilt:8,  dir:1, squash:0.78,baseSpeed:0.14,inwardSpeed:1.2, turns:2.8}
+// ── 5 constelações reais mapeiam os 5 temas ──
+const CONSTEL={
+  orion:{name:'Órion',stars:[[0.3,0.12],[0.68,0.16],[0.22,0.42],[0.46,0.48],[0.42,0.52],[0.38,0.56],[0.3,0.82],[0.62,0.8],[0.5,0.5]],lines:[[0,2],[0,3],[1,3],[1,7],[2,6],[3,4],[4,5],[5,6],[3,7]]},
+  cassiopeia:{name:'Cassiopeia',stars:[[0.12,0.4],[0.3,0.62],[0.5,0.38],[0.7,0.64],[0.88,0.42]],lines:[[0,1],[1,2],[2,3],[3,4]]},
+  ursa:{name:'Ursa Maior',stars:[[0.14,0.58],[0.3,0.64],[0.46,0.62],[0.6,0.54],[0.74,0.42],[0.86,0.5],[0.72,0.6]],lines:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,3]]},
+  cygnus:{name:'Cygnus',stars:[[0.5,0.1],[0.5,0.4],[0.5,0.62],[0.5,0.88],[0.22,0.46],[0.78,0.34]],lines:[[0,1],[1,2],[2,3],[4,1],[1,5]]},
+  scorpius:{name:'Scorpius',stars:[[0.2,0.14],[0.32,0.2],[0.44,0.26],[0.52,0.4],[0.54,0.56],[0.5,0.7],[0.6,0.8],[0.74,0.78],[0.8,0.66]],lines:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8]]}
 };
-function countryFlag(n){const M={'United States of America':'🇺🇸','France':'🇫🇷','United Kingdom':'🇬🇧','Germany':'🇩🇪','Italy':'🇮🇹','Japan':'🇯🇵','Brazil':'🇧🇷','Spain':'🇪🇸','South Korea':'🇰🇷','Sweden':'🇸🇪','Argentina':'🇦🇷','Mexico':'🇲🇽','Canada':'🇨🇦','Poland':'🇵🇱','Denmark':'🇩🇰','Australia':'🇦🇺','Ireland':'🇮🇪','Belgium':'🇧🇪','Portugal':'🇵🇹','USSR':'🇷🇺','Soviet Union':'🇷🇺','Russia':'🇷🇺','Austria':'🇦🇹','Netherlands':'🇳🇱','China':'🇨🇳','Romania':'🇷🇴','India':'🇮🇳','Taiwan':'🇹🇼','Iran':'🇮🇷','Greece':'🇬🇷','Czech Republic':'🇨🇿'};return M[n]||'🌍';}
+// cada categoria de favoritos => uma constelação + ritmo orbital próprio
+const SPIRAL_VARIANTS={
+  films:  {constel:'orion',     dir:1, baseSpeed:0.16,inwardSpeed:1.0},
+  dir:    {constel:'cassiopeia',dir:-1,baseSpeed:0.22,inwardSpeed:0.8},
+  actor:  {constel:'cygnus',    dir:1, baseSpeed:0.28,inwardSpeed:1.3},
+  actress:{constel:'scorpius',  dir:-1,baseSpeed:0.18,inwardSpeed:0.9},
+  genre:  {constel:'ursa',      dir:1, baseSpeed:0.20,inwardSpeed:1.1}
+};
+// ISO 3166-1 alpha-2 → nome PT-BR (cobre os principais países do TMDB)
+const ISO_NAME={US:'Estados Unidos',GB:'Reino Unido',FR:'França',DE:'Alemanha',IT:'Itália',JP:'Japão',BR:'Brasil',ES:'Espanha',KR:'Coreia do Sul',SE:'Suécia',AR:'Argentina',MX:'México',CA:'Canadá',PL:'Polônia',DK:'Dinamarca',AU:'Austrália',IE:'Irlanda',BE:'Bélgica',PT:'Portugal',SU:'União Soviética',RU:'Rússia',AT:'Áustria',NL:'Holanda',CN:'China',RO:'Romênia',IN:'Índia',TW:'Taiwan',IR:'Irã',GR:'Grécia',CZ:'Tchéquia',HK:'Hong Kong',CH:'Suíça',NO:'Noruega',FI:'Finlândia',HU:'Hungria',TR:'Turquia',IS:'Islândia',NZ:'Nova Zelândia',CL:'Chile',CO:'Colômbia',TH:'Tailândia',ZA:'África do Sul',IL:'Israel',UA:'Ucrânia',YU:'Iugoslávia',CU:'Cuba',PH:'Filipinas',EG:'Egito',ID:'Indonésia',VN:'Vietnã',SG:'Singapura',MA:'Marrocos',BG:'Bulgária',RS:'Sérvia',HR:'Croácia',LU:'Luxemburgo',EE:'Estônia',LT:'Lituânia',LV:'Letônia',SK:'Eslováquia',SI:'Eslovênia'};
+function countryName(iso){return ISO_NAME[iso]||iso;}
+function flagUrl(iso){const c=(iso||'').toLowerCase();return c?'https://flagcdn.com/w80/'+c+'.png':'';}
+function flagImg(iso,sz){sz=sz||22;const u=flagUrl(iso);return u?'<img class="flag" src="'+u+'" alt="'+countryName(iso)+'" width="'+sz+'" loading="lazy"/>':'';}
 let bio=(()=>{try{return JSON.parse(localStorage.getItem('cs_bio'))||{};}catch(e){return {};}})();
 function saveBio(){try{localStorage.setItem('cs_bio',JSON.stringify(bio));}catch(e){}}
 let curFav=0;
@@ -533,12 +583,35 @@ async function openPerson(p){const {mini,bf}=personDetail({fl:p.f});
 }
 function openGenre(g){const fl=films().filter(r=>(r.gids||[]).some(id=>(GENRES[id]||('#'+id))===g)).map(r=>({t:r.ti||r.t,y:+(r.ye||r.y),r:r.r,p:r.po}));
   const {mini,bf}=personDetail({fl});const rd=fl.filter(f=>f.r!=null);const avg=rd.length?rd.reduce((s,f)=>s+f.r,0)/rd.length:null;
-  $('#sheet').innerHTML=`<div class="top"><div style="width:92px;height:138px;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:34px">🎬</div><div><h3>${g}</h3><div class="yr"><b>${fl.length}</b> filmes${avg!=null?' · média '+star(+avg.toFixed(2)):''}</div>${bf?`<div class="yr" style="margin-top:6px">Melhor: <b style="color:var(--gold)">${bf.t}</b> ${star(bf.r)}</div>`:''}</div></div><div class="lbl">Mais bem avaliados</div><div class="mini">${mini}</div>`;
+  $('#sheet').innerHTML=`<div class="top"><div style="width:92px;height:138px;border-radius:8px;background:linear-gradient(135deg,var(--acc1),var(--acc2));display:flex;align-items:center;justify-content:center"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 4v5M12 4v5M17 4v5M7 9v11M12 9v11M17 9v11" opacity="0.55"/></svg></div><div><h3>${g}</h3><div class="yr"><b>${fl.length}</b> filmes${avg!=null?' · média '+star(+avg.toFixed(2)):''}</div>${bf?`<div class="yr" style="margin-top:6px">Melhor: <b style="color:var(--gold)">${bf.t}</b> ${star(bf.r)}</div>`:''}</div></div><div class="lbl">Mais bem avaliados</div><div class="mini">${mini}</div>`;
   $('#modal').classList.add('show');}
-function openCountry(c){const fl=films().filter(r=>(r.co||[]).includes(c)).map(r=>({t:r.ti||r.t,y:+(r.ye||r.y),r:r.r,p:r.po}));
-  const{mini,bf}=personDetail({fl});const rd=fl.filter(f=>f.r!=null);const avg=rd.length?rd.reduce((s,f)=>s+f.r,0)/rd.length:null;
-  $('#sheet').innerHTML=`<div class="top"><div style="width:92px;height:138px;border-radius:8px;background:linear-gradient(135deg,var(--acc1),var(--acc2));display:flex;align-items:center;justify-content:center;font-size:44px">${countryFlag(c)}</div><div><h3>${c}</h3><div class="yr"><b>${fl.length}</b> filmes${avg!=null?' · média '+star(+avg.toFixed(2)):''}</div>${bf?`<div class="yr" style="margin-top:6px">Melhor: <b style="color:var(--gold)">${bf.t}</b> ${star(bf.r)}</div>`:''}</div></div><div class="lbl">Mais bem avaliados</div><div class="mini">${mini}</div>`;
-  $('#modal').classList.add('show');}
+async function openCountry(c){
+  const all=films().filter(r=>(r.co||[]).includes(c));
+  const fl=all.map(r=>({t:r.ti||r.t,y:+(r.ye||r.y),r:r.r,p:r.po}));
+  const rd=fl.filter(f=>f.r!=null);
+  const avg=rd.length?rd.reduce((s,f)=>s+f.r,0)/rd.length:null;
+  const decades={};all.forEach(r=>{const d=Math.floor((+(r.ye||r.y))/10)*10;if(d)decades[d]=(decades[d]||0)+1;});
+  const topDec=Object.entries(decades).sort((a,b)=>b[1]-a[1])[0];
+  // genres for this country
+  const gMap={};all.forEach(r=>(r.gids||[]).forEach(id=>{const g=GENRES[id];if(g)gMap[g]=(gMap[g]||0)+1;}));
+  const topGen=Object.entries(gMap).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  const{mini,bf}=personDetail({fl});
+  const flag=flagImg(c,72);
+  const stat=(lbl,val)=>'<div class="cstat"><div class="cstat-v">'+val+'</div><div class="cstat-l">'+lbl+'</div></div>';
+  const stats=
+    stat('Filmes',fmt(all.length))+
+    (avg!=null?stat('Nota média',avg.toFixed(2)):'')+
+    (topDec?stat('Década-pico',topDec[0]+'s'):'')+
+    (bf?stat('Melhor nota',star(bf.r)):'');
+  const genChips=topGen.length?'<div class="lbl">Gêneros mais frequentes</div><div class="ctr-chips" style="padding:0 14px 4px">'+topGen.map(([g,n])=>'<span class="ctr-chip">'+g+' · '+n+'</span>').join('')+'</div>':'';
+  $('#sheet').innerHTML='<div class="top"><div class="cflag-wrap">'+(flag||'<div class="cflag-ph"></div>')+'</div><div><h3>'+countryName(c)+'</h3><div class="yr"><b>'+all.length+'</b> filmes vistos'+(avg!=null?' · média '+star(+avg.toFixed(2)):'')+'</div>'+(bf?'<div class="yr" style="margin-top:6px">Destaque: <b style="color:var(--gold)">'+bf.t+'</b> '+star(bf.r)+'</div>':'')+'</div></div>'+
+    '<div class="cstats">'+stats+'</div>'+
+    genChips+
+    '<div class="lbl">Mais bem avaliados</div><div class="mini">'+mini+'</div>'+
+    '<div class="note" style="margin:10px 14px 4px">Estatísticas calculadas a partir do seu histórico. País de produção principal segundo o TMDB.</div>';
+  $('#modal').classList.add('show');
+}
+
 function openEntity(e){if(!e)return;if(e.kind==='film')openFilm(e.ref);else if(e.kind==='genre')openGenre(e.ref);else if(e.kind==='country')openCountry(e.ref);else openPerson(e._p);}
 let spiralRAF=null;
 function stopSpiralAnim(){if(spiralRAF){cancelAnimationFrame(spiralRAF);spiralRAF=null;}}
@@ -547,54 +620,30 @@ function renderSpiral(items,cat){
   stopSpiralAnim();
   cat=cat||bio.cat||'films';
   const v=SPIRAL_VARIANTS[cat]||SPIRAL_VARIANTS.films;
+  const con=CONSTEL[v.constel]||CONSTEL.orion;
   const W=host.clientWidth||320,H=Math.round(W*1.05);
   host.style.height=H+'px';
-  const n=Math.min(items.length,14);
   const cx=W/2,cy=H/2;
-  const pal=palette(n);
   const animate=bio.animate!==false;
   const[c1,c2]=ACCENTS[bio.accent||'vertigo'];
-  const tilt=v.tilt*Math.PI/180;
-  const cosT=Math.cos(tilt),sinT=Math.sin(tilt);
-  function rgb(hex){const h=hexToRgb(hex);return h[0]+','+h[1]+','+h[2];}
+  const sx=hexToRgb(c1),sxA=sx[0]+','+sx[1]+','+sx[2];
+  const sx2=hexToRgb(c2),sxB=sx2[0]+','+sx2[1]+','+sx2[2];
+  // tags = top-N names, capped to a legible count
+  const n=Math.min(items.length,14);
+  const pal=palette(n);
+  // Map constellation star anchor points into pixel space (used as the home layout)
+  const pad=0.12;
+  const anchors=con.stars.map(s=>({
+    x:(pad+ s[0]*(1-2*pad))*W,
+    y:(pad+ s[1]*(1-2*pad))*H
+  }));
   host.innerHTML='';
-  // ── Canvas: nebula glow + stars ──
   const cvs=document.createElement('canvas');
   cvs.width=W;cvs.height=H;
   cvs.style.cssText='position:absolute;inset:0;pointer-events:none;border-radius:12px';
   host.appendChild(cvs);
   const ctx=cvs.getContext('2d');
-  // ── SVG: rotating spiral rings ──
-  const NS='http://www.w3.org/2000/svg';
-  const svgEl=document.createElementNS(NS,'svg');
-  svgEl.setAttribute('viewBox','0 0 100 100');
-  svgEl.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none';
-  const NRINGS=7;const radF=d=>d*Math.PI/180;const ringPaths=[];
-  for(let i=0;i<NRINGS;i++){
-    const pr=i/(NRINGS-1);
-    const rx=5+pr*44,ry=rx*v.squash;
-    const dir=(i%2===0)?v.dir:-v.dir;
-    const col=i%2===0?'var(--acc1)':'var(--acc2)';
-    const op=(0.80-pr*0.42).toFixed(2);
-    const sw=(1.5-pr*0.70).toFixed(2);
-    const a0=dir>0?15:195,a1=dir>0?315:-105;
-    const x0=(50+rx*Math.cos(radF(a0))).toFixed(2),y0=(50+ry*Math.sin(radF(a0))).toFixed(2);
-    const x1=(50+rx*Math.cos(radF(a1))).toFixed(2),y1=(50+ry*Math.sin(radF(a1))).toFixed(2);
-    const large=Math.abs(a1-a0)>180?1:0,sweep=dir>0?1:0;
-    const p=document.createElementNS(NS,'path');
-    p.setAttribute('d',`M${x0} ${y0} A${rx.toFixed(2)} ${ry.toFixed(2)} 0 ${large} ${sweep} ${x1} ${y1}`);
-    p.setAttribute('stroke',col);p.setAttribute('stroke-width',sw);
-    p.setAttribute('opacity',op);p.setAttribute('fill','none');p.setAttribute('stroke-linecap','round');
-    p._dir=dir;p._base=v.tilt+i*4;
-    p._spd=(v.baseSpeed*32)*(1+(NRINGS-1-i)*0.22); // inner rings faster
-    svgEl.appendChild(p);ringPaths.push(p);
-  }
-  const nucSvg=document.createElementNS(NS,'circle');
-  nucSvg.setAttribute('cx','50');nucSvg.setAttribute('cy','50');nucSvg.setAttribute('r','2.8');
-  nucSvg.setAttribute('fill','var(--ink)');nucSvg.setAttribute('opacity','0.95');
-  svgEl.appendChild(nucSvg);
-  host.appendChild(svgEl);
-  // ── Tag buttons ──
+  // Tag buttons (the orbiting "named stars")
   const tagEls=items.slice(0,n).map((e,i)=>{
     const b=document.createElement('button');
     b.className='tag';b.textContent=e.label;
@@ -602,75 +651,103 @@ function renderSpiral(items,cat){
     b.onclick=()=>openEntity(e);
     host.appendChild(b);return b;
   });
-  // Static mode
+
+  // ── STATIC MODE: tags rest on the constellation skeleton ──
   if(!animate){
-    const turns=v.turns||2.5;
+    // draw constellation lines + base stars
+    ctx.clearRect(0,0,W,H);
+    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,W*0.55);
+    g.addColorStop(0,'rgba('+sxA+',0.10)');g.addColorStop(1,'transparent');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='rgba('+sxA+',0.28)';ctx.lineWidth=1;
+    con.lines.forEach(([a,b])=>{ctx.beginPath();ctx.moveTo(anchors[a].x,anchors[a].y);ctx.lineTo(anchors[b].x,anchors[b].y);ctx.stroke();});
+    con.stars.forEach((_,i)=>{const a=anchors[i];ctx.beginPath();ctx.arc(a.x,a.y,2,0,7);ctx.fillStyle='rgba(244,240,230,0.7)';ctx.fill();});
+    // place tags on anchors (cycle if more tags than stars)
     items.slice(0,n).forEach((_,i)=>{
-      const p=(n>1)?i/(n-1):0.5;
-      const r=(W*0.43)*p;
-      const angle=v.dir*(p*turns*Math.PI*2);
-      const ex=r*Math.cos(angle),ey=r*Math.sin(angle)*v.squash;
+      const a=anchors[i%anchors.length];
       const el=tagEls[i];
-      el.style.left=(cx+ex*cosT-ey*sinT)+'px';
-      el.style.top=(cy+ex*sinT+ey*cosT)+'px';
-      el.style.fontSize=Math.max(10,10+p*8)+'px';
-      el.style.opacity=(0.4+p*0.6).toFixed(2);
+      el.style.left=a.x+'px';el.style.top=a.y+'px';
+      el.style.fontSize='12px';el.style.opacity='0.96';
     });
-    const gd=ctx.createRadialGradient(cx,cy,0,cx,cy,W*0.52);
-    gd.addColorStop(0,'rgba('+rgb(c1)+',0.13)');gd.addColorStop(1,'transparent');
-    ctx.fillStyle=gd;ctx.fillRect(0,0,W,H);
     return;
   }
-  // ── Star particles ──
-  const STARS=Array.from({length:40},()=>({
-    x:Math.random()*W,y:Math.random()*H,
-    r:0.3+Math.random()*0.9,ba:0.08+Math.random()*0.28,
-    ph:Math.random()*Math.PI*2,spd:0.5+Math.random()*2.0
+
+  // ── ANIMATED MODE: orbit → fall → vanish at the core ──
+  // Background twinkling field
+  const FIELD=Array.from({length:46},()=>({
+    x:Math.random()*W,y:Math.random()*H,r:0.3+Math.random()*0.9,
+    ba:0.06+Math.random()*0.26,ph:Math.random()*7,spd:0.4+Math.random()*1.8
   }));
-  // ── Per-tag orbital state (evenly spaced from center to outer) ──
-  const turns=v.turns||2.5;
-  const ORBS=Array.from({length:n},(_,i)=>{
-    const baseLife=(n>1)?(i/(n-1)):0.5;
+  // Persistent constellation skeleton stars (slowly drift/twinkle) used to draw lines
+  const SKEL=anchors.map((a,i)=>({bx:a.x,by:a.y,ph:Math.random()*7,amp:2+Math.random()*3}));
+  // Each tag = orbiting body on an elliptical path collapsing toward center
+  const dirArr=[1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1];
+  const ORB=Array.from({length:n},(_,i)=>{
+    const home=anchors[i%anchors.length];
+    const baseAng=Math.atan2(home.y-cy,home.x-cx);
+    const baseRad=Math.hypot(home.x-cx,home.y-cy)/(W*0.5); // 0..~0.7
     return{
-      life:Math.max(0.04,baseLife+(Math.random()*0.06-0.03)),
-      lSpd:(0.004+Math.random()*0.005)*(v.inwardSpeed||1),
-      pOff:(Math.random()-0.5)*0.3
+      ang:baseAng+(Math.random()*0.6-0.3),
+      rad:Math.max(0.16,Math.min(0.74,baseRad+(Math.random()*0.12-0.06))),
+      life:0.55+Math.random()*0.45,          // 1=outer, 0=core
+      lSpd:(0.0035+Math.random()*0.0045)*(v.inwardSpeed||1),
+      spin:v.dir*(0.5+Math.random()*0.8),
+      ecc:0.55+Math.random()*0.30,           // ellipse squash
+      tilt:Math.random()*Math.PI,            // ellipse rotation
+      tw:Math.random()*7,twSpd:1.4+Math.random()*3.6
     };
   });
-  const start=performance.now();
+  const t0=performance.now();
   function step(now){
-    const t=(now-start)/1000;
-    // Canvas: nebula glow
+    const t=(now-t0)/1000;
     ctx.clearRect(0,0,W,H);
-    const g1=ctx.createRadialGradient(cx,cy,0,cx,cy,W*0.52);
-    g1.addColorStop(0,'rgba('+rgb(c1)+',0.12)');
-    g1.addColorStop(0.5,'rgba('+rgb(c2)+',0.05)');
-    g1.addColorStop(1,'transparent');
-    ctx.fillStyle=g1;ctx.fillRect(0,0,W,H);
-    // Stars
-    STARS.forEach(s=>{
-      const tw=0.4+0.6*Math.sin(s.ph+t*s.spd);
-      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-      ctx.fillStyle='rgba(244,240,230,'+(s.ba*tw).toFixed(2)+')';ctx.fill();
-    });
-    // SVG: rotate rings (alternating dirs, inner spins faster)
-    ringPaths.forEach(p=>{
-      p.setAttribute('transform',`rotate(${(p._base+p._dir*t*p._spd).toFixed(2)} 50 50)`);
-    });
-    // Tags: move along spiral arms toward nucleus (sucked in)
-    ORBS.forEach((o,i)=>{
+    // nebular core glow (drifts subtly)
+    const nx=cx+Math.sin(t*0.16)*W*0.05,ny=cy+Math.cos(t*0.13)*H*0.05;
+    const gg=ctx.createRadialGradient(nx,ny,0,nx,ny,W*0.54);
+    gg.addColorStop(0,'rgba('+sxA+',0.12)');gg.addColorStop(0.5,'rgba('+sxB+',0.05)');gg.addColorStop(1,'transparent');
+    ctx.fillStyle=gg;ctx.fillRect(0,0,W,H);
+    // background star field
+    FIELD.forEach(s=>{const tw=0.4+0.6*Math.sin(s.ph+t*s.spd);
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,7);ctx.fillStyle='rgba(244,240,230,'+(s.ba*tw).toFixed(2)+')';ctx.fill();});
+    // constellation skeleton (gentle drift) + connecting lines
+    const sp=SKEL.map(s=>({x:s.bx+Math.sin(s.ph+t*0.5)*s.amp,y:s.by+Math.cos(s.ph+t*0.4)*s.amp}));
+    ctx.strokeStyle='rgba('+sxA+',0.16)';ctx.lineWidth=0.8;
+    con.lines.forEach(([a,b])=>{ctx.beginPath();ctx.moveTo(sp[a].x,sp[a].y);ctx.lineTo(sp[b].x,sp[b].y);ctx.stroke();});
+    sp.forEach(p=>{const tw=0.5+0.5*Math.sin(t*1.5+p.x);ctx.beginPath();ctx.arc(p.x,p.y,1.4,0,7);ctx.fillStyle='rgba(244,240,230,'+(0.4*tw+0.2).toFixed(2)+')';ctx.fill();});
+    // pulsing core (where stars vanish)
+    const pul=0.7+0.3*Math.sin(t*2.2);
+    const cg=ctx.createRadialGradient(cx,cy,0,cx,cy,12*pul);
+    cg.addColorStop(0,'rgba('+sxA+',0.9)');cg.addColorStop(0.4,'rgba('+sxA+',0.25)');cg.addColorStop(1,'transparent');
+    ctx.fillStyle=cg;ctx.beginPath();ctx.arc(cx,cy,12*pul,0,7);ctx.fill();
+    // update orbiting tags
+    ORB.forEach((o,i)=>{
       o.life-=o.lSpd;
-      if(o.life<=0){o.life=1.0;o.pOff=(Math.random()-0.5)*0.3;}
-      const p=o.life;            // 1=outer, 0=center
-      const r=(W*0.44)*p;
-      // Archimedean spiral angle — shrinks as p→0, wraps around spiral arms
-      const angle=v.dir*(p*turns*Math.PI*2+o.pOff)+t*v.dir*(v.baseSpeed*0.3);
-      const ex=r*Math.cos(angle),ey=r*Math.sin(angle)*v.squash;
+      o.ang+=o.spin*(v.baseSpeed)* (0.6+ (1-o.life)*1.4);  // spins faster as it falls inward
+      if(o.life<=0.04){
+        // respawn on the constellation rim
+        const home=anchors[i%anchors.length];
+        o.life=0.96+Math.random()*0.04;
+        o.ang=Math.atan2(home.y-cy,home.x-cx)+(Math.random()*0.6-0.3);
+        o.rad=Math.max(0.16,Math.min(0.74,Math.hypot(home.x-cx,home.y-cy)/(W*0.5)));
+        o.tilt=Math.random()*Math.PI;
+      }
+      const rr=o.rad*o.life*(W*0.5);
+      const ex=Math.cos(o.ang)*rr, ey=Math.sin(o.ang)*rr*o.ecc;
+      const ct=Math.cos(o.tilt),st=Math.sin(o.tilt);
+      const px=cx+ex*ct-ey*st, py=cy+ex*st+ey*ct;
+      // trailing glow dot on canvas
+      const col=hexToRgb(pal[i]);
+      const dg=ctx.createRadialGradient(px,py,0,px,py,7);
+      dg.addColorStop(0,'rgba('+col[0]+','+col[1]+','+col[2]+','+(o.life*0.6).toFixed(2)+')');dg.addColorStop(1,'transparent');
+      ctx.fillStyle=dg;ctx.beginPath();ctx.arc(px,py,7,0,7);ctx.fill();
+      // the tag label
+      o.tw+=0.02;
+      const flk=0.55+0.45*Math.sin(o.tw*o.twSpd);
       const el=tagEls[i];
-      el.style.left=(cx+ex*cosT-ey*sinT)+'px';
-      el.style.top=(cy+ex*sinT+ey*cosT)+'px';
-      el.style.fontSize=Math.max(10,10+p*8)+'px';
-      el.style.opacity=Math.min(1,p*2.6+0.05).toFixed(2);
+      el.style.left=px+'px';el.style.top=py+'px';
+      el.style.fontSize=Math.max(9,9+o.life*8)+'px';
+      // fade fully as it reaches the core (vanish), flicker like a star
+      el.style.opacity=(Math.min(1,o.life*2.2)*flk).toFixed(2);
     });
     spiralRAF=requestAnimationFrame(step);
   }
