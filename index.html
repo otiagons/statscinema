@@ -49,8 +49,7 @@
 <style>
 :root{--bg:#000000;--panel:#0c0c0e;--p2:#141418;--line:#26262b;--ink:#f4f0e6;--mut:#9a958c;--dim:#5f5b54;
 --gold:#1ec98a;--gold2:#13a06c;--cyan:#ff2e43;--rose:#ff6a1f;--blue:#2f7bff;--purple:#8a3ff0;--magenta:#ff3d9a;
---acc1:#1ec98a;--acc2:#ff2e43;
---star-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M12 2l3 6.5 7 .9-5 4.8 1.3 7L12 17.8 5.4 21.2 6.7 14.2 1.7 9.4l7-.9z'/%3E%3C/svg%3E")}
+--acc1:#1ec98a;--acc2:#ff2e43}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Arial,sans-serif;font-size:15px;line-height:1.4}
 .wrap{max-width:680px;margin:0 auto;padding:0 13px;padding-bottom:env(safe-area-inset-bottom)}
@@ -175,6 +174,8 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 @keyframes animspin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.anim-toggle.on svg{animation:none}}
 .ctr{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:7px;cursor:pointer;transition:border-color .15s,transform .12s}
+.flag-fb{display:inline-flex;align-items:center;justify-content:center;color:var(--dim);vertical-align:middle;flex:none}
+.cflag-img{border-radius:0;box-shadow:none;display:block;width:100%;height:auto}
 .ctr:active{transform:scale(.99)}
 .ctr:hover{border-color:color-mix(in srgb,var(--acc1) 45%,var(--line))}
 .ctr-head{display:flex;align-items:center;gap:9px}
@@ -182,7 +183,7 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .flag{border-radius:3px;display:block;height:auto;box-shadow:0 0 0 1px rgba(255,255,255,.10);flex:none}
 .ctr-nm{flex:1;font-weight:700;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ctr-ct{font-size:12px;color:var(--mut);white-space:nowrap}
-.ctr-ct .sstar{display:inline-block;width:9px;height:9px;margin-left:1px;background:var(--acc1);-webkit-mask:var(--star-mask) center/contain no-repeat;mask:var(--star-mask) center/contain no-repeat;vertical-align:-1px}
+
 .ctr-arr{flex:none;width:14px;height:14px;border-right:2px solid var(--dim);border-top:2px solid var(--dim);transform:rotate(45deg);margin-left:2px;opacity:.6}
 .ctr-thumbs{display:flex;gap:5px;margin-top:9px;padding-left:27px}
 .ctr-th{width:38px;height:57px;border-radius:5px;object-fit:cover;background:var(--p2);flex:none}
@@ -386,8 +387,9 @@ function countryBreakdown(viewTab){
 
   if(viewTab==='films'||viewTab==='genre'){
     const P={};
-    fl.forEach(r=>{const c=(r.co||[])[0];if(!c)return;
-      P[c]=P[c]||{n:0,rated:[],all:[],gMap:{}};P[c].n++;P[c].all.push(r);
+    fl.forEach(r=>{const raw=(r.co&&(Array.isArray(r.co)?r.co[0]:r.co))||'';if(!raw)return;
+      const c=normalizeKey(raw)||raw;  // normalize to ISO or original
+      P[c]=P[c]||{n:0,rated:[],all:[],gMap:{},disp:displayCountry(raw)};P[c].n++;P[c].all.push(r);
       if(r.r!=null)P[c].rated.push(r);
       (r.gids||[]).forEach(id=>{const g=GENRES[id];if(g)P[c].gMap[g]=(P[c].gMap[g]||0)+1;});});
     const arr=Object.entries(P).sort((a,b)=>b[1].n-a[1].n).slice(0,30);
@@ -401,7 +403,7 @@ function countryBreakdown(viewTab){
       if(viewTab==='genre'){
         chips=Object.entries(v.gMap).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([g,gn])=>'<span class="ctr-chip">'+g+' · '+gn+'</span>').join('');
       }
-      return '<div class="ctr" data-c="'+c+'"><div class="ctr-head"><span class="ctr-rk">'+(idx+1)+'</span>'+flagImg(c,26)+'<span class="ctr-nm">'+countryName(c)+'</span><span class="ctr-ct">'+fmt(v.n)+' filmes'+(avg?' · '+avg+'<span class="sstar"></span>':'')+'</span><span class="ctr-arr"></span></div><div class="ctr-thumbs">'+thumbs+'</div>'+(chips?'<div class="ctr-chips">'+chips+'</div>':'')+'</div>';
+      return '<div class="ctr" data-c="'+c+'"><div class="ctr-head"><span class="ctr-rk">'+(idx+1)+'</span>'+flagImg(c,26)+'<span class="ctr-nm">'+(v.disp||displayCountry(c))+'</span><span class="ctr-ct">'+fmt(v.n)+' filmes'+(avg?' · '+avg+'<span style="color:var(--gold)">★</span>':'')+'</span><span class="ctr-arr"></span></div><div class="ctr-thumbs">'+thumbs+'</div>'+(chips?'<div class="ctr-chips">'+chips+'</div>':'')+'</div>';
     }).join('');
   }
 
@@ -411,10 +413,10 @@ function countryBreakdown(viewTab){
   const byC={};
   persons.forEach(person=>{
     const cc={};
-    person.f.forEach(f=>{const cached=cache[key(f.t,f.y)];const c=cached&&(cached.co||[])[0];if(c)cc[c]=(cc[c]||0)+1;});
+    person.f.forEach(f=>{const cached=cache[key(f.t,f.y)];const raw=cached&&(Array.isArray(cached.co)?cached.co[0]:cached.co);if(raw){const nk=normalizeKey(raw)||raw;cc[nk]=(cc[nk]||0)+1;}});
     const prim=Object.entries(cc).sort((a,b)=>b[1]-a[1])[0];
     if(!prim)return;const c=prim[0];
-    byC[c]=byC[c]||{persons:[]};byC[c].persons.push(person);});
+    byC[c]=byC[c]||{persons:[],disp:displayCountry(c)};byC[c].persons.push(person);});
   const arr2=Object.entries(byC).sort((a,b)=>b[1].persons.length-a[1].persons.length).slice(0,30);
   if(!arr2.length)return noData;
   const lbl=viewTab==='dir'?'diretores':viewTab==='actor'?'atores':'atrizes';
@@ -422,7 +424,7 @@ function countryBreakdown(viewTab){
     const top3=[...v.persons].sort((a,b)=>b.f.length-a.f.length).slice(0,3);
     const thumbs=top3.map(p=>faceThumb(p.pic,p.n)).join('');
     const names=top3.map(p=>'<span class="ctr-chip">'+p.n+' · '+p.f.length+'f</span>').join('');
-    return '<div class="ctr" data-c="'+c+'"><div class="ctr-head"><span class="ctr-rk">'+(idx+1)+'</span>'+flagImg(c,26)+'<span class="ctr-nm">'+countryName(c)+'</span><span class="ctr-ct">'+v.persons.length+' '+lbl+'</span><span class="ctr-arr"></span></div><div class="ctr-thumbs">'+thumbs+'</div><div class="ctr-chips">'+names+'</div></div>';
+    return '<div class="ctr" data-c="'+c+'"><div class="ctr-head"><span class="ctr-rk">'+(idx+1)+'</span>'+flagImg(c,26)+'<span class="ctr-nm">'+(v.disp||displayCountry(c))+'</span><span class="ctr-ct">'+v.persons.length+' '+lbl+'</span><span class="ctr-arr"></span></div><div class="ctr-thumbs">'+thumbs+'</div><div class="ctr-chips">'+names+'</div></div>';
   }).join('');
 }
 
@@ -544,26 +546,53 @@ function palette(n){const[c1,c2]=ACCENTS[bio.accent||'vertigo'];if(n<=1)return[c
 const THEME_SPIRAL={vertigo:'films',verde:'genre',vermelho:'dir',sonho:'actress',neon:'actor'};
 function applyAccent(){const a=bio.accent||'vertigo';const[c1,c2]=ACCENTS[a];document.documentElement.style.setProperty('--acc1',c1);document.documentElement.style.setProperty('--acc2',c2);const enc=s=>s.replace(/#/g,'%23');const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23000'/><path d='M 4 16 A 12 7.5 0 0 1 28 16' stroke='${enc(c1)}' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M 28 16 A 12 7.5 0 0 1 4 16' stroke='${enc(c2)}' stroke-width='3' fill='none' stroke-linecap='round'/><circle cx='16' cy='16' r='2.3' fill='%23f4f0e6'/></svg>`;const lnk=document.querySelector('link[rel="icon"][type="image/svg+xml"]');if(lnk)lnk.href='data:image/svg+xml,'+svg;}
 // ── 5 constelações reais mapeiam os 5 temas ──
-const CONSTEL={
-  orion:{name:'Órion',stars:[[0.3,0.12],[0.68,0.16],[0.22,0.42],[0.46,0.48],[0.42,0.52],[0.38,0.56],[0.3,0.82],[0.62,0.8],[0.5,0.5]],lines:[[0,2],[0,3],[1,3],[1,7],[2,6],[3,4],[4,5],[5,6],[3,7]]},
-  cassiopeia:{name:'Cassiopeia',stars:[[0.12,0.4],[0.3,0.62],[0.5,0.38],[0.7,0.64],[0.88,0.42]],lines:[[0,1],[1,2],[2,3],[3,4]]},
-  ursa:{name:'Ursa Maior',stars:[[0.14,0.58],[0.3,0.64],[0.46,0.62],[0.6,0.54],[0.74,0.42],[0.86,0.5],[0.72,0.6]],lines:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,3]]},
-  cygnus:{name:'Cygnus',stars:[[0.5,0.1],[0.5,0.4],[0.5,0.62],[0.5,0.88],[0.22,0.46],[0.78,0.34]],lines:[[0,1],[1,2],[2,3],[4,1],[1,5]]},
-  scorpius:{name:'Scorpius',stars:[[0.2,0.14],[0.32,0.2],[0.44,0.26],[0.52,0.4],[0.54,0.56],[0.5,0.7],[0.6,0.8],[0.74,0.78],[0.8,0.66]],lines:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8]]}
+// ── 5 GALÁXIAS — uma por categoria de favoritos ──
+const GALAXY_VARIANTS={
+  films:  {arms:2,turns:2.5,squash:0.65,rot:0.09,nS:22,core:0.13,dir:1},
+  dir:    {arms:2,turns:3.0,squash:0.55,rot:0.07,nS:26,core:0.11,dir:-1},
+  actor:  {arms:3,turns:2.0,squash:0.70,rot:0.13,nS:18,core:0.15,dir:1},
+  actress:{arms:2,turns:3.2,squash:0.46,rot:0.06,nS:30,core:0.10,dir:-1},
+  genre:  {arms:4,turns:1.8,squash:0.74,rot:0.11,nS:15,core:0.16,dir:1}
 };
-// cada categoria de favoritos => uma constelação + ritmo orbital próprio
-const SPIRAL_VARIANTS={
-  films:  {constel:'orion',     dir:1, baseSpeed:0.16,inwardSpeed:1.0},
-  dir:    {constel:'cassiopeia',dir:-1,baseSpeed:0.22,inwardSpeed:0.8},
-  actor:  {constel:'cygnus',    dir:1, baseSpeed:0.28,inwardSpeed:1.3},
-  actress:{constel:'scorpius',  dir:-1,baseSpeed:0.18,inwardSpeed:0.9},
-  genre:  {constel:'ursa',      dir:1, baseSpeed:0.20,inwardSpeed:1.1}
-};
-// ISO 3166-1 alpha-2 → nome PT-BR (cobre os principais países do TMDB)
+// Mapas ISO ↔ nomes (suporta dados antigos no formato "XX,Nome" e novos "XX")
 const ISO_NAME={US:'Estados Unidos',GB:'Reino Unido',FR:'França',DE:'Alemanha',IT:'Itália',JP:'Japão',BR:'Brasil',ES:'Espanha',KR:'Coreia do Sul',SE:'Suécia',AR:'Argentina',MX:'México',CA:'Canadá',PL:'Polônia',DK:'Dinamarca',AU:'Austrália',IE:'Irlanda',BE:'Bélgica',PT:'Portugal',SU:'União Soviética',RU:'Rússia',AT:'Áustria',NL:'Holanda',CN:'China',RO:'Romênia',IN:'Índia',TW:'Taiwan',IR:'Irã',GR:'Grécia',CZ:'Tchéquia',HK:'Hong Kong',CH:'Suíça',NO:'Noruega',FI:'Finlândia',HU:'Hungria',TR:'Turquia',IS:'Islândia',NZ:'Nova Zelândia',CL:'Chile',CO:'Colômbia',TH:'Tailândia',ZA:'África do Sul',IL:'Israel',UA:'Ucrânia',YU:'Iugoslávia',CU:'Cuba',PH:'Filipinas',EG:'Egito',ID:'Indonésia',VN:'Vietnã',SG:'Singapura',MA:'Marrocos',BG:'Bulgária',RS:'Sérvia',HR:'Croácia',LU:'Luxemburgo',EE:'Estônia',LT:'Lituânia',LV:'Letônia',SK:'Eslováquia',SI:'Eslovênia'};
-function countryName(iso){return ISO_NAME[iso]||iso;}
-function flagUrl(iso){const c=(iso||'').toLowerCase();return c?'https://flagcdn.com/w80/'+c+'.png':'';}
-function flagImg(iso,sz){sz=sz||22;const u=flagUrl(iso);return u?'<img class="flag" src="'+u+'" alt="'+countryName(iso)+'" width="'+sz+'" loading="lazy"/>':'';}
+// TMDB full English name → ISO (para dados antigos que guardam o nome completo)
+const TMDB_TO_ISO={'United States of America':'US','United States':'US','United Kingdom':'GB','France':'FR','Germany':'DE','Italy':'IT','Japan':'JP','Brazil':'BR','Spain':'ES','South Korea':'KR','Sweden':'SE','Argentina':'AR','Mexico':'MX','Canada':'CA','Poland':'PL','Denmark':'DK','Australia':'AU','Ireland':'IE','Belgium':'BE','Portugal':'PT','Soviet Union':'SU','Russia':'RU','Austria':'AT','Netherlands':'NL','China':'CN','Romania':'RO','India':'IN','Taiwan':'TW','Iran':'IR','Greece':'GR','Czech Republic':'CZ','Czechia':'CZ','Hong Kong':'HK','Switzerland':'CH','Norway':'NO','Finland':'FI','Hungary':'HU','Turkey':'TR','Iceland':'IS','New Zealand':'NZ','Chile':'CL','Colombia':'CO','Thailand':'TH','South Africa':'ZA','Israel':'IL','Ukraine':'UA','Yugoslavia':'YU','Cuba':'CU','Philippines':'PH','Egypt':'EG','Indonesia':'ID','Vietnam':'VN','Singapore':'SG','Morocco':'MA','Bulgaria':'BG','Serbia':'RS','Croatia':'HR','Luxembourg':'LU','Estonia':'EE','Lithuania':'LT','Latvia':'LV','Slovakia':'SK','Slovenia':'SI','West Germany':'DE'};
+// Extrai ISO de qualquer formato: "GB", "GB,United Kingdom", "United Kingdom"
+function extractIso(c){
+  if(!c)return'';
+  const t=c.trim();
+  if(t.length<=3&&/^[A-Z]+$/i.test(t))return t.toUpperCase();
+  const cm=t.indexOf(',');
+  if(cm>0&&cm<=3)return t.slice(0,cm).toUpperCase();
+  return TMDB_TO_ISO[t]||'';
+}
+// Nome para exibição em PT-BR
+function displayCountry(c){
+  if(!c)return'';
+  const iso=extractIso(c);
+  if(iso&&ISO_NAME[iso])return ISO_NAME[iso];
+  const cm=c.indexOf(',');
+  if(cm>0)return c.slice(cm+1).trim();
+  return c;
+}
+// Chave normalizada (ISO) para agrupamento
+function normalizeKey(c){return extractIso(c)||c;}
+// Imagem de bandeira com fallback SVG (sem emoji)
+const GLOBE_ICON='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 2.5 15.4 0 18M12 3c-2.5 2.6-2.5 15.4 0 18"/></svg>';
+function flagImg(c,sz){
+  sz=sz||22;
+  const iso=extractIso(c);
+  if(!iso)return'<span class="flag-fb" style="width:'+sz+'px">'+GLOBE_ICON+'</span>';
+  const fb='this.onerror=null;this.style.display=\'none\';this.insertAdjacentHTML(\'afterend\',\'<span class=\"flag-fb\" style=\"width:'+sz+'px\">'+GLOBE_ICON.replace(/'/g,"\'")+'</span>\')';
+  return'<img class="flag" src="https://flagcdn.com/w80/'+iso.toLowerCase()+'.png" width="'+sz+'" loading="lazy" onerror="'+fb+'" alt="'+displayCountry(c)+'"/>';
+}
+function flagImgLarge(c,w){
+  const iso=extractIso(c);
+  if(!iso)return'<div class="cflag-ph"></div>';
+  const fb='this.onerror=null;this.style.display=\'none\';this.insertAdjacentHTML(\'afterend\',\'<div class=\"cflag-ph\"></div>\')';
+  return'<img class="flag cflag-img" src="https://flagcdn.com/w160/'+iso.toLowerCase()+'.png" width="'+w+'" loading="lazy" onerror="'+fb+'" alt="'+displayCountry(c)+'"/>';
+}
 let bio=(()=>{try{return JSON.parse(localStorage.getItem('cs_bio'))||{};}catch(e){return {};}})();
 function saveBio(){try{localStorage.setItem('cs_bio',JSON.stringify(bio));}catch(e){}}
 let curFav=0;
@@ -586,7 +615,11 @@ function openGenre(g){const fl=films().filter(r=>(r.gids||[]).some(id=>(GENRES[i
   $('#sheet').innerHTML=`<div class="top"><div style="width:92px;height:138px;border-radius:8px;background:linear-gradient(135deg,var(--acc1),var(--acc2));display:flex;align-items:center;justify-content:center"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 4v5M12 4v5M17 4v5M7 9v11M12 9v11M17 9v11" opacity="0.55"/></svg></div><div><h3>${g}</h3><div class="yr"><b>${fl.length}</b> filmes${avg!=null?' · média '+star(+avg.toFixed(2)):''}</div>${bf?`<div class="yr" style="margin-top:6px">Melhor: <b style="color:var(--gold)">${bf.t}</b> ${star(bf.r)}</div>`:''}</div></div><div class="lbl">Mais bem avaliados</div><div class="mini">${mini}</div>`;
   $('#modal').classList.add('show');}
 async function openCountry(c){
-  const all=films().filter(r=>(r.co||[]).includes(c));
+  // normalise: match by exact key OR ISO code OR display name (handles old/new data formats)
+  const isoC=extractIso(c)||c,nameC=displayCountry(c);
+  const all=films().filter(r=>{const co=r.co;if(!co)return false;
+    const coArr=Array.isArray(co)?co:[co];
+    return coArr.some(x=>x===c||x===isoC||normalizeKey(x)===isoC||displayCountry(x)===nameC);});
   const fl=all.map(r=>({t:r.ti||r.t,y:+(r.ye||r.y),r:r.r,p:r.po}));
   const rd=fl.filter(f=>f.r!=null);
   const avg=rd.length?rd.reduce((s,f)=>s+f.r,0)/rd.length:null;
@@ -596,7 +629,7 @@ async function openCountry(c){
   const gMap={};all.forEach(r=>(r.gids||[]).forEach(id=>{const g=GENRES[id];if(g)gMap[g]=(gMap[g]||0)+1;}));
   const topGen=Object.entries(gMap).sort((a,b)=>b[1]-a[1]).slice(0,4);
   const{mini,bf}=personDetail({fl});
-  const flag=flagImg(c,72);
+  const flag=flagImgLarge(c,92);
   const stat=(lbl,val)=>'<div class="cstat"><div class="cstat-v">'+val+'</div><div class="cstat-l">'+lbl+'</div></div>';
   const stats=
     stat('Filmes',fmt(all.length))+
@@ -604,7 +637,7 @@ async function openCountry(c){
     (topDec?stat('Década-pico',topDec[0]+'s'):'')+
     (bf?stat('Melhor nota',star(bf.r)):'');
   const genChips=topGen.length?'<div class="lbl">Gêneros mais frequentes</div><div class="ctr-chips" style="padding:0 14px 4px">'+topGen.map(([g,n])=>'<span class="ctr-chip">'+g+' · '+n+'</span>').join('')+'</div>':'';
-  $('#sheet').innerHTML='<div class="top"><div class="cflag-wrap">'+(flag||'<div class="cflag-ph"></div>')+'</div><div><h3>'+countryName(c)+'</h3><div class="yr"><b>'+all.length+'</b> filmes vistos'+(avg!=null?' · média '+star(+avg.toFixed(2)):'')+'</div>'+(bf?'<div class="yr" style="margin-top:6px">Destaque: <b style="color:var(--gold)">'+bf.t+'</b> '+star(bf.r)+'</div>':'')+'</div></div>'+
+  $('#sheet').innerHTML='<div class="top"><div class="cflag-wrap">'+(flag||'<div class="cflag-ph"></div>')+'</div><div><h3>'+displayCountry(c)+'</h3><div class="yr"><b>'+all.length+'</b> filmes vistos'+(avg!=null?' · média '+star(+avg.toFixed(2)):'')+'</div>'+(bf?'<div class="yr" style="margin-top:6px">Destaque: <b style="color:var(--gold)">'+bf.t+'</b> '+star(bf.r)+'</div>':'')+'</div></div>'+
     '<div class="cstats">'+stats+'</div>'+
     genChips+
     '<div class="lbl">Mais bem avaliados</div><div class="mini">'+mini+'</div>'+
@@ -619,135 +652,157 @@ function renderSpiral(items,cat){
   const host=$('#spiral');if(!host)return;
   stopSpiralAnim();
   cat=cat||bio.cat||'films';
-  const v=SPIRAL_VARIANTS[cat]||SPIRAL_VARIANTS.films;
-  const con=CONSTEL[v.constel]||CONSTEL.orion;
+  const v=GALAXY_VARIANTS[cat]||GALAXY_VARIANTS.films;
   const W=host.clientWidth||320,H=Math.round(W*1.05);
   host.style.height=H+'px';
   const cx=W/2,cy=H/2;
-  const animate=bio.animate!==false;
-  const[c1,c2]=ACCENTS[bio.accent||'vertigo'];
-  const sx=hexToRgb(c1),sxA=sx[0]+','+sx[1]+','+sx[2];
-  const sx2=hexToRgb(c2),sxB=sx2[0]+','+sx2[1]+','+sx2[2];
-  // tags = top-N names, capped to a legible count
   const n=Math.min(items.length,14);
   const pal=palette(n);
-  // Map constellation star anchor points into pixel space (used as the home layout)
-  const pad=0.12;
-  const anchors=con.stars.map(s=>({
-    x:(pad+ s[0]*(1-2*pad))*W,
-    y:(pad+ s[1]*(1-2*pad))*H
-  }));
+  const animate=bio.animate!==false;
+  const[c1,c2]=ACCENTS[bio.accent||'vertigo'];
+  const r1=hexToRgb(c1),r2=hexToRgb(c2);
+  const s1=r1[0]+','+r1[1]+','+r1[2];
+  const s2=r2[0]+','+r2[1]+','+r2[2];
+
   host.innerHTML='';
   const cvs=document.createElement('canvas');
   cvs.width=W;cvs.height=H;
-  cvs.style.cssText='position:absolute;inset:0;pointer-events:none;border-radius:12px';
+  cvs.style.cssText='position:absolute;inset:0;border-radius:12px;pointer-events:none';
   host.appendChild(cvs);
   const ctx=cvs.getContext('2d');
-  // Tag buttons (the orbiting "named stars")
+
+  // Planet label buttons
   const tagEls=items.slice(0,n).map((e,i)=>{
     const b=document.createElement('button');
-    b.className='tag';b.textContent=e.label;
-    b.style.color=pal[i];b.style.zIndex=n-i;
+    b.className='tag';b.textContent=e.label;b.style.color=pal[i];b.style.zIndex=n-i;
     b.onclick=()=>openEntity(e);
     host.appendChild(b);return b;
   });
 
-  // ── STATIC MODE: tags rest on the constellation skeleton ──
-  if(!animate){
-    // draw constellation lines + base stars
+  // ── Galaxy drawing function (called each frame) ──
+  function drawGalaxy(t){
     ctx.clearRect(0,0,W,H);
-    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,W*0.55);
-    g.addColorStop(0,'rgba('+sxA+',0.10)');g.addColorStop(1,'transparent');
-    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-    ctx.strokeStyle='rgba('+sxA+',0.28)';ctx.lineWidth=1;
-    con.lines.forEach(([a,b])=>{ctx.beginPath();ctx.moveTo(anchors[a].x,anchors[a].y);ctx.lineTo(anchors[b].x,anchors[b].y);ctx.stroke();});
-    con.stars.forEach((_,i)=>{const a=anchors[i];ctx.beginPath();ctx.arc(a.x,a.y,2,0,7);ctx.fillStyle='rgba(244,240,230,0.7)';ctx.fill();});
-    // place tags on anchors (cycle if more tags than stars)
+    const ga=t*v.rot;  // global galaxy rotation angle
+
+    // Outer ambient halo
+    const halo=ctx.createRadialGradient(cx,cy,0,cx,cy,W*0.56);
+    halo.addColorStop(0,'rgba('+s1+',0.10)');halo.addColorStop(0.45,'rgba('+s2+',0.04)');halo.addColorStop(1,'transparent');
+    ctx.fillStyle=halo;ctx.fillRect(0,0,W,H);
+
+    // Spiral arms — many overlapping thin strokes create the dense galactic look
+    for(let arm=0;arm<v.arms;arm++){
+      const base=arm/v.arms*Math.PI*2;
+      const armCol=arm%2===0?s1:s2;
+      for(let stroke=0;stroke<v.nS;stroke++){
+        const sr=stroke/v.nS;
+        const angOff=(sr-0.5)*0.32;
+        const op=((1-sr)*0.18+0.012).toFixed(3);
+        const lw=(0.4+(1-sr)*0.9).toFixed(2);
+        ctx.beginPath();let first=true;
+        for(let s=2;s<=72;s++){
+          const p=s/72;
+          const th=ga+base+angOff+p*v.turns*Math.PI*2;
+          const r=p*W*0.44;
+          const x=cx+r*Math.cos(th),y=cy+r*Math.sin(th)*v.squash;
+          if(first){ctx.moveTo(x,y);first=false;}else ctx.lineTo(x,y);
+        }
+        ctx.strokeStyle='rgba('+armCol+','+op+')';
+        ctx.lineWidth=+lw;ctx.stroke();
+      }
+    }
+
+    // Core bar glow (elongated, squashed like a galactic bulge)
+    const coreR=W*v.core;
+    ctx.save();
+    const sy=v.squash*0.45;
+    ctx.transform(1,0,0,sy,0,cy*(1-sy));
+    const cg=ctx.createRadialGradient(cx,cy/sy,0,cx,cy/sy,coreR*3);
+    cg.addColorStop(0,'rgba('+s1+',0.55)');cg.addColorStop(0.4,'rgba('+s1+',0.18)');cg.addColorStop(1,'transparent');
+    ctx.fillStyle=cg;ctx.fillRect(0,0,W,H/sy+1);
+    ctx.restore();
+
+    // Bright nucleus point
+    const nc=ctx.createRadialGradient(cx,cy,0,cx,cy,coreR*0.55);
+    nc.addColorStop(0,'rgba(248,246,236,0.98)');nc.addColorStop(0.4,'rgba('+s1+',0.80)');nc.addColorStop(1,'transparent');
+    ctx.fillStyle=nc;ctx.fillRect(0,0,W,H);
+  }
+
+  // ── Static mode: galaxy + fixed planet positions ──
+  if(!animate){
+    drawGalaxy(0);
     items.slice(0,n).forEach((_,i)=>{
-      const a=anchors[i%anchors.length];
+      const t=i/Math.max(1,n-1);
+      const r=(0.10+t*0.36)*W*0.5;
+      const angle=i/n*Math.PI*2;
       const el=tagEls[i];
-      el.style.left=a.x+'px';el.style.top=a.y+'px';
-      el.style.fontSize='12px';el.style.opacity='0.96';
+      el.style.left=(cx+r*Math.cos(angle))+'px';
+      el.style.top=(cy+r*Math.sin(angle)*v.squash)+'px';
+      el.style.fontSize='11px';el.style.opacity='0.92';
     });
     return;
   }
 
-  // ── ANIMATED MODE: orbit → fall → vanish at the core ──
-  // Background twinkling field
-  const FIELD=Array.from({length:46},()=>({
-    x:Math.random()*W,y:Math.random()*H,r:0.3+Math.random()*0.9,
-    ba:0.06+Math.random()*0.26,ph:Math.random()*7,spd:0.4+Math.random()*1.8
+  // ── Background star field (50 twinkling stars) ──
+  const STARS=Array.from({length:50},()=>({
+    x:Math.random()*W,y:Math.random()*H,r:0.2+Math.random()*1.0,
+    a:0.05+Math.random()*0.22,ph:Math.random()*7,spd:0.3+Math.random()*1.5
   }));
-  // Persistent constellation skeleton stars (slowly drift/twinkle) used to draw lines
-  const SKEL=anchors.map((a,i)=>({bx:a.x,by:a.y,ph:Math.random()*7,amp:2+Math.random()*3}));
-  // Each tag = orbiting body on an elliptical path collapsing toward center
-  const dirArr=[1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1];
-  const ORB=Array.from({length:n},(_,i)=>{
-    const home=anchors[i%anchors.length];
-    const baseAng=Math.atan2(home.y-cy,home.x-cx);
-    const baseRad=Math.hypot(home.x-cx,home.y-cy)/(W*0.5); // 0..~0.7
+
+  // ── Planet (tag) orbital parameters ──
+  // Keplerian-ish: inner planets orbit faster, slight ellipticity
+  const ORBS=Array.from({length:n},(_,i)=>{
+    const t=i/Math.max(1,n-1);
+    const R=0.10+t*0.37;  // orbital radius (fraction of W/2)
+    const dir=i%5!==3?v.dir:-v.dir;  // ~1 retrograde per 5
     return{
-      ang:baseAng+(Math.random()*0.6-0.3),
-      rad:Math.max(0.16,Math.min(0.74,baseRad+(Math.random()*0.12-0.06))),
-      life:0.55+Math.random()*0.45,          // 1=outer, 0=core
-      lSpd:(0.0035+Math.random()*0.0045)*(v.inwardSpeed||1),
-      spin:v.dir*(0.5+Math.random()*0.8),
-      ecc:0.55+Math.random()*0.30,           // ellipse squash
-      tilt:Math.random()*Math.PI,            // ellipse rotation
-      tw:Math.random()*7,twSpd:1.4+Math.random()*3.6
+      R, ang:i/n*Math.PI*2+(Math.random()-0.5)*0.6,
+      spd:dir*(v.rot*7)/Math.sqrt(R+0.01)*(0.82+Math.random()*0.36),
+      ecc:0.04+Math.random()*0.11,  // orbital ellipticity
+      incl:(Math.random()-0.5)*0.28  // plane tilt
     };
   });
+
   const t0=performance.now();
+  let lastNow=null;
+
   function step(now){
     const t=(now-t0)/1000;
-    ctx.clearRect(0,0,W,H);
-    // nebular core glow (drifts subtly)
-    const nx=cx+Math.sin(t*0.16)*W*0.05,ny=cy+Math.cos(t*0.13)*H*0.05;
-    const gg=ctx.createRadialGradient(nx,ny,0,nx,ny,W*0.54);
-    gg.addColorStop(0,'rgba('+sxA+',0.12)');gg.addColorStop(0.5,'rgba('+sxB+',0.05)');gg.addColorStop(1,'transparent');
-    ctx.fillStyle=gg;ctx.fillRect(0,0,W,H);
-    // background star field
-    FIELD.forEach(s=>{const tw=0.4+0.6*Math.sin(s.ph+t*s.spd);
-      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,7);ctx.fillStyle='rgba(244,240,230,'+(s.ba*tw).toFixed(2)+')';ctx.fill();});
-    // constellation skeleton (gentle drift) + connecting lines
-    const sp=SKEL.map(s=>({x:s.bx+Math.sin(s.ph+t*0.5)*s.amp,y:s.by+Math.cos(s.ph+t*0.4)*s.amp}));
-    ctx.strokeStyle='rgba('+sxA+',0.16)';ctx.lineWidth=0.8;
-    con.lines.forEach(([a,b])=>{ctx.beginPath();ctx.moveTo(sp[a].x,sp[a].y);ctx.lineTo(sp[b].x,sp[b].y);ctx.stroke();});
-    sp.forEach(p=>{const tw=0.5+0.5*Math.sin(t*1.5+p.x);ctx.beginPath();ctx.arc(p.x,p.y,1.4,0,7);ctx.fillStyle='rgba(244,240,230,'+(0.4*tw+0.2).toFixed(2)+')';ctx.fill();});
-    // pulsing core (where stars vanish)
-    const pul=0.7+0.3*Math.sin(t*2.2);
-    const cg=ctx.createRadialGradient(cx,cy,0,cx,cy,12*pul);
-    cg.addColorStop(0,'rgba('+sxA+',0.9)');cg.addColorStop(0.4,'rgba('+sxA+',0.25)');cg.addColorStop(1,'transparent');
-    ctx.fillStyle=cg;ctx.beginPath();ctx.arc(cx,cy,12*pul,0,7);ctx.fill();
-    // update orbiting tags
-    ORB.forEach((o,i)=>{
-      o.life-=o.lSpd;
-      o.ang+=o.spin*(v.baseSpeed)* (0.6+ (1-o.life)*1.4);  // spins faster as it falls inward
-      if(o.life<=0.04){
-        // respawn on the constellation rim
-        const home=anchors[i%anchors.length];
-        o.life=0.96+Math.random()*0.04;
-        o.ang=Math.atan2(home.y-cy,home.x-cx)+(Math.random()*0.6-0.3);
-        o.rad=Math.max(0.16,Math.min(0.74,Math.hypot(home.x-cx,home.y-cy)/(W*0.5)));
-        o.tilt=Math.random()*Math.PI;
-      }
-      const rr=o.rad*o.life*(W*0.5);
-      const ex=Math.cos(o.ang)*rr, ey=Math.sin(o.ang)*rr*o.ecc;
-      const ct=Math.cos(o.tilt),st=Math.sin(o.tilt);
-      const px=cx+ex*ct-ey*st, py=cy+ex*st+ey*ct;
-      // trailing glow dot on canvas
+    const dt=lastNow?Math.min((now-lastNow)/1000,0.033):0.016;
+    lastNow=now;
+
+    // Draw galaxy background
+    drawGalaxy(t);
+
+    // Twinkling stars
+    STARS.forEach(s=>{
+      const tw=0.5+0.5*Math.sin(s.ph+t*s.spd);
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,7);
+      ctx.fillStyle='rgba(244,240,230,'+(s.a*tw).toFixed(2)+')';ctx.fill();
+    });
+
+    // Update planet orbits
+    ORBS.forEach((o,i)=>{
+      o.ang+=o.spd*dt;
+      const r=o.R*W*0.5*(1+o.ecc*Math.cos(o.ang*2));
+      const x=cx+r*Math.cos(o.ang);
+      const y=cy+r*Math.sin(o.ang)*v.squash*Math.cos(o.incl);
+      // Depth cue: back half dimmer/smaller (pseudo-3D orbit)
+      const depth=Math.sin(o.ang)*v.squash*Math.cos(o.incl); // -squash..+squash
+      const ahead=depth>0;
+      // Planet glow dot on canvas
       const col=hexToRgb(pal[i]);
-      const dg=ctx.createRadialGradient(px,py,0,px,py,7);
-      dg.addColorStop(0,'rgba('+col[0]+','+col[1]+','+col[2]+','+(o.life*0.6).toFixed(2)+')');dg.addColorStop(1,'transparent');
-      ctx.fillStyle=dg;ctx.beginPath();ctx.arc(px,py,7,0,7);ctx.fill();
-      // the tag label
-      o.tw+=0.02;
-      const flk=0.55+0.45*Math.sin(o.tw*o.twSpd);
+      const pg=ctx.createRadialGradient(x,y,0,x,y,7);
+      pg.addColorStop(0,'rgba('+col[0]+','+col[1]+','+col[2]+','+(0.6+depth*0.3).toFixed(2)+')');
+      pg.addColorStop(1,'transparent');
+      ctx.fillStyle=pg;ctx.beginPath();ctx.arc(x,y,7,0,7);ctx.fill();
+      ctx.beginPath();ctx.arc(x,y,2,0,7);
+      ctx.fillStyle='rgba('+col[0]+','+col[1]+','+col[2]+',0.9)';ctx.fill();
+      // Tag label
       const el=tagEls[i];
-      el.style.left=px+'px';el.style.top=py+'px';
-      el.style.fontSize=Math.max(9,9+o.life*8)+'px';
-      // fade fully as it reaches the core (vanish), flicker like a star
-      el.style.opacity=(Math.min(1,o.life*2.2)*flk).toFixed(2);
+      el.style.left=x+'px';el.style.top=y+'px';
+      el.style.fontSize=Math.max(10,11+depth*2.5)+'px';
+      el.style.opacity=Math.max(0.40,(0.72+depth*0.38)).toFixed(2);
+      el.style.zIndex=Math.round(20+(depth+1.5)*12+i);
     });
     spiralRAF=requestAnimationFrame(step);
   }
