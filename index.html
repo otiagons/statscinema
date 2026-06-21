@@ -224,6 +224,23 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .post-lb img{max-width:88%;max-height:88vh;border-radius:10px;object-fit:contain;pointer-events:none}
 .dist-v{display:flex;align-items:flex-end;gap:2px;height:64px}
 .dist-vc{flex:1;min-height:2px;border-radius:2px 2px 0 0;background:linear-gradient(0deg,var(--acc2),var(--acc1))}
+/* ── Recomendações ── */
+.reco-ctx{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:0 0 14px;font-size:13px;color:var(--mut);line-height:1.4}
+.reco-ctx b{color:var(--ink)}
+.reco-vibes{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+.reco-vibe{border:1px solid var(--line);background:var(--panel);color:var(--mut);border-radius:20px;padding:8px 13px;font-size:13px;font-weight:700;cursor:pointer;transition:border-color .15s,color .15s}
+.reco-vibe:active,.reco-vibe.on{border-color:var(--acc1);color:var(--acc1);background:rgba(30,201,138,.08)}
+.reco-card{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
+.reco-card:last-child{border-bottom:none}
+.reco-card img,.reco-card .reco-ph{width:56px;height:84px;border-radius:6px;object-fit:cover;background:var(--p2);flex:none;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:11px;font-weight:700}
+.reco-info{flex:1;min-width:0}
+.reco-title{font-weight:800;font-size:14px;margin:0 0 2px;line-height:1.2}
+.reco-meta{font-size:11.5px;color:var(--mut);margin-bottom:4px}
+.reco-why{font-size:11.5px;color:var(--acc1);font-weight:600}
+.reco-score{font-size:11px;color:var(--dim);margin-top:3px}
+.reco-spin{text-align:center;padding:32px 0;color:var(--mut);font-size:13px}
+.reco-btn-wrap{margin:14px 0 0}
+.reco-empty{color:var(--dim);text-align:center;padding:28px;font-size:13px;line-height:1.5}
 </style></head><body>
 <div class="wrap">
   <header>
@@ -302,6 +319,12 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 <div class="over" id="shareOver">
   <div class="oh"><h2>Compartilhar</h2><button class="icon-btn" id="shareClose">✕</button></div>
   <div class="ob" id="shareOb"></div>
+</div>
+
+<!-- RECOMENDAR -->
+<div class="over" id="recoOver">
+  <div class="oh"><h2>Recomendar agora</h2><button class="icon-btn" id="recoClose">✕</button></div>
+  <div class="ob" id="recoOb"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -798,6 +821,7 @@ function renderBio(){
   $('#animToggle').onclick=()=>{const cur=bio.speed??2;bio.speed=(cur+1)%4;bio.animate=bio.speed>0;saveBio();renderBio();};
   $('#bioEditBtn').onclick=openBioEdit;
   $('#shareBtn').onclick=()=>openShareCard(null);
+  if($('#recoBtn'))$('#recoBtn').onclick=openReco;
   $$('.favslot').forEach(el=>el.onclick=()=>{const i=+el.dataset.fav;const k=(bio.favs||[])[i];if(k&&cache[k])openFilm(k);else openFavPicker(i);});
   $$('.blrow').forEach(el=>el.onclick=()=>openEntity(ents[+el.dataset.i]));
   requestAnimationFrame(()=>renderSpiral(ents,cat));
@@ -819,6 +843,7 @@ function renderFavRes(q){const nq=norm(q);let list=films();if(nq)list=list.filte
   $$('#favRes .sr').forEach(el=>el.onclick=()=>{bio.favs=bio.favs||[];bio.favs[curFav]=el.dataset.k;saveBio();$('#favOver').classList.remove('show');if($('#bioEdit').classList.contains('show'))bioFavSlots($('#bioFavs'));renderBio();});}
 $('#favClose').onclick=()=>$('#favOver').classList.remove('show');
 $('#shareClose').onclick=()=>$('#shareOver').classList.remove('show');
+$('#recoClose').onclick=()=>$('#recoOver').classList.remove('show');
 $('#favIn').oninput=e=>renderFavRes(e.target.value);
 
 
@@ -842,26 +867,173 @@ function computeStats(){
 function statsBioHTML(){
   if(!films().length)return'';
   const st=computeStats();
-  const genT=st.topGenre?(st.topGenre.length>10?st.topGenre.slice(0,10)+'\u2026':st.topGenre):'—';
-  const cntT=st.countries?fmt(st.countries):'—';
+  const genT=st.topGenre?(st.topGenre.length>10?st.topGenre.slice(0,10)+'\u2026':st.topGenre):'\u2014';
+  const avgT=st.avg!=null?(st.avg.toFixed(2).replace('.',',')+' \u2605'):'\u2014';
   const maxD=Math.max(1,...Object.values(st.dist));
-  const vbars=Object.entries(st.dist).map(([v,n])=>'<div class="dist-vc" style="height:'+Math.max(3,Math.round(n/maxD*58))+'px" title="'+String(v).replace('.',',')+'\u2605"></div>').join('');
-  return'<span class="eyb" style="margin-top:16px">Estatísticas</span>'
+  const distRows=Object.entries(st.dist)
+    .sort((a,b)=>+b[0]-+a[0])
+    .filter(([,n])=>n>0)
+    .map(([v,n])=>{
+      const lbl=String(v).replace('.',',');
+      const pct=Math.round(n/maxD*100);
+      return '<div class="drow"><span class="dlbl">'+lbl+'</span>'
+        +'<div class="dbar"><div class="dfill" style="width:'+pct+'%"></div></div>'
+        +'<span class="dct">'+n+'</span></div>';
+    }).join('');
+  return'<span class="eyb" style="margin-top:16px">Estat\u00edsticas</span>'
     +'<div class="strow" style="grid-template-columns:repeat(3,1fr)">'
       +'<div class="stbox"><div class="sv">'+fmt(st.total)+'</div><div class="sl">filmes</div></div>'
       +'<div class="stbox"><div class="sv" style="font-size:11px">'+genT+'</div><div class="sl">g\u00eanero fav.</div></div>'
-      +'<div class="stbox"><div class="sv">'+cntT+'</div><div class="sl">pa\u00edses</div></div>'
+      +'<div class="stbox"><div class="sv">'+avgT+'</div><div class="sl">nota m\u00e9dia</div></div>'
     +'</div>'
-    +'<div style="display:flex;align-items:center;gap:8px;margin:8px 0 4px">'
-      +'<span style="color:var(--gold);font-size:13px;flex:none">\u2605</span>'
-      +'<div class="dist-v">'+vbars+'</div>'
-      +'<span style="color:var(--gold);font-size:11px;flex:none">\u2605\u2605\u2605\u2605\u2605</span>'
-    +'</div>';
+    +'<div class="dist-chart">'+distRows+'</div>'
+    +'<button class="btn sec" id="recoBtn" style="margin:10px 0 2px;font-size:13px">\u2728 Recomendar um filme agora</button>';
 }
 
 /* ── CARD GENERATOR ── */
 let _sfKey=null,_sfType='retrato';
 const _CW=540,_CH=960,_CS=2; // canvas 1080×1920, preview em 540×960
+
+/* ── RECOMENDAÇÕES ── */
+const VIBE_CFG = {
+  terror:  {label:'😱 Terror',   genres:[27],        lang:null,  note:'Terror e suspense'},
+  noir:    {label:'🕵️ Noir/Crime',genres:[80,53],    lang:null,  note:'Crime e thriller'},
+  arte:    {label:'🎭 Arte/Drama',genres:[18,36,9648],lang:null,  note:'Drama e cinema de arte'},
+  queer:   {label:'🌈 Queer',    genres:[18,10749],  lang:null,  note:'Cinema LGBTQ+'},
+  scifi:   {label:'🚀 Sci-fi',   genres:[878,14],    lang:null,  note:'Ficção científica e fantasia'},
+  brasil:  {label:'🇧🇷 Cinema BR',genres:[18,28,80], lang:'pt',  note:'Cinema nacional'},
+  surpresa:{label:'✨ Surpresa', genres:null,         lang:null,  note:'Baseado no seu perfil'},
+};
+
+function _recoContext(){
+  const now=new Date();
+  const dow=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][now.getDay()];
+  const h=now.getHours();
+  let periodo,suggest;
+  if(h>=0&&h<6){periodo='madrugada';suggest='terror ou cult';}
+  else if(h<12){periodo='manhã';suggest='drama ou comédia';}
+  else if(h<18){periodo='tarde';suggest='qualquer gênero';}
+  else{periodo='noite';suggest='thriller ou drama intenso';}
+  // dia da semana
+  const d=now.getDay();
+  let dayNote='';
+  if(d===0)dayNote='Domingo — ideal para algo especial ou double feature';
+  else if(d===6)dayNote='Sábado — bom para drama intenso ou crime';
+  else dayNote='Dia de semana — algo que prenda do início ao fim';
+  return {dow,h,periodo,suggest,dayNote,d};
+}
+
+function _recoTopGenreIds(){
+  const gmap={};
+  films().forEach(r=>{
+    if(r.r==null||!r.gids)return;
+    r.gids.forEach(id=>{
+      gmap[id]=gmap[id]||{sum:0,cnt:0};
+      gmap[id].sum+=r.r; gmap[id].cnt++;
+    });
+  });
+  return Object.entries(gmap)
+    .map(([id,{sum,cnt}])=>({id:+id,score:(sum/cnt)*Math.log1p(cnt)}))
+    .sort((a,b)=>b.score-a.score)
+    .slice(0,3)
+    .map(x=>x.id);
+}
+
+function _dayBoostGenres(d,h){
+  // domingo / sábado noite → terror/drama; semana → drama/thriller
+  if(d===0)return[27,18,878]; // domingo: terror, drama, scifi
+  if(d===6)return[18,80,53];  // sábado: drama, crime, thriller
+  if(h>=22)return[27,53,9648];// madrugada: terror, thriller, mistério
+  return[18,53,9648];
+}
+
+async function _fetchRecos(vibe){
+  const cfg=VIBE_CFG[vibe];
+  if(!cfg)return[];
+  const ctx=_recoContext();
+  // Gêneros: vibe > perfil > dia
+  let genreIds=cfg.genres;
+  if(!genreIds){
+    const top=_recoTopGenreIds();
+    const dayBoost=_dayBoostGenres(ctx.d,ctx.h);
+    genreIds=[...new Set([...dayBoost,...top])].slice(0,3);
+  }
+  // IDs já vistos
+  const seenIds=new Set(films().filter(r=>r.id).map(r=>r.id));
+  const seenTitles=new Set(films().map(r=>norm(r.t)));
+  const results=[];
+  for(let page=1;page<=5&&results.length<8;page++){
+    const params={
+      with_genres:genreIds.join(','),
+      sort_by:'vote_average.desc',
+      'vote_count.gte':500,
+      'vote_average.gte':7.0,
+      page,
+      language:'pt-BR',
+      'without_genres':'10751,16', // sem família nem animação (a não ser que escolhido)
+    };
+    if(cfg.lang)params['with_original_language']=cfg.lang;
+    if(vibe==='brasil'){delete params['without_genres'];}
+    if(vibe==='arte')params['vote_average.gte']=7.5;
+    const j=await tmdb('/discover/movie',params);
+    if(!j||!j.results)break;
+    for(const m of j.results){
+      if(seenIds.has(m.id))continue;
+      if(seenTitles.has(norm(m.title||''))||seenTitles.has(norm(m.original_title||'')))continue;
+      results.push(m);
+      if(results.length>=6)break;
+    }
+  }
+  return results.slice(0,5);
+}
+
+function _recoCardHtml(m,vibeCfg){
+  const po=m.poster_path?'<img src="'+IMG+'/w92'+m.poster_path+'" loading="lazy"/>'
+    :'<div class="reco-ph">'+initials(m.title||'?')+'</div>';
+  const yr=(m.release_date||'').slice(0,4);
+  const genNames=(m.genre_ids||[]).slice(0,3).map(id=>GENRES[id]).filter(Boolean).join(' · ');
+  const score=m.vote_average?m.vote_average.toFixed(1):'—';
+  const ov=(m.overview||'').slice(0,120)+(m.overview&&m.overview.length>120?'…':'');
+  return '<div class="reco-card">'
+    +po
+    +'<div class="reco-info">'
+      +'<div class="reco-title">'+m.title+(yr?' ('+yr+')':'')+'</div>'
+      +(genNames?'<div class="reco-meta">'+genNames+'</div>':'')
+      +(ov?'<div class="reco-score" style="color:var(--mut)">'+ov+'</div>':'')
+      +'<div class="reco-score">★ '+score+' no TMDB · <span style="color:var(--acc1)">'+vibeCfg.note+'</span></div>'
+    +'</div></div>';
+}
+
+async function _runReco(vibe){
+  const ob=$('#recoOb');if(!ob)return;
+  const cfg=VIBE_CFG[vibe];
+  ob.querySelector('#recoVibeArea').querySelectorAll('.reco-vibe').forEach(b=>b.classList.toggle('on',b.dataset.v===vibe));
+  const resultsEl=ob.querySelector('#recoResults');
+  resultsEl.innerHTML='<div class="reco-spin">Buscando filmes no TMDB…<br><br>🎬</div>';
+  const movies=await _fetchRecos(vibe);
+  if(!movies.length){
+    resultsEl.innerHTML='<div class="reco-empty">Não encontrei títulos novos para esse filtro. Tente outra vibe!</div>';
+    return;
+  }
+  resultsEl.innerHTML=movies.map(m=>_recoCardHtml(m,cfg)).join('');
+}
+
+function openReco(){
+  const ctx=_recoContext();
+  const ob=$('#recoOb');if(!ob)return;
+  const vibeHtml=Object.entries(VIBE_CFG).map(([k,v])=>
+    '<button class="reco-vibe" data-v="'+k+'">'+v.label+'</button>'
+  ).join('');
+  ob.innerHTML=
+    '<div class="reco-ctx"><b>'+ctx.dow+', '+ctx.periodo+'</b><br>'+ctx.dayNote+'</div>'
+    +'<div id="recoVibeArea" class="reco-vibes">'+vibeHtml+'</div>'
+    +'<div id="recoResults"><div class="reco-empty">Escolha uma vibe acima para ver recomendações personalizadas.</div></div>';
+  ob.querySelector('#recoVibeArea').onclick=e=>{
+    const b=e.target.closest('.reco-vibe');
+    if(b)_runReco(b.dataset.v);
+  };
+  $('#recoOver').classList.add('show');
+}
 
 function _lastFilm(){const fl=films().filter(r=>r.r!=null);if(!fl.length)return null;return fl.sort((a,b)=>(b.ts||0)-(a.ts||0)||(+(b.ye||b.y))-(+(a.ye||a.y))||b.r-a.r)[0];}
 async function _shareCard(){const cv=$('#sfCanvas');if(!cv)return;const btn=$('#sfShare');if(btn){btn.textContent='Gerando\u2026';btn.disabled=true;}cv.toBlob(async blob=>{if(btn){btn.textContent='\u2197 Compartilhar';btn.disabled=false;}if(!blob)return;const file=new File([blob],'cinestats.png',{type:'image/png'});if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'CineStats'});}catch(e){if(e.name!=='AbortError')toast('Erro ao compartilhar');}}else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cinestats.png';a.click();}},'image/png');}
