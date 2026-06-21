@@ -432,7 +432,7 @@ function countryBreakdown(viewTab){
 function renderFilms(){
   if(fView==='country'){
     const body=countryBreakdown('films');
-    $('#view').innerHTML=`<div class="controls"><div class="seg"><button data-s="rt" id="fSortBack">Nota</button><button data-s="yr" id="">Ano</button><button data-s="az" id="">A–Z</button></div><button class="chip on" id="fCPais">País</button></div><div style="margin-top:8px">${body}</div><div class="note">Top 30 países de produção principal · fonte TMDB</div>`;
+    $('#view').innerHTML=`<div class="controls"><div class="seg"><button data-s="rt" id="fSortBack">Nota</button><button data-s="yr" id="">Ano</button><button data-s="az" id="">A–Z</button></div><button class="chip on" id="fCPais">${GLOBE_SVG} País</button></div><div style="margin-top:8px">${body}</div><div class="note">Top 30 países de produção principal · fonte TMDB</div>`;
     $('#fCPais').onclick=()=>{fView='list';renderFilms();};
     $$('.ctr').forEach(el=>el.onclick=()=>openCountry(el.dataset.c));
     return;
@@ -447,7 +447,7 @@ function renderFilms(){
   const ctrl=`<div class="controls"><div class="seg" id="pSort">
     ${[['rt','Nota'],['yr','Ano'],['az','A–Z'],['rnd','Aleatório']].map(([s,l])=>`<button data-s="${s}" class="${pSort===s?'on':''}">${l}</button>`).join('')}
     </div><div class="chips" id="pDec"><button class="chip ${pDec==null?'on':''}" data-d="all">Todas</button>${decs.map(d=>`<button class="chip ${pDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>
-    <button class="chip" id="fCPais">País</button></div>`;
+    <button class="chip" id="fCPais">${GLOBE_SVG} País</button></div>`;
   const cells=list.map(x=>{const r=x.rec;const po=(r&&r.po)?`<img loading="lazy" src="${IMG}/w185${r.po}"/>`:`<div class="ph">${x.t}<br><span style="opacity:.6">(${x.y})</span></div>`;
     return `<div class="po" data-k="${(x.t+'|'+x.y).replace(/"/g,'&quot;')}">${po}${x.r!=null?`<span class="rt">${star(x.r)}</span>`:''}</div>`;}).join('');
   $('#view').innerHTML=ctrl+`<div class="grid">${cells}</div><div class="note">${fmt(list.length)} filmes${pDec!=null?' nos '+pDec+'s':''}. Toque num pôster para ver elenco e direção.</div>`;
@@ -474,7 +474,7 @@ function renderRanking(){
   if(rView==='country'){
     const body=countryBreakdown(tab);
     const lbl=tab==='dir'?'Diretores':tab==='actor'?'Atores':'Atrizes';
-    $('#view').innerHTML=`<div class="controls"><div class="seg"><button data-s="all">Geral</button><button data-s="dec">Década</button><button data-s="yr">Ano</button></div><button class="chip on" id="rCPais">País</button></div><div style="margin-top:8px">${body}</div><div class="note">Países agrupados pela produção dos filmes (fonte: TMDB).</div>`;
+    $('#view').innerHTML=`<div class="controls"><div class="seg"><button data-s="all">Geral</button><button data-s="dec">Década</button><button data-s="yr">Ano</button></div><button class="chip on" id="rCPais">${GLOBE_SVG} País</button></div><div style="margin-top:8px">${body}</div><div class="note">Países agrupados pela produção dos filmes (fonte: TMDB).</div>`;
     $('#rCPais').onclick=()=>{rView='list';renderRanking();};
     $$('.ctr').forEach(el=>el.onclick=()=>openCountry(el.dataset.c));
     return;
@@ -484,7 +484,7 @@ function renderRanking(){
   if(rYr==null&&years.length)rYr=years[0];if(rDec==null&&decs.length)rDec=decs[0];
   const ctrl=`<div class="controls"><div class="seg" id="rScope">
     ${[['all','Geral'],['dec','Década'],['yr','Ano']].map(([s,l])=>`<button data-s="${s}" class="${rScope===s?'on':''}">${l}</button>`).join('')}
-    </div>${rScope==='dec'?`<div class="chips" id="rDec">${decs.map(d=>`<button class="chip ${rDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>`:''}${rScope==='yr'?`<select id="rYr">${years.map(y=>`<option ${y===rYr?'selected':''}>${y}</option>`).join('')}</select>`:''}<button class="chip" id="rCPais">País</button></div>`;
+    </div>${rScope==='dec'?`<div class="chips" id="rDec">${decs.map(d=>`<button class="chip ${rDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>`:''}${rScope==='yr'?`<select id="rYr">${years.map(y=>`<option ${y===rYr?'selected':''}>${y}</option>`).join('')}</select>`:''}<button class="chip" id="rCPais">${GLOBE_SVG} País</button></div>`;
   let body;
   if(!r.length)body=`<div class="empty">Ninguém nesse recorte.</div>`;
   else{
@@ -516,7 +516,7 @@ function renderGenre(){
   if(fl.length<20){$('#view').innerHTML=`<div class="empty">Os gêneros são carregados junto com os pôsteres.<br>Deixe a sincronização avançar e volte aqui.</div>`;return;}
   if(gView==='country'){
     const body=countryBreakdown('genre');
-    $('#view').innerHTML=`<div class="controls"><div class="seg"><button>Mais vistos</button><button>Melhor avaliados</button></div><button class="chip on" id="gCPais">País</button></div><div style="margin-top:8px">${body}</div><div class="note">Top 30 países com gêneros predominantes · fonte TMDB</div>`;
+    $('#view').innerHTML=`<div class="controls"><div class="seg"><button>Mais vistos</button><button>Melhor avaliados</button></div><button class="chip on" id="gCPais">${GLOBE_SVG} País</button></div><div style="margin-top:8px">${body}</div><div class="note">Top 30 países com gêneros predominantes · fonte TMDB</div>`;
     $('#gCPais').onclick=()=>{gView='list';renderGenre();};
     $$('.ctr').forEach(el=>el.onclick=()=>openCountry(el.dataset.c));
     return;
@@ -527,7 +527,7 @@ function renderGenre(){
   if(gSort==='count'){arr.sort((a,b)=>b.n-a.n);note=`Por quantidade de filmes vistos. Gêneros vêm do TMDB (cobertura total: ${fmt(fl.length)} filmes).`;}
   else{arr=arr.filter(x=>x.n>=5&&x.avg!=null);arr.sort((a,b)=>b.avg-a.avg);note='Pela sua nota média, só gêneros com 5+ filmes.';}
   const max=gSort==='count'?Math.max(...arr.map(x=>x.n)):5;
-  const ctrl=`<div class="controls"><div class="seg" id="gSort"><button data-s="count" class="${gSort==='count'?'on':''}">Mais vistos</button><button data-s="avg" class="${gSort==='avg'?'on':''}">Melhor avaliados</button></div><button class="chip" id="gCPais">País</button></div>`;
+  const ctrl=`<div class="controls"><div class="seg" id="gSort"><button data-s="count" class="${gSort==='count'?'on':''}">Mais vistos</button><button data-s="avg" class="${gSort==='avg'?'on':''}">Melhor avaliados</button></div><button class="chip" id="gCPais">${GLOBE_SVG} País</button></div>`;
   const pal=palette(arr.length);
   const bars=arr.map((x,i)=>{const w=gSort==='count'?x.n/max*100:x.avg/5*100;const bc=pal[i];const right=gSort==='count'?`<b>${fmt(x.n)}</b>${x.avg!=null?' · <span class="g">'+star(+x.avg.toFixed(2))+'</span>':''}`:`<span class="g">${star(+x.avg.toFixed(2))}</span> · ${fmt(x.n)}f`;
     return `<div class="barrow"><div class="bn">${x.g}</div><div class="track"><div class="fill" style="width:${w}%;background:linear-gradient(90deg,${bc}99,${bc})"></div></div><div class="bmeta">${right}</div></div>`;}).join('');
@@ -563,29 +563,13 @@ function applyAccent(){
   const[c1,c2]=ACCENTS[a];
   document.documentElement.style.setProperty('--acc1',c1);
   document.documentElement.style.setProperty('--acc2',c2);
-  // theme-color meta (barra do navegador / status bar)
-  const tm=document.querySelector('meta[name="theme-color"]');
-  if(tm)tm.content=c1;
-  // Favicon SVG (aba do navegador)
+  const tm=document.querySelector('meta[name="theme-color"]');if(tm)tm.content=c1;
   const enc=s=>s.replace(/#/g,'%23');
   const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23000'/><path d='M 4 16 A 12 7.5 0 0 1 28 16' stroke='${enc(c1)}' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M 28 16 A 12 7.5 0 0 1 4 16' stroke='${enc(c2)}' stroke-width='3' fill='none' stroke-linecap='round'/><circle cx='16' cy='16' r='2.3' fill='%23f4f0e6'/></svg>`;
-  const lnk=document.querySelector('link[rel="icon"][type="image/svg+xml"]');
-  if(lnk)lnk.href='data:image/svg+xml,'+svg;
-  // Ícone PWA/atalho — gera PNG com as cores do tema via canvas e usa blob URL
-  try{
-    generateIcon(c1,c2).toBlob(blob=>{
-      if(!blob)return;
-      const url=URL.createObjectURL(blob);
-      document.querySelectorAll('link[rel*="apple-touch-icon"]').forEach(l=>{l.href=url;});
-      const i192=document.querySelector('link[rel="icon"][sizes="192x192"]');
-      const i512=document.querySelector('link[rel="icon"][sizes="512x512"]');
-      if(i192)i192.href=url;if(i512)i512.href=url;
-    },'image/png');
-  }catch(e){}
+  const lnk=document.querySelector('link[rel="icon"][type="image/svg+xml"]');if(lnk)lnk.href='data:image/svg+xml,'+svg;
+  try{generateIcon(c1,c2).toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob);document.querySelectorAll('link[rel*="apple-touch-icon"]').forEach(l=>{l.href=url;});const i192=document.querySelector('link[rel="icon"][sizes="192x192"]');const i512=document.querySelector('link[rel="icon"][sizes="512x512"]');if(i192)i192.href=url;if(i512)i512.href=url;},'image/png');}catch(e){}
 }
 // ── ESPIRAL VERTIGO — 5 temas com características visuais distintas ──
-// turns=voltas, squash=achatamento Y, rotSpd=veloc.rotação Hz, dir=sentido,
-// lineW=espessura, totalLines=qtd linhas paralelas, nTags=tags simultâneas
 const SPIRAL_VARIANTS={
   films:   {turns:3.0,squash:0.75,rotSpd:0.055,dir: 1,lineW:1.4,totalLines: 8,nTags:2},
   genre:   {turns:4.5,squash:1.00,rotSpd:0.090,dir:-1,lineW:1.7,totalLines:10,nTags:2},
@@ -617,21 +601,25 @@ function displayCountry(c){
 }
 // Chave normalizada (ISO) para agrupamento
 function normalizeKey(c){return extractIso(c)||c;}
-// Imagem de bandeira — fallback: crachá com código ISO (sem emoji de globo)
+// Imagem de bandeira — onerror chama flagErr() global (sem aspas duplas no atributo)
+function flagErr(img){
+  var iso=img.dataset.iso||'?', lg=img.classList.contains('cflag-img');
+  if(lg){var d=document.createElement('div');d.className='cflag-ph';img.replaceWith(d);}
+  else{var sz=parseInt(img.dataset.sz)||22,fbh=Math.round(sz*0.67),s=document.createElement('span');
+    s.style.cssText='display:inline-flex;align-items:center;justify-content:center;width:'+sz+'px;height:'+fbh+'px;border-radius:3px;background:var(--p2);color:var(--dim);font-size:8px;font-weight:800;flex:none';
+    s.textContent=iso;img.replaceWith(s);}
+}
 function flagImg(c,sz){
   sz=sz||22;
   const iso=extractIso(c);
   const fbh=Math.round(sz*0.67);
-  const badge='<span style="display:inline-flex;align-items:center;justify-content:center;width:'+sz+'px;height:'+fbh+'px;border-radius:3px;background:var(--p2);color:var(--dim);font-size:8px;font-weight:800;flex:none">'+(iso||'?')+'</span>';
-  if(!iso)return badge;
-  const fb='this.onerror=null;this.style.display=\'none\';this.insertAdjacentHTML(\'afterend\',\''+badge.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')'  ;
-  return'<img class="flag" src="https://flagcdn.com/w80/'+iso.toLowerCase()+'.png" width="'+sz+'" loading="lazy" onerror="'+fb+'" alt="'+displayCountry(c)+'"/>';
+  if(!iso)return'<span style="display:inline-flex;align-items:center;justify-content:center;width:'+sz+'px;height:'+fbh+'px;border-radius:3px;background:var(--p2);color:var(--dim);font-size:8px;font-weight:800;flex:none">?</span>';
+  return'<img class="flag" src="https://flagcdn.com/w80/'+iso.toLowerCase()+'.png" width="'+sz+'" data-iso="'+iso+'" data-sz="'+sz+'" loading="lazy" onerror="flagErr(this)" alt="'+displayCountry(c)+'"/>';
 }
 function flagImgLarge(c,w){
   const iso=extractIso(c);
   if(!iso)return'<div class="cflag-ph"></div>';
-  const fb='this.onerror=null;this.style.display=\'none\';this.insertAdjacentHTML(\'afterend\',\'<div class=\"cflag-ph\"></div>\')';
-  return'<img class="flag cflag-img" src="https://flagcdn.com/w160/'+iso.toLowerCase()+'.png" width="'+w+'" loading="lazy" onerror="'+fb+'" alt="'+displayCountry(c)+'"/>';
+  return'<img class="flag cflag-img" src="https://flagcdn.com/w160/'+iso.toLowerCase()+'.png" width="'+w+'" data-iso="'+iso+'" loading="lazy" onerror="flagErr(this)" alt="'+displayCountry(c)+'"/>';
 }
 let bio=(()=>{try{return JSON.parse(localStorage.getItem('cs_bio'))||{};}catch(e){return {};}})();
 function saveBio(){try{localStorage.setItem('cs_bio',JSON.stringify(bio));}catch(e){}}
@@ -709,9 +697,8 @@ function renderSpiral(items,cat){
   host.appendChild(cvs);
   const ctx=cvs.getContext('2d');
 
-  // Slots: cada slot viaja por uma lane dedicada da espiral (do bordo → centro)
-  // A lane é um offset angular distribuído entre as totalLines da espiral
-  const TAG_SPD=0.032;  // progress/s → ~31s de borda ao centro
+  // Cada slot viaja numa lane fixa da espiral (bordo → centro → reinicia)
+  const TAG_SPD=0.032;
   const slots=Array.from({length:v.nTags},(_,i)=>{
     const laneIdx=Math.round(i*v.totalLines/v.nTags)%v.totalLines;
     const itemIdx=i%items.length;
@@ -721,59 +708,42 @@ function renderSpiral(items,cat){
     const btn=document.createElement('button');
     btn.className='tag';
     const item=items[slot.itemIdx];
-    btn.textContent=item.label;
-    btn.style.color=pal[slot.itemIdx%pal.length];
+    btn.textContent=item.label;btn.style.color=pal[slot.itemIdx%pal.length];
     btn.onclick=()=>openEntity(item);
-    host.appendChild(btn);
-    slot.el=btn;
+    host.appendChild(btn);slot.el=btn;
   });
 
-  // Posição de uma tag na espiral: lane fixa + rotação global + progresso inward
   function tagPos(lane,progress,rotAngle){
     const r=maxR*(1-progress*0.97);
     const theta=rotAngle*v.dir+lane*Math.PI*2+progress*v.turns*Math.PI*2;
     return{x:cx+r*Math.cos(theta),y:cy+r*Math.sin(theta)*v.squash};
   }
 
-  // Desenha a ilusão óptica: totalLines espirais paralelas alternando acc1/acc2
   function drawSpiral(rotAngle){
     ctx.clearRect(0,0,W,H);
-    // Brilho ambiente
     const bg=ctx.createRadialGradient(cx,cy,0,cx,cy,maxR*1.05);
-    bg.addColorStop(0,'rgba('+s1+',0.12)');
-    bg.addColorStop(0.45,'rgba('+s2+',0.05)');
-    bg.addColorStop(1,'rgba(0,0,0,0)');
+    bg.addColorStop(0,'rgba('+s1+',0.12)');bg.addColorStop(0.45,'rgba('+s2+',0.05)');bg.addColorStop(1,'rgba(0,0,0,0)');
     ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
-    // Linhas espirais — espaçadas uniformemente para efeito de ilusão óptica
     const STEPS=280;
     for(let li=0;li<v.totalLines;li++){
       const laneOff=(li/v.totalLines)*Math.PI*2;
       const rgb=li%2===0?s1:s2;
       const op=li%2===0?0.34:0.26;
-      ctx.beginPath();
-      let first=true;
+      ctx.beginPath();let first=true;
       for(let s=1;s<=STEPS;s++){
-        const p=s/STEPS;
-        const r=maxR*(1-p*0.97);
+        const p=s/STEPS,r=maxR*(1-p*0.97);
         if(r<2)break;
         const theta=rotAngle*v.dir+laneOff+p*v.turns*Math.PI*2;
-        const x=cx+r*Math.cos(theta);
-        const y=cy+r*Math.sin(theta)*v.squash;
+        const x=cx+r*Math.cos(theta),y=cy+r*Math.sin(theta)*v.squash;
         if(first){ctx.moveTo(x,y);first=false;}else ctx.lineTo(x,y);
       }
-      ctx.strokeStyle='rgba('+rgb+','+op+')';
-      ctx.lineWidth=v.lineW;
-      ctx.stroke();
+      ctx.strokeStyle='rgba('+rgb+','+op+')';ctx.lineWidth=v.lineW;ctx.stroke();
     }
-    // Núcleo central
     const nc=ctx.createRadialGradient(cx,cy,0,cx,cy,maxR*0.10);
-    nc.addColorStop(0,'rgba(248,246,236,0.97)');
-    nc.addColorStop(0.45,'rgba('+s1+',0.55)');
-    nc.addColorStop(1,'rgba(0,0,0,0)');
+    nc.addColorStop(0,'rgba(248,246,236,0.97)');nc.addColorStop(0.45,'rgba('+s1+',0.55)');nc.addColorStop(1,'rgba(0,0,0,0)');
     ctx.fillStyle=nc;ctx.fillRect(0,0,W,H);
   }
 
-  // Modo parado
   if(!animate){
     drawSpiral(0);
     slots.forEach(slot=>{
@@ -785,8 +755,7 @@ function renderSpiral(items,cat){
     return;
   }
 
-  const t0=performance.now();
-  let lastNow=null;
+  const t0=performance.now();let lastNow=null;
   function step(now){
     const dt=lastNow?Math.min((now-lastNow)/1000,0.05):0.016;
     lastNow=now;
@@ -795,22 +764,16 @@ function renderSpiral(items,cat){
     slots.forEach(slot=>{
       slot.progress+=TAG_SPD*dt;
       if(slot.progress>=1){
-        // Tag chegou ao núcleo → reinicia no bordo com próximo item
         slot.progress-=1;
         slot.itemIdx=(slot.itemIdx+v.nTags)%items.length;
         const item=items[slot.itemIdx];
-        slot.el.textContent=item.label;
-        slot.el.onclick=()=>openEntity(item);
+        slot.el.textContent=item.label;slot.el.onclick=()=>openEntity(item);
         slot.el.style.color=pal[slot.itemIdx%pal.length];
       }
-      const p=slot.progress;
-      const pos=tagPos(slot.lane,p,rotAngle);
-      // Fade in no bordo, pleno no meio, fade out no centro
+      const p=slot.progress,pos=tagPos(slot.lane,p,rotAngle);
       const opacity=p<0.08?p/0.08:p>0.83?(1-p)/0.17:1;
-      // Tamanho diminui levemente ao se aproximar do núcleo
       const fs=Math.max(9.5,Math.round(12.5*(1-p*0.30)));
-      slot.el.style.left=pos.x+'px';
-      slot.el.style.top=pos.y+'px';
+      slot.el.style.left=pos.x+'px';slot.el.style.top=pos.y+'px';
       slot.el.style.opacity=Math.max(0,opacity).toFixed(2);
       slot.el.style.fontSize=fs+'px';
       slot.el.style.zIndex=Math.round((1-p)*20+1);
