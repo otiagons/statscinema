@@ -153,8 +153,8 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .bio-grid{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
 .spiralbox{flex:1 1 300px;min-width:270px;isolation:isolate}
 #spiral{position:relative;width:100%;overflow:hidden;background:var(--bg);border-radius:12px}
-.tag{position:absolute;transform:translate(-50%,-50%);background:none;border:none;padding:2px 7px;font-weight:800;white-space:nowrap;cursor:pointer;max-width:46%;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 6px currentColor,0 0 16px currentColor,0 0 34px currentColor;transition:transform .12s;letter-spacing:.01em;font-size:13px}
-.tag:hover,.tag:active{transform:translate(-50%,-50%) scale(1.22);z-index:50!important}
+.tag{position:absolute;transform:translate(-50%,-50%);background:rgba(0,0,0,0.70);border:1.5px solid currentColor;border-radius:20px;padding:3px 10px;font-weight:800;font-size:12px;white-space:nowrap;cursor:pointer;max-width:46%;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 7px currentColor;transition:transform .12s,opacity .08s;letter-spacing:.01em}
+.tag:hover,.tag:active{transform:translate(-50%,-50%) scale(1.18);z-index:50!important}
 .biolist{flex:1 1 230px;position:relative;z-index:1}
 .blrow{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--line);cursor:pointer}
 .blrow .brk{width:20px;color:var(--dim);font-weight:800;font-size:12px;text-align:center}
@@ -170,6 +170,13 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .anim-toggle.on svg{animation:animspin 3s linear infinite}
 @keyframes animspin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.anim-toggle.on svg{animation:none}}
+.ctr{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 13px;margin-bottom:6px}
+.ctr-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ctr-rk{width:20px;color:var(--dim);font-weight:800;font-size:12px;text-align:center;flex:none}
+.ctr-flag{font-size:17px;flex:none}
+.ctr-nm{flex:1;font-weight:700;font-size:13.5px;min-width:80px}
+.ctr-ct{font-size:12px;color:var(--mut);white-space:nowrap}
+.ctr-top{font-size:11.5px;color:var(--dim);margin-top:4px;padding-left:28px;line-height:1.5}
 </style></head><body>
 <div class="wrap">
   <header>
@@ -256,6 +263,7 @@ const IMG='https://image.tmdb.org/t/p';
 const STAR_SVG='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.5 7 .9-5 4.8 1.3 7L12 17.8 5.4 21.2 6.7 14.2 1.7 9.4l7-.9z"/></svg>';
 let KEY=null, cache={}, db=null, tab='bio', busy=false, PEOPLE=null;
 let pSort='rt', pDec=null, rScope='all', rDec=null, rYr=null, gSort='count', expanded={};
+let fView='list', rView='list', gView='list';  // 'list' or 'country'
 
 /* ---------- storage ---------- */
 function getKey(){try{return localStorage.getItem('cs_key');}catch(e){return KEY;}}
@@ -339,8 +347,59 @@ function buildPeople(){const A={},D={};
 function people(){if(!PEOPLE)PEOPLE=buildPeople();return PEOPLE;}
 function decadesOf(){return [...new Set(films().map(r=>Math.floor(r.y/10)*10))].sort((a,b)=>b-a);}
 
+/* ---------- PAÍS (filtro) ---------- */
+function countryBreakdown(viewTab){
+  const fl=films();
+  const noData='<div class="empty">Dados de países ainda em sincronização com o TMDB.<br>Aguarde a sincronização terminar.</div>';
+  if(viewTab==='films'||viewTab==='genre'){
+    const P={};
+    fl.forEach(r=>{
+      const c=(r.co||[])[0];if(!c)return;
+      P[c]=P[c]||{n:0,rated:[],gMap:{}};P[c].n++;
+      if(r.r!=null)P[c].rated.push(r);
+      (r.gids||[]).forEach(id=>{const g=GENRES[id];if(g)P[c].gMap[g]=(P[c].gMap[g]||0)+1;});
+    });
+    const arr=Object.entries(P).sort((a,b)=>b[1].n-a[1].n).slice(0,30);
+    if(!arr.length)return noData;
+    return arr.map(([c,v],idx)=>{
+      const avg=v.rated.length?(v.rated.reduce((s,r)=>s+r.r,0)/v.rated.length).toFixed(1):null;
+      let sub;
+      if(viewTab==='genre'){
+        sub=Object.entries(v.gMap).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([g,n])=>g+' ('+n+')').join(' · ');
+      } else {
+        sub=v.rated.sort((a,b)=>b.r-a.r).slice(0,3).map(r=>r.ti||r.t).join(' · ');
+      }
+      return '<div class="ctr"><div class="ctr-head"><span class="ctr-rk">'+(idx+1)+'</span><span class="ctr-flag">'+countryFlag(c)+'</span><span class="ctr-nm">'+c+'</span><span class="ctr-ct">'+fmt(v.n)+' filmes'+(avg?' · '+avg+'★':'')+'</span></div>'+(sub?'<div class="ctr-top">'+(viewTab==='genre'?'🎭 ':'🎬 ')+sub+'</div>':'')+'</div>';
+    }).join('');
+  }
+  // dir/actor/actress: group by primary country of their films
+  const P2=people();
+  let persons=viewTab==='dir'?P2.D:viewTab==='actor'?P2.A.filter(p=>p.g===2):P2.A.filter(p=>p.g===1);
+  const byC={};
+  persons.forEach(person=>{
+    const cCounts={};
+    person.f.forEach(f=>{const cached=cache[key(f.t,f.y)];const c=cached&&(cached.co||[])[0];if(c)cCounts[c]=(cCounts[c]||0)+1;});
+    const primC=Object.entries(cCounts).sort((a,b)=>b[1]-a[1])[0];
+    if(!primC)return;
+    const c=primC[0];
+    byC[c]=byC[c]||{persons:[],nFilms:0};byC[c].persons.push(person);byC[c].nFilms+=person.f.length;
+  });
+  const arr2=Object.entries(byC).sort((a,b)=>b[1].persons.length-a[1].persons.length).slice(0,30);
+  if(!arr2.length)return noData;
+  const lbl=viewTab==='dir'?'diretores':viewTab==='actor'?'atores':'atrizes';
+  return arr2.map(([c,v],idx)=>{
+    const top3=[...v.persons].sort((a,b)=>b.f.length-a.f.length).slice(0,3).map(p=>p.n+' ('+p.f.length+'f)').join(' · ');
+    return '<div class="ctr"><div class="ctr-head"><span class="ctr-rk">'+(idx+1)+'</span><span class="ctr-flag">'+countryFlag(c)+'</span><span class="ctr-nm">'+c+'</span><span class="ctr-ct">'+v.persons.length+' '+lbl+'</span></div>'+(top3?'<div class="ctr-top">▶ '+top3+'</div>':'')+'</div>';
+  }).join('');
+}
 /* ---------- FILMES ---------- */
 function renderFilms(){
+  if(fView==='country'){
+    const body=countryBreakdown('films');
+    $('#view').innerHTML=`<div class="controls"><div class="seg"><button data-s="rt" id="fSortBack">Nota</button><button data-s="yr" id="">Ano</button><button data-s="az" id="">A–Z</button></div><button class="chip on" id="fCPais">🌍 País</button></div><div style="margin-top:8px">${body}</div><div class="note">Top 30 países de produção principal · fonte TMDB</div>`;
+    $('#fCPais').onclick=()=>{fView='list';renderFilms();};
+    return;
+  }
   let list=films().map(r=>({t:r.t,y:r.y,r:r.r,rec:r}));
   if(pDec!=null)list=list.filter(x=>Math.floor(x.y/10)*10===pDec);
   if(pSort==='rt')list.sort((a,b)=>(b.r||0)-(a.r||0)||b.y-a.y);
@@ -350,12 +409,14 @@ function renderFilms(){
   const decs=decadesOf();
   const ctrl=`<div class="controls"><div class="seg" id="pSort">
     ${[['rt','Nota'],['yr','Ano'],['az','A–Z'],['rnd','Aleatório']].map(([s,l])=>`<button data-s="${s}" class="${pSort===s?'on':''}">${l}</button>`).join('')}
-    </div><div class="chips" id="pDec"><button class="chip ${pDec==null?'on':''}" data-d="all">Todas</button>${decs.map(d=>`<button class="chip ${pDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div></div>`;
+    </div><div class="chips" id="pDec"><button class="chip ${pDec==null?'on':''}" data-d="all">Todas</button>${decs.map(d=>`<button class="chip ${pDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>
+    <button class="chip" id="fCPais">🌍 País</button></div>`;
   const cells=list.map(x=>{const r=x.rec;const po=(r&&r.po)?`<img loading="lazy" src="${IMG}/w185${r.po}"/>`:`<div class="ph">${x.t}<br><span style="opacity:.6">(${x.y})</span></div>`;
     return `<div class="po" data-k="${(x.t+'|'+x.y).replace(/"/g,'&quot;')}">${po}${x.r!=null?`<span class="rt">${star(x.r)}</span>`:''}</div>`;}).join('');
   $('#view').innerHTML=ctrl+`<div class="grid">${cells}</div><div class="note">${fmt(list.length)} filmes${pDec!=null?' nos '+pDec+'s':''}. Toque num pôster para ver elenco e direção.</div>`;
   $('#pSort').onclick=e=>{const b=e.target.closest('button');if(b){pSort=b.dataset.s;renderFilms();}};
   $('#pDec').onclick=e=>{const b=e.target.closest('button');if(b){pDec=b.dataset.d==='all'?null:+b.dataset.d;renderFilms();}};
+  const fcp=$('#fCPais');if(fcp)fcp.onclick=()=>{fView='country';renderFilms();};
   $$('.po').forEach(el=>el.onclick=()=>openFilm(el.dataset.k));
 }
 
@@ -372,12 +433,20 @@ function personDetail(p){
 function renderRanking(){
   const done=films().filter(r=>r.cc).length;
   if(done<20){$('#view').innerHTML=`<div class="empty">Ainda baixando o elenco…<br>Esta aba fica pronta conforme a sincronização avança. Deixe o painel aberto um instante.</div>`;return;}
+  // Country view override
+  if(rView==='country'){
+    const body=countryBreakdown(tab);
+    const lbl=tab==='dir'?'Diretores':tab==='actor'?'Atores':'Atrizes';
+    $('#view').innerHTML=`<div class="controls"><div class="seg"><button data-s="all">Geral</button><button data-s="dec">Década</button><button data-s="yr">Ano</button></div><button class="chip on" id="rCPais">🌍 País</button></div><div style="margin-top:8px">${body}</div><div class="note">Países agrupados pela produção dos filmes (fonte: TMDB).</div>`;
+    $('#rCPais').onclick=()=>{rView='list';renderRanking();};
+    return;
+  }
   const r=rankList(),top=r.slice(0,5),rest=r.slice(5,30);
   const decs=decadesOf(),years=[...new Set(films().map(x=>x.y))].sort((a,b)=>b-a);
   if(rYr==null&&years.length)rYr=years[0];if(rDec==null&&decs.length)rDec=decs[0];
   const ctrl=`<div class="controls"><div class="seg" id="rScope">
     ${[['all','Geral'],['dec','Década'],['yr','Ano']].map(([s,l])=>`<button data-s="${s}" class="${rScope===s?'on':''}">${l}</button>`).join('')}
-    </div>${rScope==='dec'?`<div class="chips" id="rDec">${decs.map(d=>`<button class="chip ${rDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>`:''}${rScope==='yr'?`<select id="rYr">${years.map(y=>`<option ${y===rYr?'selected':''}>${y}</option>`).join('')}</select>`:''}</div>`;
+    </div>${rScope==='dec'?`<div class="chips" id="rDec">${decs.map(d=>`<button class="chip ${rDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>`:''}${rScope==='yr'?`<select id="rYr">${years.map(y=>`<option ${y===rYr?'selected':''}>${y}</option>`).join('')}</select>`:''}<button class="chip" id="rCPais">🌍 País</button></div>`;
   let body;
   if(!r.length)body=`<div class="empty">Ninguém nesse recorte.</div>`;
   else{
@@ -400,24 +469,32 @@ function renderRanking(){
   const rd=$('#rDec');if(rd)rd.onclick=e=>{const b=e.target.closest('button');if(b){rDec=+b.dataset.d;renderRanking();}};
   const ry=$('#rYr');if(ry)ry.onchange=e=>{rYr=+e.target.value;renderRanking();};
   $$('.rw').forEach(el=>el.onclick=()=>{const rk=el.dataset.r;expanded[tab+rk]=!expanded[tab+rk];el.classList.toggle('open');const ex=$(`.exp[data-e="${rk}"]`);if(ex)ex.classList.toggle('show');});
+  const rcp=$('#rCPais');if(rcp)rcp.onclick=()=>{rView='country';renderRanking();};
 }
 
 /* ---------- GÊNERO ---------- */
 function renderGenre(){
   const fl=films().filter(r=>r.gids&&r.gids.length);
   if(fl.length<20){$('#view').innerHTML=`<div class="empty">Os gêneros são carregados junto com os pôsteres.<br>Deixe a sincronização avançar e volte aqui.</div>`;return;}
+  if(gView==='country'){
+    const body=countryBreakdown('genre');
+    $('#view').innerHTML=`<div class="controls"><div class="seg"><button>Mais vistos</button><button>Melhor avaliados</button></div><button class="chip on" id="gCPais">🌍 País</button></div><div style="margin-top:8px">${body}</div><div class="note">Top 30 países com gêneros predominantes · fonte TMDB</div>`;
+    $('#gCPais').onclick=()=>{gView='list';renderGenre();};
+    return;
+  }
   const agg={};fl.forEach(r=>r.gids.forEach(id=>{const g=GENRES[id]||('#'+id);(agg[g]=agg[g]||{n:0,s:0,c:0});agg[g].n++;if(r.r!=null){agg[g].s+=r.r;agg[g].c++;}}));
   let arr=Object.entries(agg).map(([g,v])=>({g,n:v.n,avg:v.c?v.s/v.c:null}));
   let note;
   if(gSort==='count'){arr.sort((a,b)=>b.n-a.n);note=`Por quantidade de filmes vistos. Gêneros vêm do TMDB (cobertura total: ${fmt(fl.length)} filmes).`;}
   else{arr=arr.filter(x=>x.n>=5&&x.avg!=null);arr.sort((a,b)=>b.avg-a.avg);note='Pela sua nota média, só gêneros com 5+ filmes.';}
   const max=gSort==='count'?Math.max(...arr.map(x=>x.n)):5;
-  const ctrl=`<div class="controls"><div class="seg" id="gSort"><button data-s="count" class="${gSort==='count'?'on':''}">Mais vistos</button><button data-s="avg" class="${gSort==='avg'?'on':''}">Melhor avaliados</button></div></div>`;
+  const ctrl=`<div class="controls"><div class="seg" id="gSort"><button data-s="count" class="${gSort==='count'?'on':''}">Mais vistos</button><button data-s="avg" class="${gSort==='avg'?'on':''}">Melhor avaliados</button></div><button class="chip" id="gCPais">🌍 País</button></div>`;
   const pal=palette(arr.length);
   const bars=arr.map((x,i)=>{const w=gSort==='count'?x.n/max*100:x.avg/5*100;const bc=pal[i];const right=gSort==='count'?`<b>${fmt(x.n)}</b>${x.avg!=null?' · <span class="g">'+star(+x.avg.toFixed(2))+'</span>':''}`:`<span class="g">${star(+x.avg.toFixed(2))}</span> · ${fmt(x.n)}f`;
     return `<div class="barrow"><div class="bn">${x.g}</div><div class="track"><div class="fill" style="width:${w}%;background:linear-gradient(90deg,${bc}99,${bc})"></div></div><div class="bmeta">${right}</div></div>`;}).join('');
   $('#view').innerHTML=ctrl+`<div class="bars">${bars}</div><div class="note">${note}</div>`;
   $('#gSort').onclick=e=>{const b=e.target.closest('button');if(b){gSort=b.dataset.s;renderGenre();}};
+  const gcp=$('#gCPais');if(gcp)gcp.onclick=()=>{gView='country';renderGenre();};
 }
 
 /* ---------- BIO ---------- */
@@ -430,12 +507,11 @@ function palette(n){const[c1,c2]=ACCENTS[bio.accent||'vertigo'];if(n<=1)return[c
 const THEME_SPIRAL={vertigo:'films',verde:'genre',vermelho:'dir',sonho:'actress',neon:'actor'};
 function applyAccent(){const a=bio.accent||'vertigo';const[c1,c2]=ACCENTS[a];document.documentElement.style.setProperty('--acc1',c1);document.documentElement.style.setProperty('--acc2',c2);const enc=s=>s.replace(/#/g,'%23');const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23000'/><path d='M 4 16 A 12 7.5 0 0 1 28 16' stroke='${enc(c1)}' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M 28 16 A 12 7.5 0 0 1 4 16' stroke='${enc(c2)}' stroke-width='3' fill='none' stroke-linecap='round'/><circle cx='16' cy='16' r='2.3' fill='%23f4f0e6'/></svg>`;const lnk=document.querySelector('link[rel="icon"][type="image/svg+xml"]');if(lnk)lnk.href='data:image/svg+xml,'+svg;}
 const SPIRAL_VARIANTS={
-  films:  {tilt:-18,dir:1, squash:0.62,baseSpeed:0.18,speedVar:0.10,inwardSpeed:1.0},
-  dir:    {tilt:24, dir:-1,squash:0.68,baseSpeed:0.28,speedVar:0.18,inwardSpeed:0.75},
-  actor:  {tilt:-32,dir:1, squash:0.52,baseSpeed:0.35,speedVar:0.22,inwardSpeed:1.4},
-  actress:{tilt:38, dir:-1,squash:0.60,baseSpeed:0.22,speedVar:0.12,inwardSpeed:0.9},
-  genre:  {tilt:8,  dir:1, squash:0.78,baseSpeed:0.14,speedVar:0.28,inwardSpeed:1.2},
-  country:{tilt:-50,dir:-1,squash:0.48,baseSpeed:0.20,speedVar:0.15,inwardSpeed:0.85}
+  films:  {tilt:-18,dir:1, squash:0.62,baseSpeed:0.18,inwardSpeed:1.0,turns:2.5},
+  dir:    {tilt:24, dir:-1,squash:0.68,baseSpeed:0.28,inwardSpeed:0.75,turns:3.0},
+  actor:  {tilt:-32,dir:1, squash:0.52,baseSpeed:0.36,inwardSpeed:1.4, turns:2.2},
+  actress:{tilt:38, dir:-1,squash:0.60,baseSpeed:0.22,inwardSpeed:0.9, turns:3.5},
+  genre:  {tilt:8,  dir:1, squash:0.78,baseSpeed:0.14,inwardSpeed:1.2, turns:2.8}
 };
 function countryFlag(n){const M={'United States of America':'🇺🇸','France':'🇫🇷','United Kingdom':'🇬🇧','Germany':'🇩🇪','Italy':'🇮🇹','Japan':'🇯🇵','Brazil':'🇧🇷','Spain':'🇪🇸','South Korea':'🇰🇷','Sweden':'🇸🇪','Argentina':'🇦🇷','Mexico':'🇲🇽','Canada':'🇨🇦','Poland':'🇵🇱','Denmark':'🇩🇰','Australia':'🇦🇺','Ireland':'🇮🇪','Belgium':'🇧🇪','Portugal':'🇵🇹','USSR':'🇷🇺','Soviet Union':'🇷🇺','Russia':'🇷🇺','Austria':'🇦🇹','Netherlands':'🇳🇱','China':'🇨🇳','Romania':'🇷🇴','India':'🇮🇳','Taiwan':'🇹🇼','Iran':'🇮🇷','Greece':'🇬🇷','Czech Republic':'🇨🇿'};return M[n]||'🌍';}
 let bio=(()=>{try{return JSON.parse(localStorage.getItem('cs_bio'))||{};}catch(e){return {};}})();
@@ -446,9 +522,6 @@ function entities(cat){
   if(cat==='films')return films().filter(r=>r.r!=null&&r.r>=3).sort((a,b)=>b.r-a.r||b.y-a.y).slice(0,20).map(r=>({kind:'film',ref:key(r.t,r.y),label:r.ti||r.t,sub:star(r.r)}));
   if(cat==='genre'){const P={};films().forEach(r=>(r.gids||[]).forEach(id=>{const g=GENRES[id]||('#'+id);P[g]=(P[g]||0)+1;}));
     return Object.entries(P).filter(([,n])=>n>=m).sort((a,b)=>b[1]-a[1]).slice(0,20).map(([g,n])=>({kind:'genre',ref:g,label:g,sub:n+'f'}));}
-  if(cat==='country'){const P={};films().forEach(r=>(r.co||[]).forEach(c=>{P[c]=(P[c]||0)+1;}));
-    if(!Object.keys(P).length)return[];
-    return Object.entries(P).filter(([,n])=>n>=m).sort((a,b)=>b[1]-a[1]).slice(0,20).map(([c,n])=>({kind:'country',ref:c,label:countryFlag(c)+' '+c,sub:n+'f'}));}
   const P=people();let arr=cat==='dir'?P.D:cat==='actor'?P.A.filter(p=>p.g===2):P.A.filter(p=>p.g===1);
   return arr.filter(p=>p.f.length>=m).sort((a,b)=>b.f.length-a.f.length||a.n.localeCompare(b.n)).slice(0,20).map(p=>({kind:'person',ref:p.id,label:p.n,sub:p.f.length+'f',_p:p}));
 }
@@ -474,9 +547,9 @@ function renderSpiral(items,cat){
   stopSpiralAnim();
   cat=cat||bio.cat||'films';
   const v=SPIRAL_VARIANTS[cat]||SPIRAL_VARIANTS.films;
-  const W=host.clientWidth||320,H=Math.round(W*1.08);
+  const W=host.clientWidth||320,H=Math.round(W*1.05);
   host.style.height=H+'px';
-  const n=Math.min(items.length,20);
+  const n=Math.min(items.length,14);
   const cx=W/2,cy=H/2;
   const pal=palette(n);
   const animate=bio.animate!==false;
@@ -484,13 +557,44 @@ function renderSpiral(items,cat){
   const tilt=v.tilt*Math.PI/180;
   const cosT=Math.cos(tilt),sinT=Math.sin(tilt);
   function rgb(hex){const h=hexToRgb(hex);return h[0]+','+h[1]+','+h[2];}
-  // Build DOM
   host.innerHTML='';
+  // ── Canvas: nebula glow + stars ──
   const cvs=document.createElement('canvas');
   cvs.width=W;cvs.height=H;
   cvs.style.cssText='position:absolute;inset:0;pointer-events:none;border-radius:12px';
   host.appendChild(cvs);
   const ctx=cvs.getContext('2d');
+  // ── SVG: rotating spiral rings ──
+  const NS='http://www.w3.org/2000/svg';
+  const svgEl=document.createElementNS(NS,'svg');
+  svgEl.setAttribute('viewBox','0 0 100 100');
+  svgEl.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none';
+  const NRINGS=7;const radF=d=>d*Math.PI/180;const ringPaths=[];
+  for(let i=0;i<NRINGS;i++){
+    const pr=i/(NRINGS-1);
+    const rx=5+pr*44,ry=rx*v.squash;
+    const dir=(i%2===0)?v.dir:-v.dir;
+    const col=i%2===0?'var(--acc1)':'var(--acc2)';
+    const op=(0.80-pr*0.42).toFixed(2);
+    const sw=(1.5-pr*0.70).toFixed(2);
+    const a0=dir>0?15:195,a1=dir>0?315:-105;
+    const x0=(50+rx*Math.cos(radF(a0))).toFixed(2),y0=(50+ry*Math.sin(radF(a0))).toFixed(2);
+    const x1=(50+rx*Math.cos(radF(a1))).toFixed(2),y1=(50+ry*Math.sin(radF(a1))).toFixed(2);
+    const large=Math.abs(a1-a0)>180?1:0,sweep=dir>0?1:0;
+    const p=document.createElementNS(NS,'path');
+    p.setAttribute('d',`M${x0} ${y0} A${rx.toFixed(2)} ${ry.toFixed(2)} 0 ${large} ${sweep} ${x1} ${y1}`);
+    p.setAttribute('stroke',col);p.setAttribute('stroke-width',sw);
+    p.setAttribute('opacity',op);p.setAttribute('fill','none');p.setAttribute('stroke-linecap','round');
+    p._dir=dir;p._base=v.tilt+i*4;
+    p._spd=(v.baseSpeed*32)*(1+(NRINGS-1-i)*0.22); // inner rings faster
+    svgEl.appendChild(p);ringPaths.push(p);
+  }
+  const nucSvg=document.createElementNS(NS,'circle');
+  nucSvg.setAttribute('cx','50');nucSvg.setAttribute('cy','50');nucSvg.setAttribute('r','2.8');
+  nucSvg.setAttribute('fill','var(--ink)');nucSvg.setAttribute('opacity','0.95');
+  svgEl.appendChild(nucSvg);
+  host.appendChild(svgEl);
+  // ── Tag buttons ──
   const tagEls=items.slice(0,n).map((e,i)=>{
     const b=document.createElement('button');
     b.className='tag';b.textContent=e.label;
@@ -500,117 +604,80 @@ function renderSpiral(items,cat){
   });
   // Static mode
   if(!animate){
-    const ns=Math.min(n,14);
-    items.slice(0,ns).forEach((_,i)=>{
-      const t=i/Math.max(1,ns-1);
-      const r=16+t*W*0.38;
-      const angle=v.dir*(i/ns*Math.PI*3.8);
+    const turns=v.turns||2.5;
+    items.slice(0,n).forEach((_,i)=>{
+      const p=(n>1)?i/(n-1):0.5;
+      const r=(W*0.43)*p;
+      const angle=v.dir*(p*turns*Math.PI*2);
       const ex=r*Math.cos(angle),ey=r*Math.sin(angle)*v.squash;
       const el=tagEls[i];
       el.style.left=(cx+ex*cosT-ey*sinT)+'px';
       el.style.top=(cy+ex*sinT+ey*cosT)+'px';
-      el.style.fontSize=Math.max(9,19-i*0.5)+'px';
-      el.style.opacity=(1-i/ns*0.35).toFixed(2);
+      el.style.fontSize=Math.max(10,10+p*8)+'px';
+      el.style.opacity=(0.4+p*0.6).toFixed(2);
     });
-    const gd=ctx.createRadialGradient(cx,cy,0,cx,cy,W*0.5);
-    gd.addColorStop(0,'rgba('+rgb(c1)+',0.10)');gd.addColorStop(0.5,'rgba('+rgb(c2)+',0.04)');gd.addColorStop(1,'transparent');
+    const gd=ctx.createRadialGradient(cx,cy,0,cx,cy,W*0.52);
+    gd.addColorStop(0,'rgba('+rgb(c1)+',0.13)');gd.addColorStop(1,'transparent');
     ctx.fillStyle=gd;ctx.fillRect(0,0,W,H);
-    ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);
-    ctx.fillStyle='rgba('+rgb(c1)+',0.9)';ctx.fill();
     return;
   }
-  // ── ANIMATED CONSTELLATION MODE ──
-  // 55 twinkling background stars
-  const STARS=Array.from({length:55},()=>({
+  // ── Star particles ──
+  const STARS=Array.from({length:40},()=>({
     x:Math.random()*W,y:Math.random()*H,
-    r:0.3+Math.random()*1.1,ba:0.10+Math.random()*0.38,
-    ph:Math.random()*Math.PI*2,spd:0.4+Math.random()*2.6
+    r:0.3+Math.random()*0.9,ba:0.08+Math.random()*0.28,
+    ph:Math.random()*Math.PI*2,spd:0.5+Math.random()*2.0
   }));
-  // Per-tag orbital state (each tag = a planet being sucked to center)
-  const DIRS=[1,-0.9,1.1,-1,0.85,-1.15,1.05,-0.8,1.2,-0.95,0.75,-1.3,1.0,-0.7,1.25,-1.05,0.9,-1.2,1.15,-0.85];
+  // ── Per-tag orbital state (evenly spaced from center to outer) ──
+  const turns=v.turns||2.5;
   const ORBS=Array.from({length:n},(_,i)=>{
-    const t=i/Math.max(1,n-1);
+    const baseLife=(n>1)?(i/(n-1)):0.5;
     return{
-      ph:i/n*Math.PI*2+(Math.random()-0.5)*1.8,
-      maxR:W*(0.08+t*0.40),
-      life:Math.random(),            // 1=outer edge, 0=center
-      lSpd:(0.005+Math.random()*0.013)*(v.inwardSpeed||1),
-      omega:v.dir*(DIRS[i%20])*(v.baseSpeed+(Math.random()-0.5)*(v.speedVar||0.1)),
-      noise:0.10+Math.random()*0.32,nf:0.3+Math.random()*2.2,
-      sq:v.squash+(Math.random()-0.5)*0.13,
-      tw:Math.random()*Math.PI*2,twSpd:1.2+Math.random()*4.5
+      life:Math.max(0.04,baseLife+(Math.random()*0.06-0.03)),
+      lSpd:(0.004+Math.random()*0.005)*(v.inwardSpeed||1),
+      pOff:(Math.random()-0.5)*0.3
     };
   });
   const start=performance.now();
   function step(now){
     const t=(now-start)/1000;
+    // Canvas: nebula glow
     ctx.clearRect(0,0,W,H);
-    // Drifting primary nebula
-    const nx=cx+Math.sin(t*0.19)*W*0.06,ny=cy+Math.cos(t*0.14)*H*0.07;
-    const g1=ctx.createRadialGradient(nx,ny,0,nx,ny,W*0.54);
-    g1.addColorStop(0,'rgba('+rgb(c1)+',0.09)');g1.addColorStop(0.5,'rgba('+rgb(c2)+',0.04)');g1.addColorStop(1,'transparent');
+    const g1=ctx.createRadialGradient(cx,cy,0,cx,cy,W*0.52);
+    g1.addColorStop(0,'rgba('+rgb(c1)+',0.12)');
+    g1.addColorStop(0.5,'rgba('+rgb(c2)+',0.05)');
+    g1.addColorStop(1,'transparent');
     ctx.fillStyle=g1;ctx.fillRect(0,0,W,H);
-    // Drifting secondary nebula blob
-    const bx=cx-Math.cos(t*0.11)*W*0.16,by=cy-Math.sin(t*0.17)*H*0.13;
-    const g2=ctx.createRadialGradient(bx,by,0,bx,by,W*0.32);
-    g2.addColorStop(0,'rgba('+rgb(c2)+',0.06)');g2.addColorStop(1,'transparent');
-    ctx.fillStyle=g2;ctx.fillRect(0,0,W,H);
-    // Twinkling stars
+    // Stars
     STARS.forEach(s=>{
       const tw=0.4+0.6*Math.sin(s.ph+t*s.spd);
       ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
       ctx.fillStyle='rgba(244,240,230,'+(s.ba*tw).toFixed(2)+')';ctx.fill();
     });
-    // Orbital positions — tags sucked toward nucleus
-    const pos=ORBS.map((o,i)=>{
-      o.life-=o.lSpd;
-      if(o.life<=0){o.life=0.98+Math.random()*0.02;o.ph=Math.random()*Math.PI*2;}
-      const prog=o.life;           // 1=outer, 0=nucleus
-      const r=o.maxR*prog;
-      const angle=o.ph+o.omega*t+o.noise*Math.sin(o.nf*t+i*1.9);
-      const ex=r*Math.cos(angle),ey=r*Math.sin(angle)*o.sq;
-      o.tw+=0.018+Math.random()*0.006;
-      return{x:cx+ex*cosT-ey*sinT,y:cy+ex*sinT+ey*cosT,prog};
+    // SVG: rotate rings (alternating dirs, inner spins faster)
+    ringPaths.forEach(p=>{
+      p.setAttribute('transform',`rotate(${(p._base+p._dir*t*p._spd).toFixed(2)} 50 50)`);
     });
-    // Constellation lines (proximity)
-    for(let i=0;i<pos.length;i++){
-      for(let j=i+1;j<pos.length;j++){
-        const d=Math.hypot(pos[i].x-pos[j].x,pos[i].y-pos[j].y);
-        if(d<W*0.28){
-          const a=(1-d/(W*0.28))*0.14*Math.min(pos[i].prog,pos[j].prog);
-          ctx.beginPath();ctx.moveTo(pos[i].x,pos[i].y);ctx.lineTo(pos[j].x,pos[j].y);
-          ctx.strokeStyle='rgba('+rgb(c1)+','+a.toFixed(2)+')';ctx.lineWidth=0.5;ctx.stroke();
-        }
-      }
-    }
-    // Pulsing nucleus
-    const pulse=0.75+0.25*Math.sin(t*2.3);
-    const nc=ctx.createRadialGradient(cx,cy,0,cx,cy,11*pulse);
-    nc.addColorStop(0,'rgba('+rgb(c1)+',0.95)');nc.addColorStop(0.35,'rgba('+rgb(c1)+',0.3)');nc.addColorStop(1,'transparent');
-    ctx.fillStyle=nc;ctx.beginPath();ctx.arc(cx,cy,11*pulse,0,Math.PI*2);ctx.fill();
-    // Dot markers + tag text update
-    pos.forEach((p,i)=>{
-      const hh=hexToRgb(pal[i]);const rr=hh[0],gg=hh[1],bb=hh[2];
-      // Glowing dot on canvas
-      const dg=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,8);
-      dg.addColorStop(0,'rgba('+rr+','+gg+','+bb+','+(p.prog*0.68).toFixed(2)+')');dg.addColorStop(1,'transparent');
-      ctx.fillStyle=dg;ctx.beginPath();ctx.arc(p.x,p.y,8,0,Math.PI*2);ctx.fill();
-      ctx.beginPath();ctx.arc(p.x,p.y,1.8,0,Math.PI*2);
-      ctx.fillStyle='rgba('+rr+','+gg+','+bb+','+Math.min(1,p.prog*1.8).toFixed(2)+')';ctx.fill();
-      // Tag DOM
+    // Tags: move along spiral arms toward nucleus (sucked in)
+    ORBS.forEach((o,i)=>{
+      o.life-=o.lSpd;
+      if(o.life<=0){o.life=1.0;o.pOff=(Math.random()-0.5)*0.3;}
+      const p=o.life;            // 1=outer, 0=center
+      const r=(W*0.44)*p;
+      // Archimedean spiral angle — shrinks as p→0, wraps around spiral arms
+      const angle=v.dir*(p*turns*Math.PI*2+o.pOff)+t*v.dir*(v.baseSpeed*0.3);
+      const ex=r*Math.cos(angle),ey=r*Math.sin(angle)*v.squash;
       const el=tagEls[i];
-      el.style.left=p.x+'px';el.style.top=p.y+'px';
-      el.style.fontSize=Math.max(9,9+p.prog*10)+'px';
-      // Scintillation flicker
-      const flk=0.5+0.5*Math.sin(ORBS[i].tw*3.8);
-      el.style.opacity=(Math.min(1,p.prog*2.8)*flk).toFixed(2);
+      el.style.left=(cx+ex*cosT-ey*sinT)+'px';
+      el.style.top=(cy+ex*sinT+ey*cosT)+'px';
+      el.style.fontSize=Math.max(10,10+p*8)+'px';
+      el.style.opacity=Math.min(1,p*2.6+0.05).toFixed(2);
     });
     spiralRAF=requestAnimationFrame(step);
   }
   spiralRAF=requestAnimationFrame(step);
 }
 function renderBio(){
-  const cats=[['films','Filmes'],['dir','Diretores'],['actor','Atores'],['actress','Atrizes'],['genre','Gêneros'],['country','Países']];
+  const cats=[['films','Filmes'],['dir','Diretores'],['actor','Atores'],['actress','Atrizes'],['genre','Gêneros']];
   const cat=bio.cat||'films';
   const su=bio.site?bio.site.replace(/^https?:\/\//,''):'';
   const href=bio.site?(/^https?:/.test(bio.site)?bio.site:'https://'+bio.site):'';
