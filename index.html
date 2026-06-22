@@ -58,6 +58,11 @@ header{background:var(--panel);border:1px solid var(--line);border-radius:16px;p
 .logo svg{width:27px;height:27px;flex:none}
 .logo h1{font-size:20px;margin:0;font-weight:800;letter-spacing:-.01em}
 .logo h1 b{color:var(--acc2)}
+.icon-opts{display:flex;gap:8px;margin-top:8px}
+.icon-opt{width:40px;height:40px;border-radius:10px;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;transition:border-color .15s}
+.icon-opt.on{border-color:var(--ink)}
+.icon-opt svg{width:22px;height:22px}
+.set-row{margin:10px 0 4px;font-size:13px;color:var(--mut)}
 .icon-btn{background:var(--panel);border:1px solid var(--line);color:var(--mut);border-radius:9px;width:38px;height:38px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .icon-btn svg{width:18px;height:18px}
 .tabs{position:sticky;top:0;z-index:15;background:rgba(16,17,21,.95);backdrop-filter:blur(8px);display:flex;gap:2px;margin:6px -13px 0;padding:0 13px;border-bottom:1px solid var(--line);overflow-x:auto}
@@ -306,9 +311,12 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
   <input type="file" id="fileIn" accept=".zip,.csv" style="display:none"/>
   <button class="btn sec" id="setResync">Buscar o que falta no TMDB</button>
   <button class="btn sec" id="setKey">Trocar chave do TMDB</button>
+  <button class="btn sec" id="setSaveHTML">Salvar HTML com todos os dados</button>
+  <div class="set-row">Ícone da tela inicial (Add to Home Screen)</div>
+  <div class="icon-opts" id="iconOpts"></div>
   <button class="btn danger" id="setClear">Apagar cache do TMDB</button>
   <button class="btn sec" id="setClose">Fechar</button>
-  <p class="note" style="margin-top:16px">Dados e imagens via TMDB; produto não endossado pelo TMDB. Atualizar filmes mescla o novo export com o que já existe (não apaga histórico).</p>
+  <p class="note" style="margin-top:16px">Dados e imagens via TMDB; produto não endossado pelo TMDB. Atualizar filmes mescla o novo export com o que já existe (não apaga histórico).<br><br>"Salvar HTML" gera um novo arquivo com todos os seus dados embutidos — faça commit no GitHub para garantir backup permanente.<br><br>Avaliações e dados ficam no IndexedDB do navegador. Ao salvar o HTML e fazer commit, os dados ficam gravados no próprio arquivo — nada se perde ao abrir em nova aba ou novo aparelho.</p>
 </div></div>
 
 <!-- BIO EDIT -->
@@ -351,6 +359,67 @@ const key=(t,y)=>t+'|'+y;
 const IMG='https://image.tmdb.org/t/p';
 const STAR_SVG='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.5 7 .9-5 4.8 1.3 7L12 17.8 5.4 21.2 6.7 14.2 1.7 9.4l7-.9z"/></svg>';
 // ícone globo estilizado (herda a cor do tema via currentColor)
+
+// ── Ícones de tela inicial (apple-touch-icon) ─────────────────────────────────
+const _SP1 = 'M25.20 24.00 L25.29 24.12 L25.36 24.25 L25.42 24.40 L25.46 24.56 L25.48 24.73 L25.49 24.91 L25.47 25.10 L25.43 25.29 L25.37 25.48 L25.29 25.67 L25.18 25.86 L25.05 26.04 L24.89 26.21 L24.71 26.37 L24.51 26.51 L24.29 26.64 L24.05 26.75 L23.79 26.83 L23.52 26.89 L23.23 26.92 L22.94 26.92 L22.64 26.90 L22.33 26.84 L22.03 26.75 L21.73 26.62 L21.43 26.47 L21.14 26.28 L20.87 26.06 L20.62 25.81 L20.38 25.53 L20.17 25.22 L19.99 24.88 L19.83 24.53 L19.71 24.15 L19.63 23.75 L19.58 23.34 L19.57 22.92 L19.60 22.49 L19.67 22.05 L19.79 21.62 L19.95 21.20 L20.15 20.78 L20.40 20.38 L20.69 19.99 L21.01 19.63 L21.38 19.30 L21.78 19.00 L22.22 18.73 L22.69 18.50 L23.18 18.31 L23.70 18.17 L24.24 18.08 L24.79 18.03 L25.35 18.04 L25.92 18.10 L26.48 18.22 L27.04 18.39 L27.59 18.62 L28.13 18.90 L28.64 19.23 L29.12 19.61 L29.58 20.05 L29.99 20.52 L30.37 21.05 L30.70 21.61 L30.97 22.21 L31.20 22.84 L31.36 23.49 L31.47 24.17 L31.51 24.86 L31.49 25.56 L31.41 26.27 L31.25 26.97 L31.03 27.66 L30.75 28.33 L30.39 28.99 L29.98 29.61 L29.50 30.20 L28.97 30.75 L28.38 31.26 L27.73 31.71 L27.05 32.10 L26.32 32.43 L25.56 32.70 L24.76 32.89 L23.95 33.02 L23.12 33.07 L22.28 33.04 L21.43 32.93 L20.60 32.74 L19.77 32.48 L18.97 32.13 L18.19 31.71 L17.45 31.22 L16.75 30.65 L16.10 30.02 L15.51 29.32 L14.98 28.56 L14.52 27.75 L14.13 26.90 L13.81 26.00 L13.58 25.07 L13.44 24.12 L13.38 23.15 L13.41 22.17 L13.54 21.19 L13.75 20.21 L14.06 19.25 L14.45 18.32 L14.94 17.42 L15.51 16.56 L16.16 15.75 L16.89 15.00 L17.69 14.31 L18.56 13.69 L19.49 13.16 L20.47 12.70 L21.50 12.34 L22.56 12.07 L23.65 11.90 L24.77 11.82 L25.89 11.85 L27.01 11.99 L28.12 12.23 L29.22 12.57 L30.29 13.02 L31.31 13.56 L32.29 14.20 L33.22 14.94 L34.08 15.76 L34.86 16.66 L35.57 17.64 L36.18 18.69 L36.70 19.79 L37.12 20.95 L37.44 22.15 L37.64 23.38 L37.73 24.63 L37.71 25.89 L37.57 27.15 L37.31 28.41 L36.93 29.64 L36.44 30.84 L35.84 32.00 L35.13 33.10 L34.32 34.15 L33.41 35.11 L32.41 36.00 L31.32 36.80 L30.16 37.50 L28.94 38.09 L27.65 38.57 L26.32 38.93 L24.95 39.17 L23.56 39.28 L22.16 39.27 L20.75 39.13 L19.36 38.86 L17.99 38.45 L16.65 37.93 L15.36 37.27 L14.13 36.50 L12.97 35.61 L11.89 34.62 L10.89 33.52 L10.00 32.33 L9.22 31.06 L8.55 29.71 L8.00 28.30 L7.59 26.84 L7.31 25.34 L7.16 23.81 L7.16 22.26 L7.30 20.72 L7.58 19.18 L8.01 17.67 L8.57 16.19 L9.27 14.77 L10.10 13.41 L11.06 12.12 L12.14 10.93 L13.33 9.82 L14.62 8.83 L16.00 7.96 L17.46 7.21 L19.00 6.60 L20.59 6.12 L22.23 5.80 L23.90 5.62 L25.58 5.60 L27.27 5.73 L28.95 6.01 L30.60 6.46 L32.21 7.05 L33.77 7.79 L35.27 8.68 L36.68 9.70 L38.00 10.86 L39.21 12.13 L40.31 13.52 L41.27 15.01 L42.11 16.59 L42.79 18.25 L43.33 19.97 L43.71 21.74 L43.92 23.54 L43.97 25.37 L43.85 27.20 L43.57 29.02 L43.11 30.82 L42.49 32.57 L41.71 34.27 L40.77 35.90 L39.69 37.44 L38.46 38.88 L37.10 40.21 L35.61 41.41 L34.02 42.48 L32.33 43.40 L30.55 44.16';
+const _SP2 = 'M25.20 24.00 L25.29 23.88 L25.36 23.75 L25.42 23.60 L25.46 23.44 L25.48 23.27 L25.49 23.09 L25.47 22.90 L25.43 22.71 L25.37 22.52 L25.29 22.33 L25.18 22.14 L25.05 21.96 L24.89 21.79 L24.71 21.63 L24.51 21.49 L24.29 21.36 L24.05 21.25 L23.79 21.17 L23.52 21.11 L23.23 21.08 L22.94 21.08 L22.64 21.10 L22.33 21.16 L22.03 21.25 L21.73 21.38 L21.43 21.53 L21.14 21.72 L20.87 21.94 L20.62 22.19 L20.38 22.47 L20.17 22.78 L19.99 23.12 L19.83 23.47 L19.71 23.85 L19.63 24.25 L19.58 24.66 L19.57 25.08 L19.60 25.51 L19.67 25.95 L19.79 26.38 L19.95 26.80 L20.15 27.22 L20.40 27.62 L20.69 28.01 L21.01 28.37 L21.38 28.70 L21.78 29.00 L22.22 29.27 L22.69 29.50 L23.18 29.69 L23.70 29.83 L24.24 29.92 L24.79 29.97 L25.35 29.96 L25.92 29.90 L26.48 29.78 L27.04 29.61 L27.59 29.38 L28.13 29.10 L28.64 28.77 L29.12 28.39 L29.58 27.95 L29.99 27.48 L30.37 26.95 L30.70 26.39 L30.97 25.79 L31.20 25.16 L31.36 24.51 L31.47 23.83 L31.51 23.14 L31.49 22.44 L31.41 21.73 L31.25 21.03 L31.03 20.34 L30.75 19.67 L30.39 19.01 L29.98 18.39 L29.50 17.80 L28.97 17.25 L28.38 16.74 L27.73 16.29 L27.05 15.90 L26.32 15.57 L25.56 15.30 L24.76 15.11 L23.95 14.98 L23.12 14.93 L22.28 14.96 L21.43 15.07 L20.60 15.26 L19.77 15.52 L18.97 15.87 L18.19 16.29 L17.45 16.78 L16.75 17.35 L16.10 17.98 L15.51 18.68 L14.98 19.44 L14.52 20.25 L14.13 21.10 L13.81 22.00 L13.58 22.93 L13.44 23.88 L13.38 24.85 L13.41 25.83 L13.54 26.81 L13.75 27.79 L14.06 28.75 L14.45 29.68 L14.94 30.58 L15.51 31.44 L16.16 32.25 L16.89 33.00 L17.69 33.69 L18.56 34.31 L19.49 34.84 L20.47 35.30 L21.50 35.66 L22.56 35.93 L23.65 36.10 L24.77 36.18 L25.89 36.15 L27.01 36.01 L28.12 35.77 L29.22 35.43 L30.29 34.98 L31.31 34.44 L32.29 33.80 L33.22 33.06 L34.08 32.24 L34.86 31.34 L35.57 30.36 L36.18 29.31 L36.70 28.21 L37.12 27.05 L37.44 25.85 L37.64 24.62 L37.73 23.37 L37.71 22.11 L37.57 20.85 L37.31 19.59 L36.93 18.36 L36.44 17.16 L35.84 16.00 L35.13 14.90 L34.32 13.85 L33.41 12.89 L32.41 12.00 L31.32 11.20 L30.16 10.50 L28.94 9.91 L27.65 9.43 L26.32 9.07 L24.95 8.83 L23.56 8.72 L22.16 8.73 L20.75 8.87 L19.36 9.14 L17.99 9.55 L16.65 10.07 L15.36 10.73 L14.13 11.50 L12.97 12.39 L11.89 13.38 L10.89 14.48 L10.00 15.67 L9.22 16.94 L8.55 18.29 L8.00 19.70 L7.59 21.16 L7.31 22.66 L7.16 24.19 L7.16 25.74 L7.30 27.28 L7.58 28.82 L8.01 30.33 L8.57 31.81 L9.27 33.23 L10.10 34.59 L11.06 35.88 L12.14 37.07 L13.33 38.18 L14.62 39.17 L16.00 40.04 L17.46 40.79 L19.00 41.40 L20.59 41.88 L22.23 42.20 L23.90 42.38 L25.58 42.40 L27.27 42.27 L28.95 41.99 L30.60 41.54 L32.21 40.95 L33.77 40.21 L35.27 39.32 L36.68 38.30 L38.00 37.14 L39.21 35.87 L40.31 34.48 L41.27 32.99 L42.11 31.41 L42.79 29.75 L43.33 28.03 L43.71 26.26 L43.92 24.46 L43.97 22.63 L43.85 20.80 L43.57 18.98 L43.11 17.18 L42.49 15.43 L41.71 13.73 L40.77 12.10 L39.69 10.56 L38.46 9.12 L37.10 7.79 L35.61 6.59 L34.02 5.52 L32.33 4.60 L30.55 3.84';
+const ICON_VARIANTS = {
+  dark:  {bg:'#000000',c1:'#1ec98a',c2:'#ff2e43',dot:'#f4f0e6',label:'Preto'},
+  light: {bg:'#ffffff',c1:'#1ec98a',c2:'#ff2e43',dot:'#333333',label:'Branco'},
+  green: {bg:'#1ec98a',c1:'#000000',c2:'#ff2e43',dot:'#000000',label:'Verde'},
+  red:   {bg:'#ff2e43',c1:'#1ec98a',c2:'#000000',dot:'#000000',label:'Vermelho'},
+};
+function _iconSVG(iv){
+  return '<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">'
+    +'<path d="'+_SP1+'" stroke="'+iv.c1+'" stroke-width="1.7" stroke-linecap="round"/>'
+    +'<path d="'+_SP2+'" stroke="'+iv.c2+'" stroke-width="1.7" stroke-linecap="round"/>'
+    +'<circle cx="24" cy="24" r="1.8" fill="'+iv.dot+'"/>'
+    +'</svg>';
+}
+let _iconUrl=null;
+async function _setAppIcon(variant){
+  try{
+    const iv=ICON_VARIANTS[variant]||ICON_VARIANTS.dark;
+    const sz=512;
+    const cv=document.createElement('canvas'); cv.width=cv.height=sz;
+    const cx=cv.getContext('2d');
+    cx.fillStyle=iv.bg; cx.fillRect(0,0,sz,sz);
+    const svgStr=_iconSVG(iv);
+    const img=new Image();
+    await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svgStr);});
+    cx.drawImage(img,0,0,sz,sz);
+    await new Promise((res,rej)=>{
+      try{
+        cv.toBlob(blob=>{
+          try{
+            if(!blob)return rej(new Error('no blob'));
+            if(_iconUrl)URL.revokeObjectURL(_iconUrl);
+            _iconUrl=URL.createObjectURL(blob);
+            // apple-touch-icon (selector simples e válido)
+            document.querySelectorAll('link[rel="apple-touch-icon"]').forEach(l=>{l.href=_iconUrl;});
+            // icon-192/512
+            ['192x192','512x512'].forEach(s=>{const l=document.querySelector('link[rel="icon"][sizes="'+s+'"]');if(l)l.href=_iconUrl;});
+            res();
+          }catch(e){rej(e);}
+        },'image/png');
+      }catch(e){rej(e);}
+    });
+    if(bio.icon!==variant){bio.icon=variant;saveBio();}
+  }catch(e){console.warn('icon gen:',e);}
+}
+function renderIconOpts(){
+  const el=$('#iconOpts'); if(!el)return;
+  const cur=bio.icon||'dark';
+  el.innerHTML=Object.entries(ICON_VARIANTS).map(([k,iv])=>{
+    const on=k===cur?' on':'';
+    const svgSmall='<svg viewBox="0 0 48 48" fill="none" style="width:22px;height:22px">'
+      +'<path d="'+_SP1+'" stroke="'+iv.c1+'" stroke-width="1.9" stroke-linecap="round"/>'
+      +'<path d="'+_SP2+'" stroke="'+iv.c2+'" stroke-width="1.9" stroke-linecap="round"/>'
+      +'<circle cx="24" cy="24" r="1.8" fill="'+iv.dot+'"/></svg>';
+    return '<div class="icon-opt'+on+'" data-v="'+k+'" style="background:'+iv.bg+'" title="'+iv.label+'">'+svgSmall+'</div>';
+  }).join('');
+  el.onclick=e=>{const d=e.target.closest('.icon-opt');if(!d)return;_setAppIcon(d.dataset.v);renderIconOpts();};
+}
 const GLOBE_SVG='<svg class="gicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 2.5 15.4 0 18M12 3c-2.5 2.6-2.5 15.4 0 18"/></svg>';
 // ícones do tema (herdam a cor via currentColor)
 const ICON_SHARE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px;margin-right:5px"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>';
@@ -629,7 +698,6 @@ function applyAccent(){
   const enc=s=>s.replace(/#/g,'%23');
   const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23000'/><path d='M 4 16 A 12 7.5 0 0 1 28 16' stroke='${enc(c1)}' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M 28 16 A 12 7.5 0 0 1 4 16' stroke='${enc(c2)}' stroke-width='3' fill='none' stroke-linecap='round'/><circle cx='16' cy='16' r='2.3' fill='%23f4f0e6'/></svg>`;
   const lnk=document.querySelector('link[rel="icon"][type="image/svg+xml"]');if(lnk)lnk.href='data:image/svg+xml,'+svg;
-  try{generateIcon(c1,c2).toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob);document.querySelectorAll('link[rel*="apple-touch-icon"]').forEach(l=>{l.href=url;});const i192=document.querySelector('link[rel="icon"][sizes="192x192"]');const i512=document.querySelector('link[rel="icon"][sizes="512x512"]');if(i192)i192.href=url;if(i512)i512.href=url;},'image/png');}catch(e){}
 }
 // ── ESPIRAL VERTIGO — 5 temas visuais distintos ──
 const SPIRAL_VARIANTS={
@@ -921,6 +989,8 @@ const _CW=540,_CH=960,_CS=2; // canvas 1080×1920, preview em 540×960
 // Chave opcional da IA (Claude) — fica só no aparelho, como a do TMDB
 function getLLMKey(){try{return localStorage.getItem('cs_llm_key')||null;}catch(e){return null;}}
 function setLLMKey(k){try{if(k)localStorage.setItem('cs_llm_key',k);else localStorage.removeItem('cs_llm_key');}catch(e){}}
+function getOmdbKey(){try{return localStorage.getItem('cs_omdb_key')||null;}catch(e){return null;}}
+function setOmdbKey(k){try{if(k)localStorage.setItem('cs_omdb_key',k);else localStorage.removeItem('cs_omdb_key');}catch(e){}}
 const RECO_MODEL='claude-sonnet-4-6';
 
 // Ícones do tema para cada vibe (linha, herdam a cor via currentColor)
@@ -1084,40 +1154,81 @@ async function _fetchRecos(vibe){
   const ctx=_recoContext();
   let genreIds=cfg.genres;
   if(!genreIds)genreIds=[...new Set([..._dayGenres(ctx),..._topGenreIds(3)])].slice(0,3);
-  const isHorror=vibe==='terror'||(genreIds.indexOf(27)>=0&&ctx.m>=8&&ctx.m<=10);
   const seenIds=new Set(films().filter(r=>r.id).map(r=>r.id));
   const seenTitles=_watchedTitleSet();
-  const out=[];
-  for(let page=1;page<=6&&out.length<8;page++){
-    const params={with_genres:genreIds.join(','),sort_by:'vote_average.desc',page,language:'pt-BR','without_genres':'10751,16'};
-    params['vote_count.gte']=isHorror?500:(vibe==='arte'?400:500);
-    params['vote_average.gte']=isHorror?6.8:(vibe==='arte'?7.5:7.0);
-    if(cfg.lang)params['with_original_language']=cfg.lang;
-    if(vibe==='brasil')delete params['without_genres'];
-    if(vibe==='surpresa'&&(ctx.d===0&&ctx.h<18))delete params['without_genres']; // domingo tarde libera animação
-    // dia de semana: filmes mais curtos
-    if(ctx.d>=1&&ctx.d<=5)params['with_runtime.lte']=115;
-    // jan–mar: dramas recentes
-    if(ctx.m<=2&&genreIds.indexOf(18)>=0)params['primary_release_date.gte']='2019-01-01';
-    const j=await tmdb('/discover/movie',params); if(!j||!j.results)break;
+  // TMDB: candidatos com filtro frouxo (sem nota — OMDb faz o controle de qualidade)
+  const cands=[];
+  for(let page=1;page<=5&&cands.length<28;page++){
+    const p={with_genres:genreIds.join(','),sort_by:'popularity.desc',page,language:'pt-BR','vote_count.gte':300,'without_genres':'10751,16'};
+    if(cfg.lang)p['with_original_language']=cfg.lang;
+    if(vibe==='brasil')delete p['without_genres'];
+    if(vibe==='surpresa'&&ctx.d===0&&ctx.h<18)delete p['without_genres'];
+    if(ctx.d>=1&&ctx.d<=5)p['with_runtime.lte']=115;
+    if(ctx.m<=2&&genreIds.indexOf(18)>=0)p['primary_release_date.gte']='2019-01-01';
+    const j=await tmdb('/discover/movie',p); if(!j||!j.results)break;
     for(const mv of j.results){
       if(seenIds.has(mv.id))continue;
       if(seenTitles.has(norm(mv.title||''))||seenTitles.has(norm(mv.original_title||'')))continue;
-      out.push(mv); if(out.length>=6)break;
+      cands.push(mv);
     }
   }
-  return out.slice(0,5);
+  if(!getOmdbKey())return cands.slice(0,5); // sem OMDb: retorna por popularidade
+  // Com OMDb: enriquecer com nota IMDb real e filtrar
+  const MIN={terror:6.5,noir:7.0,arte:7.2,queer:6.8,scifi:7.0,brasil:6.5,surpresa:7.0};
+  const minR=MIN[vibe]||6.8;
+  const enriched=[]; let checked=0;
+  for(const mv of cands){
+    if(checked>=22||enriched.filter(x=>x._imdb!=null).length>=8)break;
+    checked++;
+    const yr=(mv.release_date||'').slice(0,4);
+    const od=await omdbFetch(mv.original_title||mv.title,yr,mv.title);
+    const rating=od?parseFloat(od.imdbRating):NaN;
+    if(!isNaN(rating)&&rating<minR)continue; // nota abaixo do corte
+    const votes=od?parseInt((od.imdbVotes||'0').replace(/,/g,''),10):0;
+    if(!isNaN(rating)&&votes<800)continue;  // nota alta demais com votos demais baixos
+    mv._imdb=isNaN(rating)?null:rating;
+    mv._imdbVotes=votes||null;
+    mv._imdbID=od?od.imdbID||null:null;
+    enriched.push(mv);
+  }
+  enriched.sort((a,b)=>(b._imdb||0)-(a._imdb||0));
+  return enriched.slice(0,5);
+}
+
+// ── cache de sessão para OMDb (evita repetir chamadas) ──
+const _omdbCache={};
+async function omdbFetch(title,year,titleFallback){
+  const ck=(title||'')+'|'+(year||'');
+  if(_omdbCache[ck]!==undefined)return _omdbCache[ck];
+  const apikey=getOmdbKey(); if(!apikey)return(_omdbCache[ck]=null);
+  const tryFetch=async(t,y)=>{
+    try{
+      const r=await fetch('https://www.omdbapi.com/?t='+encodeURIComponent(t)+(y?'&y='+y:'')+'&r=json&apikey='+apikey);
+      if(!r.ok)return null; const j=await r.json(); return j.Response==='True'?j:null;
+    }catch(e){return null;}
+  };
+  let res=await tryFetch(title,year);
+  if(!res&&titleFallback&&titleFallback!==title)res=await tryFetch(titleFallback,year);
+  if(!res&&year)res=await tryFetch(title,'');  // tenta sem ano
+  return(_omdbCache[ck]=res);
 }
 
 // ── card unificado ──
 function _recoCard(o){
   const po=o.poster?'<img src="'+IMG+'/w154'+o.poster+'" loading="lazy"/>':'<div class="reco-ph">'+initials(o.title||'?')+'</div>';
   const meta=(o.sub||'').trim();
+  let scoreHtml='';
+  if(o.imdbRating!=null)
+    scoreHtml='<div class="reco-score"><span style="color:var(--acc1);font-weight:700">IMDb '+o.imdbRating.toFixed(1)+'</span>'+(o.tag?' · '+o.tag:'')+'</div>';
+  else if(o.score)
+    scoreHtml='<div class="reco-score">★ '+o.score+' TMDB'+(o.tag?' · '+o.tag:'')+'</div>';
+  else if(o.status)
+    scoreHtml='<div class="reco-score" style="color:var(--acc1)">'+o.status+'</div>';
   return '<div class="reco-card">'+po+'<div class="reco-info">'
     +'<div class="reco-title">'+o.title+(o.year?' ('+o.year+')':'')+'</div>'
     +(meta?'<div class="reco-meta">'+meta+'</div>':'')
     +(o.why?'<div class="reco-why'+(o.main?' reco-why-main':'')+'">'+o.why+'</div>':'')
-    +(o.score?'<div class="reco-score">★ '+o.score+' no TMDB · <span style="color:var(--acc1)">'+(o.tag||'')+'</span></div>':(o.status?'<div class="reco-score" style="color:var(--acc1)">'+o.status+'</div>':''))
+    +scoreHtml
     +'</div></div>';
 }
 
@@ -1127,57 +1238,75 @@ async function _runRecoLLM(vibe){
   const res=ob.querySelector('#recoResults');
   res.innerHTML='<div class="reco-spin"><div class="reco-loader"></div>Pensando como crítico de cinema…</div>';
   let recs;
-  try{ recs=await _llmRecommend(vibe); }
+  try{recs=await _llmRecommend(vibe);}
   catch(e){
-    if(e&&e.code===401){res.innerHTML='<div class="reco-empty">A chave da IA foi recusada. Toque em <b>Trocar chave</b> acima e cole de novo.</div>';return;}
-    if(e&&e.code==='nokey'){res.innerHTML='<div class="reco-empty">Ative a IA acima ou use as sugestões via TMDB.</div>';return;}
-    res.innerHTML='<div class="reco-empty">Não consegui falar com a IA agora.<br><button class="btn sec" id="recoFallback" style="margin-top:10px;font-size:13px">Ver sugestões via TMDB</button></div>';
+    if(e&&e.code===401){res.innerHTML='<div class="reco-empty">A chave da IA foi recusada. Toque em <b>Trocar chave</b> e cole de novo.</div>';return;}
+    if(e&&e.code==='nokey'){res.innerHTML='<div class="reco-empty">Ative a IA ou use sugestões via TMDB.</div>';return;}
+    res.innerHTML='<div class="reco-empty">IA indisponível agora.<br><button class="btn sec" id="recoFallback" style="margin-top:10px;font-size:13px">Ver sugestões via TMDB'+(getOmdbKey()?'+IMDb':'')+'</button></div>';
     const fb=res.querySelector('#recoFallback'); if(fb)fb.onclick=()=>_runRecoHeuristic(vibe);
     return;
   }
   const seenTitles=_watchedTitleSet(), seenIds=new Set(films().filter(r=>r.id).map(r=>r.id));
   recs=recs.filter(r=>!seenTitles.has(norm(r.title))).slice(0,3);
-  if(!recs.length){res.innerHTML='<div class="reco-empty">As sugestões da IA você já tinha visto! Toque na vibe de novo para outra leva.</div>';return;}
-  // busca pôster no TMDB (e confirma que não é um filme já visto)
+  if(!recs.length){res.innerHTML='<div class="reco-empty">As sugestões da IA você já tinha visto! Toque na vibe de novo.</div>';return;}
   const cards=[];
   for(let i=0;i<recs.length;i++){
-    const r=recs[i]; let poster=null;
-    try{const m=await searchFilm(r.title,+r.year||0); if(m){ if(m.id&&seenIds.has(m.id))continue; poster=m.po; if(m.ye&&!r.year)r.year=m.ye; }}catch(e){}
+    const r=recs[i]; let poster=null,imdbRating=null;
+    try{const m=await searchFilm(r.title,+r.year||0); if(m){if(m.id&&seenIds.has(m.id))continue; poster=m.po; if(m.ye&&!r.year)r.year=m.ye;}}catch(e){}
+    if(getOmdbKey()){
+      try{const od=await omdbFetch(r.title,r.year||'',r.title); if(od){const v=parseFloat(od.imdbRating);if(!isNaN(v))imdbRating=v;}}catch(e){}
+    }
     const sub=[r.director,r.country,r.runtime].filter(Boolean).join(' · ');
-    cards.push(_recoCard({poster,title:r.title,year:r.year,sub,why:r.why,main:i===0,status:'Inédito p/ você'}));
+    cards.push(_recoCard({poster,title:r.title,year:r.year,sub,why:r.why,main:i===0,imdbRating,status:imdbRating==null?'Inédito p/ você':null}));
   }
   res.innerHTML=cards.length?cards.join(''):'<div class="reco-empty">Tudo que veio você já viu! Toque na vibe de novo.</div>';
 }
 
-// ── rodar via TMDB (heurística) ──
+// ── rodar via TMDB + OMDb (heurística) ──
 async function _runRecoHeuristic(vibe){
   const ob=$('#recoOb'); if(!ob)return;
   const cfg=VIBE_CFG[vibe];
   const res=ob.querySelector('#recoResults');
-  res.innerHTML='<div class="reco-spin"><div class="reco-loader"></div>Buscando filmes no TMDB…</div>';
+  const hasOmdb=!!getOmdbKey();
+  res.innerHTML='<div class="reco-spin"><div class="reco-loader"></div>'+(hasOmdb?'Filtrando com nota IMDb real…':'Buscando via TMDB…')+'</div>';
   const movies=await _fetchRecos(vibe);
-  if(!movies.length){res.innerHTML='<div class="reco-empty">Não encontrei títulos novos para esse filtro. Tente outra vibe!</div>';return;}
+  if(!movies.length){res.innerHTML='<div class="reco-empty">Não encontrei títulos novos. Tente outra vibe!</div>';return;}
   res.innerHTML=movies.map((m,i)=>{
     const yr=(m.release_date||'').slice(0,4);
     const gen=(m.genre_ids||[]).slice(0,3).map(id=>GENRES[id]).filter(Boolean).join(' · ');
     const ov=(m.overview||'').slice(0,110)+(m.overview&&m.overview.length>110?'…':'');
-    return _recoCard({poster:m.poster_path,title:m.title,year:yr,sub:gen,why:ov||'',main:i===0,score:m.vote_average?m.vote_average.toFixed(1):null,tag:cfg.note});
+    return _recoCard({poster:m.poster_path,title:m.title,year:yr,sub:gen,why:ov||'',main:i===0,
+      imdbRating:m._imdb||null,score:(!m._imdb&&m.vote_average)?m.vote_average.toFixed(1):null,tag:cfg.note});
   }).join('');
 }
 
-function _runReco(vibe){ return getLLMKey()?_runRecoLLM(vibe):_runRecoHeuristic(vibe); }
+function _runReco(vibe){return getLLMKey()?_runRecoLLM(vibe):_runRecoHeuristic(vibe);}
 
-// ── caixa de chave da IA ──
+// ── UI das chaves (OMDb + Claude IA) ──
 function _recoEngineHtml(){
-  if(getLLMKey())
-    return '<div class="reco-eng"><span class="dot"></span>Recomendações por IA (Claude) ativas <button id="recoKeyChg">Trocar chave</button><button id="recoKeyDel">Remover</button></div>';
-  return '<div class="reco-eng">Sugestões via TMDB <button id="recoKeyAdd">'+ICON_SPARK+'Ativar IA (Claude)</button></div>';
+  const hasOmdb=!!getOmdbKey(), hasLLM=!!getLLMKey();
+  let rows='';
+  if(hasOmdb)
+    rows+='<div class="reco-eng"><span class="dot"></span>Filtro IMDb/OMDb ativo <button id="recoOmdbChg">Trocar</button><button id="recoOmdbDel">Remover</button></div>';
+  else
+    rows+='<div class="reco-eng"><button id="recoOmdbAdd">'+ICON_SPARK+'Ativar filtro IMDb (OMDb gratuito)</button></div>';
+  if(hasLLM)
+    rows+='<div class="reco-eng" style="margin-top:5px"><span class="dot" style="background:var(--acc2);box-shadow:0 0 6px var(--acc2)"></span>Narrativas por IA ativas <button id="recoKeyChg">Trocar</button><button id="recoKeyDel">Remover</button></div>';
+  else
+    rows+='<div class="reco-eng" style="margin-top:5px"><button id="recoKeyAdd">Ativar narrativas IA (Claude — pago)</button></div>';
+  return rows;
+}
+function _recoOmdbBoxHtml(){
+  return '<div class="reco-keybox" id="recoOmdbBox"><div class="hint">Chave gratuita do OMDb — filtra candidatos pela nota real do IMDb em vez da nota inflada do TMDB. 1.000 chamadas/dia grátis.</div>'
+    +'<input id="recoOmdbIn" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sua-chave-omdb"/>'
+    +'<button class="btn" id="recoOmdbSave" style="font-size:13px">Salvar chave OMDb</button>'
+    +'<div class="hint" style="margin-top:8px">Obtenha em <span style="color:var(--cyan)">omdbapi.com</span> → API Key (plano gratuito).</div></div>';
 }
 function _recoKeyBoxHtml(){
-  return '<div class="reco-keybox" id="recoKeyBox"><div class="hint">Cole uma chave da API da Anthropic (Claude) para recomendações que raciocinam sobre o seu gosto. A chave fica só neste aparelho. Uso da API é pago por chamada.</div>'
+  return '<div class="reco-keybox" id="recoKeyBox"><div class="hint">Chave da API da Anthropic — adiciona "por que pra você" com raciocínio real sobre o seu gosto. Uso pago por chamada (~US$0,01–0,03 por recomendação).</div>'
     +'<input id="recoKeyIn" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sk-ant-…"/>'
-    +'<button class="btn" id="recoKeySave" style="font-size:13px">Salvar chave</button>'
-    +'<div class="hint" style="margin-top:8px">Pegue em <span style="color:var(--cyan)">console.anthropic.com</span> → API Keys.</div></div>';
+    +'<button class="btn" id="recoKeySave" style="font-size:13px">Salvar chave Claude</button>'
+    +'<div class="hint" style="margin-top:8px">Obtenha em <span style="color:var(--cyan)">console.anthropic.com</span> → API Keys.</div></div>';
 }
 
 function openReco(){
@@ -1195,16 +1324,18 @@ function openReco(){
 }
 function _wireRecoEngine(){
   const eng=$('#recoEng'); if(!eng)return;
-  const add=$('#recoKeyAdd'), chg=$('#recoKeyChg'), del=$('#recoKeyDel');
-  const showBox=()=>{
-    if($('#recoKeyBox'))return;
-    eng.insertAdjacentHTML('afterend',_recoKeyBoxHtml());
-    $('#recoKeySave').onclick=()=>{const v=$('#recoKeyIn').value.trim(); if(!v){toast('Cole a chave');return;} setLLMKey(v); toast('IA ativada'); openReco();};
-  };
-  if(add)add.onclick=showBox;
-  if(chg)chg.onclick=showBox;
-  if(del)del.onclick=()=>{setLLMKey(null); toast('Chave removida'); openReco();};
+  const showOmdbBox=()=>{if($('#recoOmdbBox'))return;eng.insertAdjacentHTML('afterend',_recoOmdbBoxHtml());$('#recoOmdbSave').onclick=()=>{const v=$('#recoOmdbIn').value.trim();if(!v){toast('Cole a chave');return;}setOmdbKey(v);toast('Filtro IMDb ativado');openReco();};};
+  const showLLMBox=()=>{if($('#recoKeyBox'))return;($('#recoOmdbBox')||eng).insertAdjacentHTML('afterend',_recoKeyBoxHtml());$('#recoKeySave').onclick=()=>{const v=$('#recoKeyIn').value.trim();if(!v){toast('Cole a chave');return;}setLLMKey(v);toast('IA ativada');openReco();};};
+  const oa=$('#recoOmdbAdd'), oc=$('#recoOmdbChg'), od=$('#recoOmdbDel');
+  const la=$('#recoKeyAdd'), lc=$('#recoKeyChg'), ld=$('#recoKeyDel');
+  if(oa)oa.onclick=showOmdbBox;
+  if(oc)oc.onclick=showOmdbBox;
+  if(od)od.onclick=()=>{setOmdbKey(null);toast('OMDb removido');openReco();};
+  if(la)la.onclick=showLLMBox;
+  if(lc)lc.onclick=showLLMBox;
+  if(ld)ld.onclick=()=>{setLLMKey(null);toast('Chave IA removida');openReco();};
 }
+
 
 function _lastFilm(){const fl=films().filter(r=>r.r!=null);if(!fl.length)return null;return fl.sort((a,b)=>(b.ts||0)-(a.ts||0)||(+(b.ye||b.y))-(+(a.ye||a.y))||b.r-a.r)[0];}
 async function _shareCard(){const cv=$('#sfCanvas');if(!cv)return;const btn=$('#sfShare');if(btn){btn.textContent='Gerando\u2026';btn.disabled=true;}cv.toBlob(async blob=>{if(btn){btn.textContent='Compartilhar';btn.disabled=false;}if(!blob)return;const file=new File([blob],'cinestats.png',{type:'image/png'});if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'CineStats'});}catch(e){if(e.name!=='AbortError')toast('Erro ao compartilhar');}}else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cinestats.png';a.click();}},'image/png');}
@@ -1509,12 +1640,78 @@ $('#keySave').onclick=async()=>{const k=$('#keyIn').value.trim();if(!k){$('#keyE
   if(!t){$('#keyErr').textContent='Não validou. Confira se é a Chave da API (v3).';return;}
   setKey(k);$('#onb').classList.remove('show');sync();};
 $('#gear').onclick=()=>{const done=films().filter(r=>r.cc).length,found=films().filter(r=>r.id).length;
+  renderIconOpts();
   $('#setInfo').innerHTML=`<b style="color:var(--ink)">${fmt(found)}</b> de ${fmt(films().length)} filmes localizados · elenco em <b style="color:var(--ink)">${fmt(done)}</b>.`;
   $('#settings').classList.add('show');};
 $('#setClose').onclick=()=>$('#settings').classList.remove('show');
 $('#setResync').onclick=()=>{$('#settings').classList.remove('show');sync();};
 $('#setKey').onclick=()=>{$('#settings').classList.remove('show');$('#keyIn').value='';openOnb();};
 $('#setClear').onclick=()=>{$('#settings').classList.remove('show');clearCredits();PEOPLE=null;toast('Cache do TMDB limpo');render();sync();};
+$('#setSaveHTML').onclick=()=>{$('#settings').classList.remove('show');saveHTML();};
+
+async function saveHTML(){
+  toast('Preparando HTML…');
+  // 1. Dump completo do IndexedDB
+  let allFilms=[];
+  try{
+    allFilms=await new Promise((res,rej)=>{
+      const tx=db.transaction('films','readonly');
+      const req=tx.objectStore('films').getAll();
+      req.onsuccess=()=>res(req.result||[]);
+      req.onerror=()=>rej(req.error);
+    });
+  }catch(e){toast('Erro ao ler banco de dados');return;}
+  if(!allFilms.length){toast('Nenhum dado para salvar');return;}
+
+  // 2. Buscar HTML fonte (a própria página)
+  let html;
+  try{
+    const r=await fetch(location.href.split('?')[0],{cache:'no-store'});
+    if(!r.ok)throw new Error('fetch '+r.status);
+    html=await r.text();
+  }catch(e){toast('Não consegui buscar o HTML fonte');return;}
+
+  // 3. Substituir a linha const EMBED = [...]
+  //    Formato novo: array de objetos completos em vez de [titulo,ano,nota]
+  const embedMark='const EMBED = ';
+  const idx=html.indexOf(embedMark);
+  if(idx<0){toast('Formato do HTML não reconhecido');return;}
+  // Encontrar o ; que fecha o array/objeto
+  let depth=0,inStr=false,esc=false,i=idx+embedMark.length;
+  while(i<html.length){
+    const ch=html[i];
+    if(esc){esc=false;i++;continue;}
+    if(ch==='\\'&&inStr){esc=true;i++;continue;}
+    if(ch==='"'||ch==="'"){inStr=!inStr;i++;continue;}
+    if(!inStr){
+      if(ch==='['||ch==='{')depth++;
+      if(ch===']'||ch==='}'){depth--;if(depth===0){i++;break;}}
+    }
+    i++;
+  }
+  if(html[i]===';')i++;
+  // Serializar com objetos completos; separador compacto para não explodir o filesize
+  const embedStr=JSON.stringify(allFilms);
+  html=html.slice(0,idx)+embedMark+embedStr+';'+html.slice(i);
+
+  // 4. Patch no código de inicialização para aceitar objetos além de arrays
+  //    O trecho original: EMBED.forEach(f=>{const r={t:f[0],y:f[1],r:f[2]};
+  html=html.replace(
+    "EMBED.forEach(f=>{const r={t:f[0],y:f[1],r:f[2]};cache[key(f[0],f[1])]=r;put(key(f[0],f[1]),r);});",
+    "EMBED.forEach(f=>{const r=Array.isArray(f)?{t:f[0],y:f[1],r:f[2]}:f;cache[key(r.t,r.y)]=r;put(key(r.t,r.y),r);});"
+  );
+
+  // 5. Download
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='cinestats.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(a.href),60000);
+  toast('HTML salvo com '+allFilms.length+' filmes — faça commit no GitHub!');
+}
 
 $('#tabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;$$('#tabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');tab=b.dataset.t;render();};
 // Pausa a animacao quando a aba/app fica em segundo plano (economia de bateria); retoma ao voltar.
@@ -1526,6 +1723,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopSpiralA
   if(!Object.keys(cache).length){EMBED.forEach(f=>{const r={t:f[0],y:f[1],r:f[2]};cache[key(f[0],f[1])]=r;put(key(f[0],f[1]),r);});}
   applyAccent();KEY=getKey();render();
   if(!KEY)openOnb();else sync();
+  setTimeout(()=>_setAppIcon(bio.icon||'dark'),200);
 })();
 </script>
 </body></html>
