@@ -312,8 +312,9 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
   <button class="btn sec" id="setResync">Buscar o que falta no TMDB</button>
   <button class="btn sec" id="setKey">Trocar chave do TMDB</button>
   <button class="btn sec" id="setSaveHTML">Salvar HTML com todos os dados</button>
-  <div class="set-row">Ícone da tela inicial (Add to Home Screen)</div>
+  <div class="set-row">Ícone da tela inicial</div>
   <div class="icon-opts" id="iconOpts"></div>
+  <div id="ghIconArea" style="margin-top:8px"></div>
   <button class="btn danger" id="setClear">Apagar cache do TMDB</button>
   <button class="btn sec" id="setClose">Fechar</button>
   <p class="note" style="margin-top:16px">Dados e imagens via TMDB; produto não endossado pelo TMDB. Atualizar filmes mescla o novo export com o que já existe (não apaga histórico).<br><br>"Salvar HTML" gera um novo arquivo com todos os seus dados embutidos — faça commit no GitHub para garantir backup permanente.<br><br>Avaliações e dados ficam no IndexedDB do navegador. Ao salvar o HTML e fazer commit, os dados ficam gravados no próprio arquivo — nada se perde ao abrir em nova aba ou novo aparelho.</p>
@@ -378,9 +379,11 @@ function _iconSVG(iv){
 }
 let _iconUrl=null;
 async function _setAppIcon(variant){
+  // Atualiza apenas o favicon da aba do browser (blob: URL funciona aqui)
+  // O apple-touch-icon precisa de arquivo PNG real no servidor — use downloadIcon()
   try{
     const iv=ICON_VARIANTS[variant]||ICON_VARIANTS.dark;
-    const sz=512;
+    const sz=192;
     const cv=document.createElement('canvas'); cv.width=cv.height=sz;
     const cx=cv.getContext('2d');
     cx.fillStyle=iv.bg; cx.fillRect(0,0,sz,sz);
@@ -395,10 +398,10 @@ async function _setAppIcon(variant){
             if(!blob)return rej(new Error('no blob'));
             if(_iconUrl)URL.revokeObjectURL(_iconUrl);
             _iconUrl=URL.createObjectURL(blob);
-            // apple-touch-icon (selector simples e válido)
-            document.querySelectorAll('link[rel="apple-touch-icon"]').forEach(l=>{l.href=_iconUrl;});
-            // icon-192/512
-            ['192x192','512x512'].forEach(s=>{const l=document.querySelector('link[rel="icon"][sizes="'+s+'"]');if(l)l.href=_iconUrl;});
+            // Favicon da aba (blob: funciona em desktop/Android)
+            const lnk=document.querySelector('link[rel="icon"][type="image/png"]')||document.createElement('link');
+            lnk.rel='icon'; lnk.type='image/png'; lnk.href=_iconUrl;
+            if(!lnk.parentNode)document.head.appendChild(lnk);
             res();
           }catch(e){rej(e);}
         },'image/png');
@@ -406,6 +409,105 @@ async function _setAppIcon(variant){
     });
     if(bio.icon!==variant){bio.icon=variant;saveBio();}
   }catch(e){console.warn('icon gen:',e);}
+}
+
+// ── GitHub icon push ──────────────────────────────────────────────────────────
+function getGhToken(){try{return localStorage.getItem('cs_gh_token')||null;}catch(e){return null;}}
+function setGhToken(k){try{if(k)localStorage.setItem('cs_gh_token',k);else localStorage.removeItem('cs_gh_token');}catch(e){}}
+function getGhRepo(){try{return localStorage.getItem('cs_gh_repo')||'otiagons/statscinema';}catch(e){return 'otiagons/statscinema';}}
+function setGhRepo(r){try{if(r)localStorage.setItem('cs_gh_repo',r);}catch(e){}}
+
+async function _iconCanvas(variant,sz){
+  const iv=ICON_VARIANTS[variant]||ICON_VARIANTS.dark;
+  const cv=document.createElement('canvas'); cv.width=cv.height=sz;
+  const cx=cv.getContext('2d');
+  cx.fillStyle=iv.bg; cx.fillRect(0,0,sz,sz);
+  const img=new Image();
+  await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(_iconSVG(iv));});
+  cx.drawImage(img,0,0,sz,sz);
+  return cv;
+}
+async function _cvToB64(cv){
+  return new Promise((res,rej)=>{cv.toBlob(blob=>{
+    if(!blob)return rej(new Error('blob null'));
+    const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=()=>rej(r.error); r.readAsDataURL(blob);
+  },'image/png');});
+}
+async function _ghSHA(token,repo,path){
+  try{const r=await fetch('https://api.github.com/repos/'+repo+'/contents/'+path,{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
+  if(r.ok){const j=await r.json();return j.sha||null;}return null;}catch(e){return null;}
+}
+async function _ghPut(token,repo,path,b64,msg){
+  const sha=await _ghSHA(token,repo,path);
+  const body={message:msg,content:b64};if(sha)body.sha=sha;
+  const r=await fetch('https://api.github.com/repos/'+repo+'/contents/'+path,{method:'PUT',
+    headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
+    body:JSON.stringify(body)});
+  if(r.status===401)throw Object.assign(new Error('auth'),{code:401});
+  if(!r.ok)throw new Error('GitHub '+r.status);
+  return r.json();
+}
+async function publishIcons(){
+  const token=getGhToken(); const repo=getGhRepo();
+  if(!token){renderGhIconArea();return;}
+  const variant=bio.icon||'dark';
+  const el=$('#ghIconArea'); if(el)el.innerHTML='<p class="note" style="color:var(--acc1)">Gerando e publicando ícones…</p>';
+  try{
+    const files=[[180,'apple-touch-icon.png'],[192,'icon-192.png'],[512,'icon-512.png']];
+    for(const[sz,name]of files){
+      const cv=await _iconCanvas(variant,sz);
+      const b64=await _cvToB64(cv);
+      await _ghPut(token,repo,name,b64,'chore: update app icon ('+variant+')');
+    }
+    toast('Ícones publicados! Aguarde ~1 min e adicione à tela inicial.');
+    renderGhIconArea();
+  }catch(e){
+    const msg=e.code===401?'Token inválido ou sem permissão de escrita':'Erro: '+e.message;
+    if(el)el.innerHTML='<p class="note" style="color:var(--acc2)">'+msg+'</p><button class="btn sec" id="ghRetry" style="margin-top:6px">Tentar de novo</button>';
+    const rb=$('#ghRetry');if(rb)rb.onclick=()=>renderGhIconArea();
+    console.warn(e);
+  }
+}
+function renderGhIconArea(){
+  const el=$('#ghIconArea'); if(!el)return;
+  const token=getGhToken(); const repo=getGhRepo();
+  if(!token){
+    el.innerHTML='<button class="btn sec" id="ghSetup" style="font-size:13px">Conectar ao GitHub para publicar ícones</button>';
+    el.querySelector('#ghSetup').onclick=()=>_showGhBox();
+    return;
+  }
+  el.innerHTML='<div class="reco-eng"><span class="dot"></span>GitHub: <b style="color:var(--ink)">'+repo+'</b> <button id="ghPublish">Publicar ícones</button><button id="ghChg">Trocar</button></div>';
+  el.querySelector('#ghPublish').onclick=publishIcons;
+  el.querySelector('#ghChg').onclick=()=>_showGhBox();
+}
+function _showGhBox(){
+  const el=$('#ghIconArea'); if(!el)return;
+  const repo=getGhRepo();
+  el.innerHTML='<div class="reco-keybox">'
+    +'<div class="hint">Token do GitHub com permissão <b>Contents: Write</b> no repo. Fica só neste aparelho.</div>'
+    +'<input id="ghTokenIn" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ghp_… ou github_pat_…" style="margin:7px 0 5px"/>'
+    +'<input id="ghRepoIn" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="usuario/repo" value="'+repo+'" style="margin:0 0 7px"/>'
+    +'<button class="btn" id="ghSave" style="font-size:13px">Salvar</button>'
+    +'<div class="hint" style="margin-top:8px">Gerar em <span style="color:var(--cyan)">github.com/settings/tokens</span> → Fine-grained → Contents: Write.'
+    +'<br>Os arquivos <code>apple-touch-icon.png</code>, <code>icon-192.png</code> e <code>icon-512.png</code> serão criados/atualizados na raiz do repo.</div>'
+    +'</div>';
+  el.querySelector('#ghSave').onclick=()=>{
+    const t=el.querySelector('#ghTokenIn').value.trim();
+    const r=el.querySelector('#ghRepoIn').value.trim();
+    if(!t||!r){toast('Preencha os dois campos');return;}
+    setGhToken(t);setGhRepo(r);
+    renderGhIconArea();
+  };
+}
+async function downloadIcon(variant){
+  try{
+    const cv=await _iconCanvas(variant||bio.icon||'dark',180);
+    const blob=await new Promise((res,rej)=>cv.toBlob(b=>{if(!b)return rej(new Error('no blob'));res(b);},'image/png'));
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='apple-touch-icon.png';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(a.href),30000);
+    toast('Ícone baixado');
+  }catch(e){toast('Erro ao gerar ícone');console.warn(e);}
 }
 function renderIconOpts(){
   const el=$('#iconOpts'); if(!el)return;
@@ -1641,6 +1743,7 @@ $('#keySave').onclick=async()=>{const k=$('#keyIn').value.trim();if(!k){$('#keyE
   setKey(k);$('#onb').classList.remove('show');sync();};
 $('#gear').onclick=()=>{const done=films().filter(r=>r.cc).length,found=films().filter(r=>r.id).length;
   renderIconOpts();
+  renderGhIconArea();
   $('#setInfo').innerHTML=`<b style="color:var(--ink)">${fmt(found)}</b> de ${fmt(films().length)} filmes localizados · elenco em <b style="color:var(--ink)">${fmt(done)}</b>.`;
   $('#settings').classList.add('show');};
 $('#setClose').onclick=()=>$('#settings').classList.remove('show');
