@@ -236,10 +236,22 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .reco-info{flex:1;min-width:0}
 .reco-title{font-weight:800;font-size:14px;margin:0 0 2px;line-height:1.2}
 .reco-meta{font-size:11.5px;color:var(--mut);margin-bottom:4px}
-.reco-why{font-size:11.5px;color:var(--acc1);font-weight:600}
-.reco-score{font-size:11px;color:var(--dim);margin-top:3px}
+.reco-why{font-size:11.5px;color:var(--mut);line-height:1.45;margin-top:2px}
+.reco-why-main{color:var(--ink);border-left:2px solid var(--acc1);padding-left:9px}
+.reco-score{font-size:11px;color:var(--dim);margin-top:4px}
 .reco-spin{text-align:center;padding:32px 0;color:var(--mut);font-size:13px}
-.reco-btn-wrap{margin:14px 0 0}
+.reco-loader{width:34px;height:34px;border:3px solid var(--p2);border-top-color:var(--acc1);border-radius:50%;margin:0 auto 12px;animation:recospin .8s linear infinite}
+@keyframes recospin{to{transform:rotate(360deg)}}
+.reco-eng{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;font-size:12px;color:var(--dim)}
+.reco-eng .dot{width:7px;height:7px;border-radius:50%;background:var(--acc1);flex:none;box-shadow:0 0 6px var(--acc1)}
+.reco-eng button{background:var(--panel);border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:6px 10px;font-size:11.5px;font-weight:700;cursor:pointer}
+.reco-eng #recoKeyAdd{border-color:color-mix(in srgb,var(--acc1) 45%,var(--line));color:var(--acc1)}
+.reco-keybox{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px;margin:0 0 14px}
+.reco-keybox input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:11px;font-size:14px;margin:7px 0}
+.reco-keybox .hint{font-size:11.5px;color:var(--dim);line-height:1.5}
+.reco-vibe .ricon{display:inline-flex;vertical-align:-3px;margin-right:6px}
+.reco-vibe .ricon svg{width:15px;height:15px}
+.reco-vibe.on .ricon svg,.reco-vibe:active .ricon svg{color:var(--acc1)}
 .reco-empty{color:var(--dim);text-align:center;padding:28px;font-size:13px;line-height:1.5}
 </style></head><body>
 <div class="wrap">
@@ -340,6 +352,17 @@ const IMG='https://image.tmdb.org/t/p';
 const STAR_SVG='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.5 7 .9-5 4.8 1.3 7L12 17.8 5.4 21.2 6.7 14.2 1.7 9.4l7-.9z"/></svg>';
 // ícone globo estilizado (herda a cor do tema via currentColor)
 const GLOBE_SVG='<svg class="gicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 2.5 15.4 0 18M12 3c-2.5 2.6-2.5 15.4 0 18"/></svg>';
+// ícones do tema (herdam a cor via currentColor)
+const ICON_SHARE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px;margin-right:5px"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>';
+const ICON_EXT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;vertical-align:-1px;margin-right:3px"><path d="M8 17L17 8M9 8h8v8"/></svg>';
+const ANIM_ICONS=[
+  '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="11 5 11 19 2 12"/><polygon points="22 5 22 19 13 12"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="7 4 20 12 7 20"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="2 5 11 12 2 19"/><polygon points="13 5 22 12 13 19"/></svg>'
+];
+const ANIM_LBL=['Parado','Lento','Normal','Rápido'];
+const ICON_SPARK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-3px;margin-right:5px"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 4v3M17 5.5h3"/></svg>';
 let KEY=null, cache={}, db=null, tab='bio', busy=false, PEOPLE=null;
 let pSort='rt', pDec=null, rScope='all', rDec=null, rYr=null, gSort='count', expanded={};
 let fView='list', rView='list', gView='list';  // 'list' or 'country'
@@ -806,7 +829,7 @@ function renderBio(){
   const cat=bio.cat||'films';
   const su=bio.site?bio.site.replace(/^https?:\/\//,''):'';
   const href=bio.site?(/^https?:/.test(bio.site)?bio.site:'https://'+bio.site):'';
-  const site=bio.site?`<a href="${href}" target="_blank" rel="noopener">↗ ${su}</a>`:'<span style="color:var(--dim);font-size:13px">adicione um link em editar</span>';
+  const site=bio.site?`<a href="${href}" target="_blank" rel="noopener">${ICON_EXT}${su}</a>`:'<span style="color:var(--dim);font-size:13px">adicione um link em editar</span>';
   const favHtml=[0,1,2,3,4].map(i=>{const k=(bio.favs||[])[i];const r=k?cache[k]:null;
     return `<div class="favslot" data-fav="${i}">${r&&r.po?`<img src="${IMG}/w185${r.po}"/>`:(r?`<div class="ph2">${r.t}</div>`:'<span>+</span>')}</div>`;}).join('');
   const ents=entities(cat);
@@ -814,9 +837,9 @@ function renderBio(){
   $('#view').innerHTML=`<div class="bio-id"><div class="bia"><h2>${bio.name||'Seu perfil'}</h2><div class="bio-site">${site}</div></div><button class="icon-btn" id="bioEditBtn"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="#1ec98a" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="#ff2e43" stroke-width="1.6"/></svg></button><button class="icon-btn" id="shareBtn" title="Compartilhar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button></div>
     <span class="eyb">Top 5 favoritos</span><div class="favrow">${favHtml}</div>
     ${statsBioHTML()}<span class="eyb" style="margin-top:18px">Espiral de favoritos</span>
-    <div class="controls"><div class="seg" id="bioCat">${cats.map(([s,l])=>`<button data-s="${s}" class="${cat===s?'on':''}">${l}</button>`).join('')}</div><button class="anim-toggle ${(bio.speed??2)>0?'on':''}" id="animToggle" title="Velocidade">${['⏸ Parado','⏪ Lento','▶ Normal','⏩ Rápido'][bio.speed??2]}</button></div>
+    <div class="controls"><div class="seg" id="bioCat">${cats.map(([s,l])=>`<button data-s="${s}" class="${cat===s?'on':''}">${l}</button>`).join('')}</div><button class="anim-toggle ${(bio.speed??2)>0?'on':''}" id="animToggle" title="Velocidade">${ANIM_ICONS[bio.speed??2]} ${ANIM_LBL[bio.speed??2]}</button></div>
     <div class="bio-grid"><div class="spiralbox"><div id="spiral"></div></div><div class="biolist">${listHtml}</div></div>
-    <div class="note">Tags clícáveis — toque para explorar. Mude o tema para outra variação. Use ↑ Compartilhar para gerar cards para Stories.</div>`;
+    <div class="note">Tags clícáveis — toque para explorar. Mude o tema para outra variação. Use o botão de compartilhar no topo para gerar cards para Stories.</div>`;
   $('#bioCat').onclick=e=>{const b=e.target.closest('button');if(b){bio.cat=b.dataset.s;saveBio();renderBio();}};
   $('#animToggle').onclick=()=>{const cur=bio.speed??2;bio.speed=(cur+1)%4;bio.animate=bio.speed>0;saveBio();renderBio();};
   $('#bioEditBtn').onclick=openBioEdit;
@@ -887,7 +910,7 @@ function statsBioHTML(){
       +'<div class="stbox"><div class="sv">'+avgT+'</div><div class="sl">nota m\u00e9dia</div></div>'
     +'</div>'
     +'<div class="dist-chart">'+distRows+'</div>'
-    +'<button class="btn sec" id="recoBtn" style="margin:10px 0 2px;font-size:13px">\u2728 Recomendar um filme agora</button>';
+    +'<button class="btn sec" id="recoBtn" style="margin:10px 0 2px;font-size:13px">'+ICON_SPARK+'Recomendar um filme agora</button>';
 }
 
 /* ── CARD GENERATOR ── */
@@ -895,148 +918,296 @@ let _sfKey=null,_sfType='retrato';
 const _CW=540,_CH=960,_CS=2; // canvas 1080×1920, preview em 540×960
 
 /* ── RECOMENDAÇÕES ── */
-const VIBE_CFG = {
-  terror:  {label:'😱 Terror',   genres:[27],        lang:null,  note:'Terror e suspense'},
-  noir:    {label:'🕵️ Noir/Crime',genres:[80,53],    lang:null,  note:'Crime e thriller'},
-  arte:    {label:'🎭 Arte/Drama',genres:[18,36,9648],lang:null,  note:'Drama e cinema de arte'},
-  queer:   {label:'🌈 Queer',    genres:[18,10749],  lang:null,  note:'Cinema LGBTQ+'},
-  scifi:   {label:'🚀 Sci-fi',   genres:[878,14],    lang:null,  note:'Ficção científica e fantasia'},
-  brasil:  {label:'🇧🇷 Cinema BR',genres:[18,28,80], lang:'pt',  note:'Cinema nacional'},
-  surpresa:{label:'✨ Surpresa', genres:null,         lang:null,  note:'Baseado no seu perfil'},
+// Chave opcional da IA (Claude) — fica só no aparelho, como a do TMDB
+function getLLMKey(){try{return localStorage.getItem('cs_llm_key')||null;}catch(e){return null;}}
+function setLLMKey(k){try{if(k)localStorage.setItem('cs_llm_key',k);else localStorage.removeItem('cs_llm_key');}catch(e){}}
+const RECO_MODEL='claude-sonnet-4-6';
+
+// Ícones do tema para cada vibe (linha, herdam a cor via currentColor)
+const RICON={
+  terror:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M5 21V11a7 7 0 0 1 14 0v10l-2.3-1.7-2.3 1.7-2.4-1.7L9.3 21 7 19.3 5 21z"/><circle cx="9.5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="11" r="1" fill="currentColor" stroke="none"/></svg>',
+  noir:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 16h16"/><path d="M6.5 16c-.5-5 1.5-8 5.5-8s6 3 5.5 8"/><path d="M7 13.5h10"/></svg>',
+  arte:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v6a7 7 0 0 1-14 0z"/><path d="M9 8.4c.6-.6 1.4-.6 2 0M13 8.4c.6-.6 1.4-.6 2 0M9 14.5c1 1 5 1 6 0"/></svg>',
+  queer:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 18a9 9 0 0 1 18 0"/><path d="M6.5 18a5.5 5.5 0 0 1 11 0"/><path d="M10 18a2 2 0 0 1 4 0"/></svg>',
+  scifi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="6"/><ellipse cx="12" cy="12" rx="11" ry="4" transform="rotate(-25 12 12)"/></svg>',
+  brasil:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="3" y="9" width="18" height="11" rx="1"/><path d="M3 9l2.4-4 4 1.4-2.4 4M9.4 6.4l4 1.4-2.4 4M15.4 8l4 1.4"/></svg>',
+  surpresa:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 4v3M17 5.5h3"/></svg>'
 };
 
+const VIBE_CFG = {
+  terror:  {name:'Terror',    genres:[27],         lang:null, note:'Terror elevado / cult'},
+  noir:    {name:'Noir/Crime',genres:[80,53],      lang:null, note:'Crime e thriller'},
+  arte:    {name:'Arte/Drama',genres:[18,36,9648], lang:null, note:'Drama e cinema de arte'},
+  queer:   {name:'Queer',     genres:[18,10749],   lang:null, note:'Cinema LGBTQ+'},
+  scifi:   {name:'Sci-fi',    genres:[878,14],     lang:null, note:'Ficção científica e fantasia'},
+  brasil:  {name:'Cinema BR', genres:[18,28,80],   lang:'pt', note:'Cinema nacional'},
+  surpresa:{name:'Para hoje', genres:null,         lang:null, note:'Pelo seu perfil + momento'},
+};
+
+// ── Prompt de recomendação (usado quando a IA está ativada) ──
+const RECO_SYSTEM_PROMPT = `Você é o sistema de recomendação de filmes do CineStats, app pessoal de Tiago Nunes (@tiagonunesn no Letterboxd). Recomende filmes que ele ainda NÃO assistiu, personalizados para o momento.
+
+REGRA FUNDAMENTAL: nunca recomende um filme já assistido. Tiago já viu 1.900+ filmes, incluindo a maior parte do cânone clássico e dos grandes títulos de horror. Evite o óbvio e o mainstream. O app remove automaticamente da sua resposta qualquer título que ele já tenha visto, então priorize variedade e descobertas. Em dúvida entre versões/títulos alternativos, escolha outro filme.
+
+PERFIL DE GOSTO
+5★ recorrentes: Stalker, Mulholland Drive, Persona, Solaris, 2001, Rosemary's Baby, Blue Velvet, Le Samouraï, Pierrot le Fou, Paris Texas, Eternal Sunshine, Synecdoche New York, Mysterious Skin, Come and See, The Big Lebowski, After Hours.
+Nota média por gênero (mais amado para menos): romance > drama > crime > animação > mistério > thriller > queer > comédia > sci-fi > horror > ação > super-herói.
+Horror: é o gênero MAIS visto, mas com nota média baixa. Recomendações de horror devem ser elevated, cult ou internacionais — nunca genéricas. Horrors bem avaliados por ele: The Wailing, Us, Impetigore, Pearl, Talk to Me, Bones and All, When Evil Lurks, The Substance, Nope.
+Diretores favoritos: Tarkovsky, Lynch, Bergman, Haneke, Wong Kar-wai, Kieślowski, Bong Joon-ho, Park Chan-wook, Guiraudie, Weerasethakul, Kiarostami, Altman, Paul Thomas Anderson, Coen, Cronenberg, Scorsese.
+Queer: ótimo histórico com queer europeu e contemporâneo (Sebastian, Young Hearts, God's Own Country).
+Cinema brasileiro: acompanha de perto (Bacurau, O Agente Secreto, Aquarius).
+
+PADRÕES POR DIA/HORÁRIO
+Domingo até ~18h: animação ou pipoca de qualidade, leveza, blockbuster inteligente, duração livre.
+Domingo 19h+: lançamento de prestígio, drama pesado, horror encorpado, thriller — peso e duração generosa ok.
+Sábado: drama, thriller, crime — encorpados e mais sérios.
+Seg a Sex: sessão pessoal e menor — dramas recentes, queer, animação; prefira até ~110 min.
+Sazonalidade: set a nov = pico de horror (sobretudo domingos de outubro). Jan a mar = dramas de temporada de premiação.
+
+FONTES: não se limite a listas fixas. Use festivais (Cannes, Berlim, Veneza, Sundance, TIFF, Mostra SP, Festival do Rio), listas (Sight & Sound, Cahiers du Cinéma, Letterboxd) e catálogos (MUBI, Shudder), além de lançamentos recentes pós-2024. Varie época, país e nível de obscuridade para não ficar previsível.
+
+O contexto do momento (dia, horário, estação e a vibe escolhida) e um resumo do gosto atual virão na mensagem do usuário. Use-os.
+
+FORMATO — responda SOMENTE com JSON válido, sem markdown, sem cercas de código, sem comentários, exatamente nesta forma:
+{"main":{"title":"","year":0,"director":"","country":"","runtime":"","why":""},"alternatives":[{"title":"","year":0,"director":"","country":"","runtime":"","why":""}]}
+- "main": 1 recomendação principal.
+- "alternatives": 1 a 2 alternativas, cada uma diferente em tom, gênero ou origem da principal.
+- "title": use o título internacional/original em inglês quando existir (ajuda a buscar o pôster); senão, o título original.
+- "year": ano de lançamento (número).
+- "runtime": duração aproximada como texto, ex.: "1h48".
+- "why": 2 a 3 frases, em português, conectando ao gosto dele e citando 1 ou 2 filmes que ele já viu e amou.
+Não escreva nada fora do objeto JSON.`;
+
+// ── contexto de dia/horário/estação ──
 function _recoContext(){
   const now=new Date();
-  const dow=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][now.getDay()];
-  const h=now.getHours();
-  let periodo,suggest;
-  if(h>=0&&h<6){periodo='madrugada';suggest='terror ou cult';}
-  else if(h<12){periodo='manhã';suggest='drama ou comédia';}
-  else if(h<18){periodo='tarde';suggest='qualquer gênero';}
-  else{periodo='noite';suggest='thriller ou drama intenso';}
-  // dia da semana
-  const d=now.getDay();
-  let dayNote='';
-  if(d===0)dayNote='Domingo — ideal para algo especial ou double feature';
-  else if(d===6)dayNote='Sábado — bom para drama intenso ou crime';
-  else dayNote='Dia de semana — algo que prenda do início ao fim';
-  return {dow,h,periodo,suggest,dayNote,d};
+  const d=now.getDay(), h=now.getHours(), m=now.getMonth();
+  const dow=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][d];
+  let periodo;
+  if(h<6)periodo='madrugada'; else if(h<12)periodo='manhã'; else if(h<18)periodo='tarde'; else periodo='noite';
+  let dayNote;
+  if(d===0&&h<18)dayNote='Domingo de tarde — leveza, animação ou pipoca de qualidade';
+  else if(d===0)dayNote='Domingo à noite — prestígio, drama pesado ou horror encorpado';
+  else if(d===6)dayNote='Sábado — drama, thriller ou crime, mais encorpado';
+  else dayNote='Dia de semana — sessão menor: drama recente, queer ou animação (até ~110 min)';
+  let season='';
+  if(m>=8&&m<=10)season='Pico de horror (set–nov)';
+  else if(m<=2)season='Temporada de premiação (jan–mar) — dramas';
+  return {now,d,h,m,dow,periodo,dayNote,season};
 }
 
-function _recoTopGenreIds(){
-  const gmap={};
-  films().forEach(r=>{
-    if(r.r==null||!r.gids)return;
-    r.gids.forEach(id=>{
-      gmap[id]=gmap[id]||{sum:0,cnt:0};
-      gmap[id].sum+=r.r; gmap[id].cnt++;
-    });
-  });
-  return Object.entries(gmap)
-    .map(([id,{sum,cnt}])=>({id:+id,score:(sum/cnt)*Math.log1p(cnt)}))
-    .sort((a,b)=>b.score-a.score)
-    .slice(0,3)
-    .map(x=>x.id);
+// gêneros mais bem avaliados pelo histórico (média ponderada pela quantidade)
+function _topGenreIds(n){
+  const g={};
+  films().forEach(r=>{if(r.r==null||!r.gids)return;r.gids.forEach(id=>{g[id]=g[id]||{s:0,c:0};g[id].s+=r.r;g[id].c++;});});
+  return Object.entries(g).map(([id,o])=>({id:+id,sc:(o.s/o.c)*Math.log1p(o.c)})).sort((a,b)=>b.sc-a.sc).slice(0,n||3).map(x=>x.id);
+}
+function _dayGenres(ctx){
+  if(ctx.d===0&&ctx.h<18)return[16,12,35];        // domingo tarde: animação/aventura/comédia
+  if(ctx.d===0)return[18,27,53];                   // domingo noite: drama/terror/thriller
+  if(ctx.d===6)return[18,53,80];                   // sábado: drama/thriller/crime
+  if(ctx.h>=22)return[27,53,9648];                 // madrugada: terror/thriller/mistério
+  return[18,10749,16];                             // semana: drama/romance(queer)/animação
 }
 
-function _dayBoostGenres(d,h){
-  // domingo / sábado noite → terror/drama; semana → drama/thriller
-  if(d===0)return[27,18,878]; // domingo: terror, drama, scifi
-  if(d===6)return[18,80,53];  // sábado: drama, crime, thriller
-  if(h>=22)return[27,53,9648];// madrugada: terror, thriller, mistério
-  return[18,53,9648];
-}
-
-async function _fetchRecos(vibe){
-  const cfg=VIBE_CFG[vibe];
-  if(!cfg)return[];
-  const ctx=_recoContext();
-  // Gêneros: vibe > perfil > dia
-  let genreIds=cfg.genres;
-  if(!genreIds){
-    const top=_recoTopGenreIds();
-    const dayBoost=_dayBoostGenres(ctx.d,ctx.h);
-    genreIds=[...new Set([...dayBoost,...top])].slice(0,3);
+// títulos já vistos que casam com os gêneros (reforça a deduplicação enviada à IA)
+function _watchedTitleSet(){return new Set(films().map(r=>norm(r.t)));}
+function _watchedForGenres(genreIds,cap){
+  const set=new Set(genreIds);
+  const out=[];
+  for(const r of films()){
+    if(!r.gids||!r.gids.some(id=>set.has(id)))continue;
+    out.push((r.ti||r.t));
+    if(out.length>=(cap||200))break;
   }
-  // IDs já vistos
+  return out;
+}
+
+// resumo do gosto atual para a IA
+function _tasteDigest(){
+  const rated=films().filter(r=>r.r!=null);
+  const top=rated.slice().sort((a,b)=>b.r-a.r||(+(b.ye||b.y))-(+(a.ye||a.y))).slice(0,45)
+    .map(r=>(r.ti||r.t)+' ('+(r.ye||r.y)+') '+String(r.r).replace('.',',')+'★');
+  const recent=rated.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,12).map(r=>(r.ti||r.t));
+  const gAvg={};rated.forEach(r=>(r.gids||[]).forEach(id=>{const g=GENRES[id];if(!g)return;gAvg[g]=gAvg[g]||{s:0,c:0};gAvg[g].s+=r.r;gAvg[g].c++;}));
+  const gLine=Object.entries(gAvg).filter(([,o])=>o.c>=4).map(([g,o])=>g+' '+(o.s/o.c).toFixed(1)+'★('+o.c+')').sort().slice(0,8).join(', ');
+  let dirs='';
+  try{const D=people().D.filter(p=>p.f.filter(f=>f.r!=null).length>=2)
+    .map(p=>{const rr=p.f.filter(f=>f.r!=null);return{n:p.n,avg:rr.reduce((s,f)=>s+f.r,0)/rr.length,c:rr.length};})
+    .sort((a,b)=>b.avg*Math.log1p(b.c)-a.avg*Math.log1p(a.c)).slice(0,8).map(p=>p.n);dirs=D.join(', ');}catch(e){}
+  return 'TOP AVALIADOS: '+top.join(', ')
+    +'\nVISTOS RECENTEMENTE: '+recent.join(', ')
+    +'\nMÉDIA POR GÊNERO: '+(gLine||'—')
+    +(dirs?'\nDIRETORES QUE ELE MAIS GOSTA (dados dele): '+dirs:'');
+}
+
+// ── chamada à IA (Anthropic, acesso direto do navegador) ──
+async function _llmRecommend(vibe){
+  const apikey=getLLMKey(); if(!apikey)throw {code:'nokey'};
+  const cfg=VIBE_CFG[vibe], ctx=_recoContext();
+  const genreIds=cfg.genres||[...new Set([..._dayGenres(ctx),..._topGenreIds(3)])].slice(0,4);
+  const userMsg=[
+    'CONTEXTO DE AGORA',
+    'Dia: '+ctx.dow+' · período: '+ctx.periodo+' ('+ctx.h+'h)',
+    'Diretriz do momento: '+ctx.dayNote,
+    (ctx.season?'Estação/sazonalidade: '+ctx.season:''),
+    'Vibe escolhida: '+cfg.name+(cfg.lang==='pt'?' (cinema brasileiro)':'')+'.',
+    '',
+    'RESUMO DO MEU GOSTO (do app)',
+    _tasteDigest(),
+    '',
+    'ALGUNS QUE JÁ VI NESSE TERRITÓRIO (não recomende estes nem similares óbvios):',
+    _watchedForGenres(genreIds,180).join(', '),
+    '',
+    'Recomende seguindo o formato JSON. 1 principal + até 2 alternativas. Nada de mainstream óbvio.'
+  ].filter(x=>x!=='').join('\n');
+
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'content-type':'application/json','x-api-key':apikey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:RECO_MODEL,max_tokens:1100,system:RECO_SYSTEM_PROMPT,messages:[{role:'user',content:userMsg}]})
+  });
+  if(r.status===401)throw {code:401};
+  if(!r.ok)throw {code:r.status};
+  const data=await r.json();
+  const text=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
+  let js=text.replace(/```json/gi,'').replace(/```/g,'').trim();
+  const a=js.indexOf('{'), b=js.lastIndexOf('}'); if(a>=0&&b>a)js=js.slice(a,b+1);
+  const obj=JSON.parse(js);
+  const arr=[]; if(obj.main)arr.push(obj.main); (obj.alternatives||[]).forEach(x=>arr.push(x));
+  return arr.filter(x=>x&&x.title);
+}
+
+// ── busca em massa no TMDB (heurística, sem IA) ──
+async function _fetchRecos(vibe){
+  const cfg=VIBE_CFG[vibe]; if(!cfg)return[];
+  const ctx=_recoContext();
+  let genreIds=cfg.genres;
+  if(!genreIds)genreIds=[...new Set([..._dayGenres(ctx),..._topGenreIds(3)])].slice(0,3);
+  const isHorror=vibe==='terror'||(genreIds.indexOf(27)>=0&&ctx.m>=8&&ctx.m<=10);
   const seenIds=new Set(films().filter(r=>r.id).map(r=>r.id));
-  const seenTitles=new Set(films().map(r=>norm(r.t)));
-  const results=[];
-  for(let page=1;page<=5&&results.length<8;page++){
-    const params={
-      with_genres:genreIds.join(','),
-      sort_by:'vote_average.desc',
-      'vote_count.gte':500,
-      'vote_average.gte':7.0,
-      page,
-      language:'pt-BR',
-      'without_genres':'10751,16', // sem família nem animação (a não ser que escolhido)
-    };
+  const seenTitles=_watchedTitleSet();
+  const out=[];
+  for(let page=1;page<=6&&out.length<8;page++){
+    const params={with_genres:genreIds.join(','),sort_by:'vote_average.desc',page,language:'pt-BR','without_genres':'10751,16'};
+    params['vote_count.gte']=isHorror?500:(vibe==='arte'?400:500);
+    params['vote_average.gte']=isHorror?6.8:(vibe==='arte'?7.5:7.0);
     if(cfg.lang)params['with_original_language']=cfg.lang;
-    if(vibe==='brasil'){delete params['without_genres'];}
-    if(vibe==='arte')params['vote_average.gte']=7.5;
-    const j=await tmdb('/discover/movie',params);
-    if(!j||!j.results)break;
-    for(const m of j.results){
-      if(seenIds.has(m.id))continue;
-      if(seenTitles.has(norm(m.title||''))||seenTitles.has(norm(m.original_title||'')))continue;
-      results.push(m);
-      if(results.length>=6)break;
+    if(vibe==='brasil')delete params['without_genres'];
+    if(vibe==='surpresa'&&(ctx.d===0&&ctx.h<18))delete params['without_genres']; // domingo tarde libera animação
+    // dia de semana: filmes mais curtos
+    if(ctx.d>=1&&ctx.d<=5)params['with_runtime.lte']=115;
+    // jan–mar: dramas recentes
+    if(ctx.m<=2&&genreIds.indexOf(18)>=0)params['primary_release_date.gte']='2019-01-01';
+    const j=await tmdb('/discover/movie',params); if(!j||!j.results)break;
+    for(const mv of j.results){
+      if(seenIds.has(mv.id))continue;
+      if(seenTitles.has(norm(mv.title||''))||seenTitles.has(norm(mv.original_title||'')))continue;
+      out.push(mv); if(out.length>=6)break;
     }
   }
-  return results.slice(0,5);
+  return out.slice(0,5);
 }
 
-function _recoCardHtml(m,vibeCfg){
-  const po=m.poster_path?'<img src="'+IMG+'/w92'+m.poster_path+'" loading="lazy"/>'
-    :'<div class="reco-ph">'+initials(m.title||'?')+'</div>';
-  const yr=(m.release_date||'').slice(0,4);
-  const genNames=(m.genre_ids||[]).slice(0,3).map(id=>GENRES[id]).filter(Boolean).join(' · ');
-  const score=m.vote_average?m.vote_average.toFixed(1):'—';
-  const ov=(m.overview||'').slice(0,120)+(m.overview&&m.overview.length>120?'…':'');
-  return '<div class="reco-card">'
-    +po
-    +'<div class="reco-info">'
-      +'<div class="reco-title">'+m.title+(yr?' ('+yr+')':'')+'</div>'
-      +(genNames?'<div class="reco-meta">'+genNames+'</div>':'')
-      +(ov?'<div class="reco-score" style="color:var(--mut)">'+ov+'</div>':'')
-      +'<div class="reco-score">★ '+score+' no TMDB · <span style="color:var(--acc1)">'+vibeCfg.note+'</span></div>'
+// ── card unificado ──
+function _recoCard(o){
+  const po=o.poster?'<img src="'+IMG+'/w154'+o.poster+'" loading="lazy"/>':'<div class="reco-ph">'+initials(o.title||'?')+'</div>';
+  const meta=(o.sub||'').trim();
+  return '<div class="reco-card">'+po+'<div class="reco-info">'
+    +'<div class="reco-title">'+o.title+(o.year?' ('+o.year+')':'')+'</div>'
+    +(meta?'<div class="reco-meta">'+meta+'</div>':'')
+    +(o.why?'<div class="reco-why'+(o.main?' reco-why-main':'')+'">'+o.why+'</div>':'')
+    +(o.score?'<div class="reco-score">★ '+o.score+' no TMDB · <span style="color:var(--acc1)">'+(o.tag||'')+'</span></div>':(o.status?'<div class="reco-score" style="color:var(--acc1)">'+o.status+'</div>':''))
     +'</div></div>';
 }
 
-async function _runReco(vibe){
-  const ob=$('#recoOb');if(!ob)return;
-  const cfg=VIBE_CFG[vibe];
-  ob.querySelector('#recoVibeArea').querySelectorAll('.reco-vibe').forEach(b=>b.classList.toggle('on',b.dataset.v===vibe));
-  const resultsEl=ob.querySelector('#recoResults');
-  resultsEl.innerHTML='<div class="reco-spin">Buscando filmes no TMDB…<br><br>🎬</div>';
-  const movies=await _fetchRecos(vibe);
-  if(!movies.length){
-    resultsEl.innerHTML='<div class="reco-empty">Não encontrei títulos novos para esse filtro. Tente outra vibe!</div>';
+// ── rodar com IA ──
+async function _runRecoLLM(vibe){
+  const ob=$('#recoOb'); if(!ob)return;
+  const res=ob.querySelector('#recoResults');
+  res.innerHTML='<div class="reco-spin"><div class="reco-loader"></div>Pensando como crítico de cinema…</div>';
+  let recs;
+  try{ recs=await _llmRecommend(vibe); }
+  catch(e){
+    if(e&&e.code===401){res.innerHTML='<div class="reco-empty">A chave da IA foi recusada. Toque em <b>Trocar chave</b> acima e cole de novo.</div>';return;}
+    if(e&&e.code==='nokey'){res.innerHTML='<div class="reco-empty">Ative a IA acima ou use as sugestões via TMDB.</div>';return;}
+    res.innerHTML='<div class="reco-empty">Não consegui falar com a IA agora.<br><button class="btn sec" id="recoFallback" style="margin-top:10px;font-size:13px">Ver sugestões via TMDB</button></div>';
+    const fb=res.querySelector('#recoFallback'); if(fb)fb.onclick=()=>_runRecoHeuristic(vibe);
     return;
   }
-  resultsEl.innerHTML=movies.map(m=>_recoCardHtml(m,cfg)).join('');
+  const seenTitles=_watchedTitleSet(), seenIds=new Set(films().filter(r=>r.id).map(r=>r.id));
+  recs=recs.filter(r=>!seenTitles.has(norm(r.title))).slice(0,3);
+  if(!recs.length){res.innerHTML='<div class="reco-empty">As sugestões da IA você já tinha visto! Toque na vibe de novo para outra leva.</div>';return;}
+  // busca pôster no TMDB (e confirma que não é um filme já visto)
+  const cards=[];
+  for(let i=0;i<recs.length;i++){
+    const r=recs[i]; let poster=null;
+    try{const m=await searchFilm(r.title,+r.year||0); if(m){ if(m.id&&seenIds.has(m.id))continue; poster=m.po; if(m.ye&&!r.year)r.year=m.ye; }}catch(e){}
+    const sub=[r.director,r.country,r.runtime].filter(Boolean).join(' · ');
+    cards.push(_recoCard({poster,title:r.title,year:r.year,sub,why:r.why,main:i===0,status:'Inédito p/ você'}));
+  }
+  res.innerHTML=cards.length?cards.join(''):'<div class="reco-empty">Tudo que veio você já viu! Toque na vibe de novo.</div>';
+}
+
+// ── rodar via TMDB (heurística) ──
+async function _runRecoHeuristic(vibe){
+  const ob=$('#recoOb'); if(!ob)return;
+  const cfg=VIBE_CFG[vibe];
+  const res=ob.querySelector('#recoResults');
+  res.innerHTML='<div class="reco-spin"><div class="reco-loader"></div>Buscando filmes no TMDB…</div>';
+  const movies=await _fetchRecos(vibe);
+  if(!movies.length){res.innerHTML='<div class="reco-empty">Não encontrei títulos novos para esse filtro. Tente outra vibe!</div>';return;}
+  res.innerHTML=movies.map((m,i)=>{
+    const yr=(m.release_date||'').slice(0,4);
+    const gen=(m.genre_ids||[]).slice(0,3).map(id=>GENRES[id]).filter(Boolean).join(' · ');
+    const ov=(m.overview||'').slice(0,110)+(m.overview&&m.overview.length>110?'…':'');
+    return _recoCard({poster:m.poster_path,title:m.title,year:yr,sub:gen,why:ov||'',main:i===0,score:m.vote_average?m.vote_average.toFixed(1):null,tag:cfg.note});
+  }).join('');
+}
+
+function _runReco(vibe){ return getLLMKey()?_runRecoLLM(vibe):_runRecoHeuristic(vibe); }
+
+// ── caixa de chave da IA ──
+function _recoEngineHtml(){
+  if(getLLMKey())
+    return '<div class="reco-eng"><span class="dot"></span>Recomendações por IA (Claude) ativas <button id="recoKeyChg">Trocar chave</button><button id="recoKeyDel">Remover</button></div>';
+  return '<div class="reco-eng">Sugestões via TMDB <button id="recoKeyAdd">'+ICON_SPARK+'Ativar IA (Claude)</button></div>';
+}
+function _recoKeyBoxHtml(){
+  return '<div class="reco-keybox" id="recoKeyBox"><div class="hint">Cole uma chave da API da Anthropic (Claude) para recomendações que raciocinam sobre o seu gosto. A chave fica só neste aparelho. Uso da API é pago por chamada.</div>'
+    +'<input id="recoKeyIn" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sk-ant-…"/>'
+    +'<button class="btn" id="recoKeySave" style="font-size:13px">Salvar chave</button>'
+    +'<div class="hint" style="margin-top:8px">Pegue em <span style="color:var(--cyan)">console.anthropic.com</span> → API Keys.</div></div>';
 }
 
 function openReco(){
   const ctx=_recoContext();
-  const ob=$('#recoOb');if(!ob)return;
-  const vibeHtml=Object.entries(VIBE_CFG).map(([k,v])=>
-    '<button class="reco-vibe" data-v="'+k+'">'+v.label+'</button>'
-  ).join('');
+  const ob=$('#recoOb'); if(!ob)return;
+  const vibeHtml=Object.entries(VIBE_CFG).map(([k,v])=>'<button class="reco-vibe" data-v="'+k+'"><span class="ricon">'+RICON[k]+'</span>'+v.name+'</button>').join('');
   ob.innerHTML=
-    '<div class="reco-ctx"><b>'+ctx.dow+', '+ctx.periodo+'</b><br>'+ctx.dayNote+'</div>'
+    '<div class="reco-ctx"><b>'+ctx.dow+', '+ctx.periodo+'</b><br>'+ctx.dayNote+(ctx.season?'<br><span style="color:var(--acc2)">'+ctx.season+'</span>':'')+'</div>'
+    +'<div id="recoEng">'+_recoEngineHtml()+'</div>'
     +'<div id="recoVibeArea" class="reco-vibes">'+vibeHtml+'</div>'
-    +'<div id="recoResults"><div class="reco-empty">Escolha uma vibe acima para ver recomendações personalizadas.</div></div>';
-  ob.querySelector('#recoVibeArea').onclick=e=>{
-    const b=e.target.closest('.reco-vibe');
-    if(b)_runReco(b.dataset.v);
-  };
+    +'<div id="recoResults"><div class="reco-empty">Escolha uma vibe acima para ver recomendações.</div></div>';
+  ob.querySelector('#recoVibeArea').onclick=e=>{const b=e.target.closest('.reco-vibe'); if(b)_runReco(b.dataset.v);};
+  _wireRecoEngine();
   $('#recoOver').classList.add('show');
+}
+function _wireRecoEngine(){
+  const eng=$('#recoEng'); if(!eng)return;
+  const add=$('#recoKeyAdd'), chg=$('#recoKeyChg'), del=$('#recoKeyDel');
+  const showBox=()=>{
+    if($('#recoKeyBox'))return;
+    eng.insertAdjacentHTML('afterend',_recoKeyBoxHtml());
+    $('#recoKeySave').onclick=()=>{const v=$('#recoKeyIn').value.trim(); if(!v){toast('Cole a chave');return;} setLLMKey(v); toast('IA ativada'); openReco();};
+  };
+  if(add)add.onclick=showBox;
+  if(chg)chg.onclick=showBox;
+  if(del)del.onclick=()=>{setLLMKey(null); toast('Chave removida'); openReco();};
 }
 
 function _lastFilm(){const fl=films().filter(r=>r.r!=null);if(!fl.length)return null;return fl.sort((a,b)=>(b.ts||0)-(a.ts||0)||(+(b.ye||b.y))-(+(a.ye||a.y))||b.r-a.r)[0];}
-async function _shareCard(){const cv=$('#sfCanvas');if(!cv)return;const btn=$('#sfShare');if(btn){btn.textContent='Gerando\u2026';btn.disabled=true;}cv.toBlob(async blob=>{if(btn){btn.textContent='\u2197 Compartilhar';btn.disabled=false;}if(!blob)return;const file=new File([blob],'cinestats.png',{type:'image/png'});if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'CineStats'});}catch(e){if(e.name!=='AbortError')toast('Erro ao compartilhar');}}else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cinestats.png';a.click();}},'image/png');}
+async function _shareCard(){const cv=$('#sfCanvas');if(!cv)return;const btn=$('#sfShare');if(btn){btn.textContent='Gerando\u2026';btn.disabled=true;}cv.toBlob(async blob=>{if(btn){btn.textContent='Compartilhar';btn.disabled=false;}if(!blob)return;const file=new File([blob],'cinestats.png',{type:'image/png'});if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'CineStats'});}catch(e){if(e.name!=='AbortError')toast('Erro ao compartilhar');}}else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cinestats.png';a.click();}},'image/png');}
 function openPosterLightbox(src){if(!src)return;const lb=document.createElement('div');lb.className='post-lb';const img=document.createElement('img');img.src=src.replace('/w342/','/w780/').replace('/w185/','/w500/');img.loading='eager';lb.appendChild(img);lb.onclick=()=>lb.remove();document.body.appendChild(lb);}
 function openShareCard(fk){_sfKey=fk||null;_sfType=fk?'destaque':'retrato';if(_sfType==='destaque'&&!_sfKey){const lf=_lastFilm();if(lf)_sfKey=key(lf.t,lf.y);}_renderShareOb();$('#shareOver').classList.add('show');}
 
@@ -1056,7 +1227,7 @@ function _renderShareOb(){
   ob.innerHTML='<p style="color:var(--mut);font-size:12px;margin:0 0 8px">Cards 9:16 para Stories \u2014 toque Compartilhar.</p>'
     +'<div class="scard-types" id="_ctypes">'+types.map(([t,l])=>'<button class="chip '+(t===_sfType?'on':'')+'" data-t="'+t+'">'+l+'</button>').join('')+'</div>'
     +'<div class="scard-wrap"><canvas id="sfCanvas" class="scard-canvas"></canvas>'
-    +'<button class="btn" id="sfShare" style="margin-top:8px">\u2197 Compartilhar</button></div>';
+    +'<button class="btn" id="sfShare" style="margin-top:8px">'+ICON_SHARE+'Compartilhar</button></div>';
   $('#_ctypes').onclick=e=>{const b=e.target.closest('button');if(!b)return;_sfType=b.dataset.t;if(_sfType==='destaque'&&!_sfKey){const lf=_lastFilm();if(lf)_sfKey=key(lf.t,lf.y);}_renderShareOb();};
   $('#sfShare').onclick=_shareCard;
   _drawCard();
@@ -1266,7 +1437,7 @@ async function openFilm(k){_curFilmKey=k;const r=cache[k];if(!r)return;const t=r
   const overview=r.ov?`<div class="lbl">Sinopse</div><p style="font-size:13px;color:var(--mut);line-height:1.6;margin:0 0 4px">${r.ov}</p>`:'';
   $('#sheet').innerHTML=`<div class="top">${poster}<div><h3>${t}</h3><div class="yr">${y}${runtime?' · <b>'+runtime+'</b>':''}${r.r!=null?` · sua nota <b>${star(r.r)}</b>`:''}</div>${tagline}${gn?`<div class="yr" style="margin-top:6px">${gn}</div>`:''}${dirs?`<div class="yr" style="margin-top:6px">Direção: <b>${dirs}</b></div>`:''}</div></div>
     ${overview}
-    <div class="lbl">Sua nota</div>${starWidget(r.r||0,k)}<div class="rate-hint">Toque na metade esquerda da estrela para nota com ,5</div><button class="btn sec" id="filmShareBtn" style="margin-top:11px;font-size:13px">↗️ Compartilhar este filme</button>
+    <div class="lbl">Sua nota</div>${starWidget(r.r||0,k)}<div class="rate-hint">Toque na metade esquerda da estrela para nota com ,5</div><button class="btn sec" id="filmShareBtn" style="margin-top:11px;font-size:13px">${ICON_SHARE}Compartilhar este filme</button>
     ${cast?`<div class="lbl">Elenco principal</div><div class="cast">${cast}</div>`:(r.id?'<div class="note">Elenco ainda sendo baixado…</div>':'')}`;
   $('#modal').classList.add('show');}
 $('#sheet').addEventListener('click',e=>{
