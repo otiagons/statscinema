@@ -1,5 +1,27 @@
 <!DOCTYPE html><!--
   CineStats — Changelog
+  v4.1 [2026-06]: Ajustes. Emojis trocados por ícones SVG no estilo do app. Ranking de produtoras
+                  removido. Filtro/busca por TAGS (nome · quantidade) na aba Filmes. Conquistas
+                  reformuladas para o cinema: movimentos (Nouvelle Vague, Surrealismo, Neorrealismo,
+                  Cinema Novo…), trilogias (Antes, Silêncio de Bergman, Três Cores, Dólares…),
+                  filmografias de diretores (Tarkovsky, Kubrick, Lynch, Bong…) e papéis de atores
+                  (Mifune, Liv Ullmann, Mastroianni…). Mostra concluídas e em andamento, com filtro
+                  por categoria, lista de filmes por conquista e um motivo visual em espiral (Vertigo).
+  v4.0 [2026-06]: Grande expansão de funcionalidades (ideias-cinestats.md).
+                  · NOVA ABA "STATS": heatmap de atividade no estilo GitHub (por ano, usa as datas
+                    de sessão), sequência atual/maior sequência, ritmo (dias entre sessões + dia da
+                    semana favorito), comparação ano a ano, décadas por nota média, ranking de
+                    estúdios/produtoras, marcos (1.000/1.500/2.000…) e conquistas temáticas.
+                  · FILTROS na aba Filmes: Watchlist ("quero ver"), Revistos, Sem nota, por Duração
+                    (curtos/~90/2h+/3h+) e por Idioma original.
+                  · FILME: contador de rewatch, mini-review (anotação) e tags livres por filme.
+                  · BUSCA: botão "Quero ver" para adicionar à watchlist sem avaliar.
+                  · RANKINGS: diretores/atores/atrizes agora ordenáveis por nota média; ficha de
+                    diretor mostra "filmografia incompleta" (quantos filmes da carreira faltam ver).
+                  · RECOMENDAÇÕES: mostra em quais streamings (BR) cada sugestão está disponível.
+                  · COMPARTILHAR: card "Seu ano no cinema" (recap anual) + QR code discreto nos cards.
+                  · DADOS: sincronização agora captura duração, idioma e produtoras; o import do
+                    Letterboxd lê diary.csv (datas/rewatch/tags) e watchlist.csv.
   v3.1 [2026-06]: Espirais de favoritos reconstruídas como CONSTELAÇÕES reais — cada tema usa uma
                   constelação conhecida (Órion, Cassiopeia, Cygnus, Scorpius, Ursa Maior). As tags
                   orbitam em elipses, giram mais rápido ao "cair" e desaparecem no núcleo, sobre um
@@ -39,11 +61,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="CineStats"/>
 <meta name="theme-color" content="#000000"/>
-<link rel="apple-touch-icon" href="apple-touch-icon.png"/>
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"/>
-<link rel="manifest" href="manifest.webmanifest"/>
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"/>
-<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png"/>
+<link id="lnkApple1" rel="apple-touch-icon" href="apple-touch-icon.png"/>
+<link id="lnkApple2" rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"/>
+<link id="lnkManifest" rel="manifest" href="manifest.webmanifest"/>
+<link id="lnkIcon192" rel="icon" type="image/png" sizes="192x192" href="icon-192.png"/>
+<link id="lnkIcon512" rel="icon" type="image/png" sizes="512x512" href="icon-512.png"/>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23000'/><path d='M 4 16 A 12 7.5 0 0 1 28 16' stroke='%231ec98a' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M 28 16 A 12 7.5 0 0 1 4 16' stroke='%23ff2e43' stroke-width='3' fill='none' stroke-linecap='round'/><circle cx='16' cy='16' r='2.3' fill='%23f4f0e6'/></svg>"/>
 <title>CineStats</title>
 <style>
@@ -258,6 +280,87 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .reco-vibe .ricon svg{width:15px;height:15px}
 .reco-vibe.on .ricon svg,.reco-vibe:active .ricon svg{color:var(--acc1)}
 .reco-empty{color:var(--dim);text-align:center;padding:28px;font-size:13px;line-height:1.5}
+.reco-prov{font-size:11px;color:var(--mut);margin-top:5px}.reco-prov b{color:var(--acc1)}
+/* ── Filtros / watchlist / rewatch ── */
+.wl-btn{background:var(--panel);border:1px solid var(--line);color:var(--mut);border-radius:7px;padding:5px 11px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+.wl-btn.on{border-color:var(--acc2);color:var(--acc2);background:rgba(255,46,67,.08)}
+.po-rw{position:absolute;right:5px;top:5px;background:rgba(0,0,0,.74);color:var(--ink);font-size:10px;font-weight:800;border-radius:5px;padding:1px 5px}
+/* ── Film modal extras ── */
+.film-wl{background:rgba(255,46,67,.08);border:1px solid color-mix(in srgb,var(--acc2) 40%,var(--line));border-radius:10px;padding:9px 12px;margin-top:13px;font-size:12.5px;color:var(--mut)}
+.film-wl b{color:var(--acc2)}
+.rw-ctl{display:flex;align-items:center;gap:12px}
+.rw-b{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:18px;font-weight:800;cursor:pointer;line-height:1}
+.rw-n{font-size:13.5px;font-weight:700;color:var(--gold);min-width:64px}
+.film-note{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:10px;font-size:13.5px;min-height:54px;resize:vertical;font-family:inherit}
+.film-tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ftag{background:var(--p2);border:1px solid var(--line);border-radius:16px;padding:4px 9px;font-size:11.5px;color:var(--ink)}
+.ftag i{color:var(--dim);font-style:normal;cursor:pointer;font-weight:800;margin-left:3px}
+.ftag-in{background:var(--bg);border:1px dashed var(--line);color:var(--ink);border-radius:16px;padding:4px 10px;font-size:11.5px;width:90px}
+.filmo-prog{display:flex;align-items:center;gap:9px;margin:4px 0 2px;font-size:11.5px;color:var(--mut)}
+.filmo-bar{flex:1;height:7px;background:var(--p2);border-radius:4px;overflow:hidden}
+.filmo-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc1))}
+/* ── Stats tab ── */
+.st-hd{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px 16px;margin-top:13px;text-align:center}
+.st-hd-big{font-size:38px;font-weight:800;color:var(--acc1);line-height:1}
+.st-hd-sub{font-size:12.5px;color:var(--mut);margin-top:5px}
+.ms-bar{height:7px;background:var(--p2);border-radius:4px;overflow:hidden;margin:11px 0 5px}
+.ms-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc1))}
+.ms-lbl{font-size:11.5px;color:var(--dim)}.ms-lbl b{color:var(--ink)}
+.hm-summary{font-size:12px;color:var(--mut);margin:2px 0 6px}
+.hm-wrap{overflow-x:auto;padding-bottom:4px}
+.hm-labels{display:flex;gap:2px;margin-left:0;padding-bottom:3px}
+.hm-lbl{width:11px;font-size:8.5px;color:var(--dim);flex:none;white-space:nowrap;overflow:visible}
+.hm-grid{display:flex;gap:2px}
+.hm-col{display:flex;flex-direction:column;gap:2px}
+.hm-c{width:11px;height:11px;border-radius:2px;flex:none}
+.hm-x{background:transparent}
+.hm-l0{background:var(--p2)}
+.hm-l1{background:color-mix(in srgb,var(--acc1) 30%,var(--p2))}
+.hm-l2{background:color-mix(in srgb,var(--acc1) 55%,var(--p2))}
+.hm-l3{background:color-mix(in srgb,var(--acc1) 78%,var(--p2))}
+.hm-l4{background:var(--acc1)}
+.hm-legend{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--dim);margin-top:7px}
+.hm-legend .hm-c{width:10px;height:10px}
+.yy-rows{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.yy-row{display:grid;grid-template-columns:46px 1fr auto auto;align-items:center;gap:8px;padding:9px 12px;background:var(--panel);border-bottom:1px solid var(--line);font-size:12.5px}
+.yy-row:last-child{border-bottom:none}
+.yy-y{font-weight:800;color:var(--acc1)}.yy-n b{color:var(--ink)}.yy-n{color:var(--mut)}
+.yy-a{color:var(--gold);font-weight:700}.yy-g{color:var(--dim);font-size:11px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:88px}
+.ach-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:380px){.ach-grid{grid-template-columns:1fr}}
+.ach{display:flex;gap:9px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:10px;opacity:.6}
+.ach.on{opacity:1;border-color:color-mix(in srgb,var(--acc1) 45%,var(--line))}
+.ach[data-ai]{cursor:pointer}
+.ach[data-ai]:active{transform:scale(.99)}
+.ach-ic{flex:none;width:26px;height:26px;color:var(--mut)}
+.ach-ic svg{width:26px;height:26px}
+.ach.on .ach-ic{color:var(--acc1)}
+.ach-bd{min-width:0;flex:1}
+.ach-n{font-size:12.5px;font-weight:800;line-height:1.15}
+.ach-n svg{color:var(--acc1)}
+.ach.on .ach-n{color:var(--acc1)}
+.ach-d{font-size:10.5px;color:var(--mut);margin:2px 0 6px;line-height:1.25}
+.ach-bar{height:5px;background:var(--p2);border-radius:3px;overflow:hidden}
+.ach-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc1))}
+.ach-p{font-size:9.5px;color:var(--dim);margin-top:3px;font-variant-numeric:tabular-nums}
+/* hero espiral Vertigo + modal de conquista */
+.ach-hero{position:relative;display:flex;align-items:center;justify-content:center;height:170px;margin:6px 0 12px}
+.vspiral{position:absolute;inset:0;margin:auto;opacity:.5;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--acc1) 30%,transparent))}
+@media(prefers-reduced-motion:no-preference){.vspiral{animation:vspin 28s linear infinite}}
+@keyframes vspin{to{transform:rotate(-360deg)}}
+.ach-hero-c{position:relative;text-align:center;z-index:1}
+.ach-hero-num{font-size:40px;font-weight:800;color:var(--ink);line-height:1}
+.ach-hero-num span{font-size:20px;color:var(--mut);font-weight:700}
+.ach-hero-lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-top:3px}
+.ach-bigic{width:64px;height:64px;border-radius:14px;background:linear-gradient(135deg,var(--acc1),var(--acc2));color:#000;display:flex;align-items:center;justify-content:center;flex:none}
+.ach-bigic svg{width:32px;height:32px}
+.ach-flist{display:flex;flex-direction:column;gap:1px;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:4px}
+.ach-frow{display:flex;align-items:center;gap:9px;padding:9px 12px;background:var(--panel);font-size:13px;color:var(--mut)}
+.ach-frow.seen{color:var(--ink)}
+.ach-frow.seen svg{color:var(--acc1);flex:none}
+.ach-frow .ach-ft{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ach-frow .ach-fy{color:var(--dim);font-size:11.5px;font-variant-numeric:tabular-nums}
+.ach-dot{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--dim);flex:none;display:inline-block}
 </style></head><body>
 <div class="wrap">
   <header>
@@ -275,6 +378,7 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
     <button data-t="actor">Atores</button>
     <button data-t="actress">Atrizes</button>
     <button data-t="genre">Gênero</button>
+    <button data-t="stats">Stats</button>
   </div>
   <div class="prog" id="prog"><span id="progTxt"></span><div class="bar"><i id="progBar"></i></div></div>
   <div id="view"></div>
@@ -349,6 +453,8 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const EMBED = [["Y Tu Mamá También",2001,4.0],["Logan",2017,4.0],["The Hunger Games: Mockingjay – Part 2",2015,2.5],["I Killed My Mother",2009,3.5],["Free Fall",2013,3.0],["Hidden Figures",2016,3.5],["Manchester by the Sea",2016,4.0],["Carol",2015,4.0],["Moonlight",2016,4.0],["Spirited Away",2001,4.5],["La La Land",2016,4.0],["Gladiator",2000,3.5],["Dogtooth",2009,4.0],["The Lord of the Rings: The Two Towers",2002,null],["The Lord of the Rings: The Return of the King",2003,4.5],["Fight Club",1999,5.0],["Suspiria",1977,4.5],["American Honey",2016,4.0],["Delicatessen",1991,4.5],["Angel Heart",1987,4.0],["Stranger Than Paradise",1984,3.5],["The People vs. Larry Flynt",1996,null],["Amadeus",1984,4.0],["Barry Lyndon",1975,4.5],["Paths of Glory",1957,4.5],["La Chinoise",1967,3.0],["Fargo",1996,4.5],["There Will Be Blood",2007,4.5],["The Departed",2006,4.0],["After Hours",1985,5.0],["The American Friend",1977,4.0],["The Big Short",2015,3.0],["The Hateful Eight",2015,3.5],["Hell or High Water",2016,3.5],["Star Wars: The Force Awakens",2015,3.5],["Pompeii",2014,2.0],["Confirmation",2016,3.0],["Weekend",1967,4.0],["La Dolce Vita",1960,4.5],["Requiem for a Dream",2000,4.5],["Arrival",2016,4.5],["The Elephant Man",1980,4.0],["Paris, Texas",1984,5.0],["Wild Tales",2014,4.0],["A Dangerous Method",2011,2.0],["Heat",1995,4.0],["Aquarius",2016,4.5],["Dead Ringers",1988,4.0],["The Exorcist",1973,4.0],["A Wolf at the Door",2013,4.0],["Open Your Eyes",1997,null],["Heathers",1989,3.5],["V for Vendetta",2005,null],["Don't Breathe",2016,3.5],["The Exterminating Angel",1962,5.0],["Land of Storms",2014,3.5],["The Secret in Their Eyes",2009,null],["S.W.A.T.",2003,null],["Jumper",2008,0.5],["The Wailing",2016,4.0],["Predator",1987,3.5],["Don't Look Now",1973,3.5],["The Young and the Damned",1950,4.5],["Basic Instinct",1992,4.0],["Elle",2016,4.5],["Total Recall",1990,4.0],["The Passion of Joan of Arc",1928,4.5],["Poseidon",2006,null],["Manhunter",1986,4.0],["Whiplash",2014,3.0],["Straw Dogs",1971,4.0],["Halloween",1978,4.0],["The Texas Chain Saw Massacre",1974,3.0],["Amélie",2001,4.0],["Lock, Stock and Two Smoking Barrels",1998,4.0],["True Romance",1993,4.0],["Star Trek Beyond",2016,3.0],["Star Trek Into Darkness",2013,null],["Killer Joe",2011,3.5],["Addams Family Values",1993,3.5],["A Walk to Remember",2002,2.5],["Neighboring Sounds",2012,null],["What Ever Happened to Baby Jane?",1962,4.0],["Witness for the Prosecution",1957,4.5],["The Passenger",1975,4.5],["Dancer in the Dark",2000,4.5],["Take Shelter",2011,null],["Polytechnique",2009,3.5],["Incendies",2010,4.5],["Donnie Darko",2001,3.5],["eXistenZ",1999,3.5],["The Usual Suspects",1995,null],["Kingsman: The Secret Service",2014,4.0],["Akira",1988,4.5],["Diabolique",1955,4.5],["The Wages of Fear",1953,5.0],["The Rules of the Game",1939,4.5],["Mouchette",1967,4.5],["Army of Shadows",1969,4.5],["Le Cercle Rouge",1970,4.5],["Le Doulos",1962,4.0],["A Streetcar Named Desire",1951,2.5],["Snatch",2000,null],["Le Samouraï",1967,5.0],["Pickpocket",1959,4.0],["A Man Escaped",1956,4.5],["American History X",1998,4.5],["Day for Night",1973,4.0],["The 400 Blows",1959,5.0],["Saw",2004,3.5],["North Sea Texas",2011,null],["Evil Dead",2013,3.5],["Dallas Buyers Club",2013,3.5],["Casablanca",1942,4.5],["The Skin I Live In",2011,3.5],["Kill Bill: Vol. 2",2004,4.5],["Stalker",1979,5.0],["Night and Fog",1956,4.0],["Last Year at Marienbad",1961,4.5],["Locke",2013,3.5],["Ivan's Childhood",1962,4.0],["Nostalgia",1983,4.0],["Lisbela and the Prisoner",2003,4.0],["Memento",2000,4.0],["The Trial",1962,4.5],["The Lady from Shanghai",1947,4.0],["Rosemary's Baby",1968,5.0],["Vivre Sa Vie",1962,4.5],["Pierrot le Fou",1965,5.0],["Dog Day Afternoon",1975,4.5],["Network",1976,4.5],["The Apartment",1960,4.5],["Breathless",1960,4.5],["Badlands",1973,4.5],["Who's Afraid of Virginia Woolf?",1966,4.0],["Come and See",1985,5.0],["Carnage",2011,3.5],["Rush Hour",1998,null],["Shooter",2007,null],["Cinderella",2015,3.0],["The Imitation Game",2014,2.0],["White Noise 2: The Light",2007,null],["Zodiac",2007,4.0],["Mirror",1975,4.5],["L.I.E.",2001,null],["Milk",2008,null],["Behind the Candelabra",2013,3.5],["Ghostbusters",1984,3.5],["Unforgiven",1992,null],["The Shawshank Redemption",1994,4.0],["Space Jam",1996,3.0],["Collateral",2004,3.5],["The Big Lebowski",1998,5.0],["Monsters, Inc.",2001,null],["Monster House",2006,null],["The Insider",1999,null],["Inglourious Basterds",2009,4.5],["Django Unchained",2012,4.0],["Transformers",2007,null],["Transformers: Revenge of the Fallen",2009,null],["Messengers",1999,null],["Snow White and the Huntsman",2012,null],["Jennifer's Body",2009,3.5],["Panic Room",2002,3.0],["Red Riding Hood",2011,null],["Mamma Mia!",2008,2.0],["Matilda",1996,3.5],["From Beginning to End",2009,2.0],["Cold Mountain",2003,2.0],["The Matrix",1999,4.0],["Drive",2011,3.5],["Bad Education",2004,3.5],["Ex Machina",2015,4.0],["X2",2003,null],["Green Lantern",2011,0.5],["X-Men: The Last Stand",2006,null],["13 Going on 30",2004,3.5],["Thor",2011,2.0],["X-Men",2000,3.0],["The Girl with the Dragon Tattoo",2009,4.0],["Mr. & Mrs. Smith",2005,null],["The Bone Collector",1999,null],["Wanted",2008,null],["The Tourist",2010,null],["The Little Rascals",1994,null],["Full Metal Jacket",1987,4.5],["Guardians of the Galaxy",2014,3.5],["Pirates of the Caribbean: Dead Man's Chest",2006,null],["Edward Scissorhands",1990,4.0],["Corpse Bride",2005,null],["Christiane F.",1981,2.5],["The Prestige",2006,3.5],["Batman & Robin",1997,2.0],["Batman Returns",1992,3.5],["Batman Forever",1995,2.0],["Mysterious Skin",2004,5.0],["Babel",2006,4.0],["Charlie and the Chocolate Factory",2005,2.5],["Birdman or (The Unexpected Virtue of Ignorance)",2014,4.0],["The Theory of Everything",2014,2.0],["Mama",2013,null],["Adam",2009,3.0],["Katy Perry: Part of Me",2012,3.5],["Nightcrawler",2014,4.0],["The Hunger Games",2012,3.5],["The Conjuring",2013,null],["Spring Breakers",2012,null],["Carrie",1976,4.0],["My Own Private Idaho",1991,null],["Gremlins 2: The New Batch",1990,3.5],["Sin City",2005,4.0],["The Reaping",2007,null],["Gravity",2013,2.5],["We Need to Talk About Kevin",2011,3.5],["Les Misérables",2012,null],["Prayers for Bobby",2009,2.5],["G.I. Joe: The Rise of Cobra",2009,1.5],["Psycho",1960,5.0],["Rio",2011,3.0],["The Last Exorcism",2010,null],["Hostel",2005,2.0],["2001 Maniacs",2005,0.5],["I Don't Want to Go Back Alone",2010,2.5],["Gold Diggers: The Secret of Bear Mountain",1995,null],["The Lion King",1994,null],["The Brothers Grimm",2005,null],["Ghost",1990,null],["50 First Dates",2004,3.0],["Resident Evil",2002,3.5],["A Knight's Tale",2001,3.0],["Captain America: The First Avenger",2011,2.5],["Four Brothers",2005,2.0],["Scream 3",2000,2.5],["I Am Legend",2007,2.0],["Bad Teacher",2011,1.5],["Black Swan",2010,4.5],["Kill Bill: Vol. 1",2003,4.5],["Saw V",2008,null],["Resident Evil: Apocalypse",2004,null],["Street Kings",2008,null],["Closer",2004,4.0],["The Avengers",2012,3.0],["Avatar",2009,3.0],["Scream",1996,4.0],["The Italian Job",2003,null],["Resident Evil: Retribution",2012,null],["Resident Evil: Afterlife",2010,null],["The Fifth Element",1997,3.5],["The Da Vinci Code",2006,null],["Saw III",2006,null],["Titanic",1997,null],["Brokeback Mountain",2005,4.5],["Blood Diamond",2006,3.0],["Scream 2",1997,3.5],["Scream 4",2011,3.5],["The Sixth Sense",1999,null],["Saw IV",2007,null],["Sleepy Hollow",1999,null],["The Amazing Spider-Man",2012,2.0],["Saw II",2005,null],["Charlie's Angels: Full Throttle",2003,2.5],["Miss Congeniality",2000,null],["Saw VI",2009,null],["The Blair Witch Project",1999,3.5],["The Social Network",2010,4.0],["Charlie's Angels",2000,2.5],["A.I. Artificial Intelligence",2001,3.5],["Resident Evil: Extinction",2007,null],["The Dark Knight",2008,4.5],["The Illusionist",2006,null],["300",2006,2.5],["Carandiru",2003,4.0],["Brainstorm",2000,3.5],["Just Married",2003,null],["Final Destination",2000,3.5],["Daredevil",2003,0.5],["My Boss's Daughter",2003,null],["12 Years a Slave",2013,3.5],["Weekend",2011,4.0],["My Uncle Killed a Guy",2004,3.0],["Caramuru: Brazil Reinvented",2001,null],["Confessions of a Brazilian Call Girl",2011,3.0],["Quarantine",2008,null],["Back to the Future",1985,4.0],["The Silence of the Lambs",1991,null],["City of God",2002,5.0],["Back to the Future Part III",1990,3.5],["Back to the Future Part II",1989,4.0],["Latter Days",2003,null],["Turbo: A Power Rangers Movie",1997,null],["Mighty Morphin Power Rangers: The Movie",1995,null],["X-Men: Days of Future Past",2014,4.0],["The Hunger Games: Catching Fire",2013,null],["Gamer",2009,4.0],["White Chicks",2004,null],["Melancholia",2011,4.0],["The Beach",2000,null],["Paranormal Activity",2007,null],["Paranormal Activity 4",2012,null],["Paranormal Activity 2",2010,null],["Paranormal Activity 3",2011,null],["Batman Begins",2005,3.5],["Elite Squad",2007,3.5],["Pulp Fiction",1994,5.0],["Push",2009,null],["The Twilight Saga: Breaking Dawn – Part 1",2011,null],["The Twilight Saga: New Moon",2009,null],["The Texas Chainsaw Massacre: The Beginning",2006,null],["The Twilight Saga: Breaking Dawn – Part 2",2012,null],["Next",2007,null],["The Amityville Horror",2005,0.5],["The Twilight Saga: Eclipse",2010,0.5],["Watchmen",2009,4.5],["House of Wax",2005,null],["Fantastic Four: Rise of the Silver Surfer",2007,2.0],["The Perks of Being a Wallflower",2012,3.5],["Crossroads",2002,null],["Interview with the Vampire",1994,3.5],["Men in Black II",2002,null],["Men in Black",1997,null],["Mystic River",2003,null],["Mulholland Drive",2001,5.0],["Dawn of the Planet of the Apes",2014,2.5],["Independence Day",1996,3.0],["Stranger by the Lake",2013,null],["Elephant",2003,4.0],["The Kids Are All Right",2010,null],["Inception",2010,3.5],["Captain America: The Winter Soldier",2014,3.5],["The Number 23",2007,null],["The Devil Wears Prada",2006,3.0],["Stand by Me",1986,5.0],["Se7en",1995,4.5],["Children of Men",2006,3.5],["Let the Right One In",2008,4.0],["The Tenant",1976,4.5],["The Craft",1996,null],["Looking: The Movie",2016,4.0],["Cinema Paradiso",1988,4.0],["Red Desert",1964,4.0],["Dogville",2003,4.5],["The Thin Red Line",1998,4.5],["Divergent",2014,2.0],["The Shining",1980,4.5],["2001: A Space Odyssey",1968,5.0],["Solaris",1972,5.0],["L'Eclisse",1962,4.0],["Mud",2012,null],["One Piece: Clockwork Island Adventure",2001,null],["Spotlight",2015,3.0],["Room",2015,3.5],["The Revenant",2015,3.5],["Misery",1990,4.0],["Autumn Sonata",1978,4.5],["Dazed and Confused",1993,3.5],["Léon: The Professional",1994,4.0],["The Witch",2015,4.0],["The Untouchables",1987,3.5],["Casino",1995,4.0],["All About My Mother",1999,4.5],["Talk to Her",2002,4.0],["Blow Out",1981,4.0],["One Flew Over the Cuckoo's Nest",1975,4.5],["Scarface",1983,4.5],["Carlito's Way",1993,4.0],["Serpico",1973,4.0],["Ace in the Hole",1951,4.5],["A Short Film About Killing",1988,4.0],["A Short Film About Love",1988,4.5],["American Sniper",2014,2.5],["Gran Torino",2008,3.5],["Million Dollar Baby",2004,null],["Dirty Harry",1971,2.0],["Taxi Driver",1976,4.5],["Raging Bull",1980,3.5],["Masculin Féminin",1966,3.5],["Through a Glass Darkly",1961,4.0],["A Separation",2011,3.5],["Winter Light",1963,4.0],["A Clockwork Orange",1971,4.5],["The Silence",1963,3.5],["Alphaville",1965,3.5],["Iron Man",2008,3.0],["X-Men: First Class",2011,3.5],["Deadpool",2016,3.5],["Amores Perros",2000,4.5],["Contempt",1963,5.0],["Stolen Kisses",1968,3.5],["Grand Illusion",1937,4.0],["The Good, the Bad and the Ugly",1966,4.5],["For a Few Dollars More",1965,4.5],["A Fistful of Dollars",1964,3.5],["Au Hasard Balthazar",1966,4.5],["Jules and Jim",1962,4.5],["Justice League: War",2014,3.5],["Justice League: The Flashpoint Paradox",2013,3.5],["Good Will Hunting",1997,3.5],["Gattaca",1997,4.0],["Enemy",2013,4.0],["District 9",2009,3.5],["Burn After Reading",2008,4.0],["American Psycho",2000,4.5],["Band of Outsiders",1964,4.5],["A Woman Is a Woman",1961,4.0],["Days of Heaven",1978,4.0],["The Addams Family",1991,null],["Cursed",2005,null],["Rise of the Planet of the Apes",2011,null],["The Dark Knight Rises",2012,3.5],["Black Snake Moan",2006,3.0],["Mean Girls",2004,4.0],["Three O'Clock High",1987,3.5],["Bicentennial Man",1999,2.0],["The Breakfast Club",1985,4.0],["Girl, Interrupted",1999,4.0],["Hard Candy",2005,3.5],["I Know What You Did Last Summer",1997,3.0],["School of Rock",2003,null],["Pan's Labyrinth",2006,4.0],["Selma",2014,3.5],["WALL·E",2008,null],["Harry Potter and the Philosopher's Stone",2001,3.0],["Jurassic Park III",2001,2.0],["American Beauty",1999,4.5],["One After Another",1968,null],["The Man Who Copied",2003,4.0],["Troy",2004,null],["Gremlins",1984,3.5],["1408",2007,2.5],["Dumb and Dumber",1994,2.5],["Romeo + Juliet",1996,null],["Prince of Persia: The Sands of Time",2010,null],["The Incredibles",2004,4.0],["Pacific Rim",2013,null],["Jurassic Park",1993,4.0],["Kingdom of Heaven",2005,null],["The Lost World: Jurassic Park",1997,null],["Not Another Teen Movie",2001,null],["E.T. the Extra-Terrestrial",1982,3.5],["Prisoners",2013,4.0],["The Assassination of Jesse James by the Coward Robert Ford",2007,4.0],["Shutter Island",2010,4.0],["No Country for Old Men",2007,5.0],["Boogie Nights",1997,3.5],["Lucy",2014,2.5],["What's Love Got to Do with It",1993,null],["Magic Mike",2012,null],["A Nightmare on Elm Street",1984,4.0],["The Talented Mr. Ripley",1999,null],["A Dog's Will",2000,4.5],["Angels & Demons",2009,2.0],["Barton Fink",1991,3.5],["Superman Returns",2006,null],["The Normal Heart",2014,3.5],["My Name Ain't Johnny",2008,null],["The Exorcism of Emily Rose",2005,null],["Deep Impact",1998,2.0],["The Woman in Black",2012,null],["The Others",2001,null],["Journey to the Center of the Earth",2008,2.0],["Underworld: Evolution",2006,null],["Volcano",1997,null],["Lady in the Water",2006,null],["Spider-Man 2",2004,3.5],["Iron Man 2",2010,2.0],["After the Sunset",2004,2.0],["Spider-Man",2002,3.5],["Spider-Man 3",2007,2.5],["Generation X",1996,null],["The Mummy Returns",2001,null],["Saw 3D",2010,null],["Ghost Rider",2007,1.5],["The Incredible Hulk",2008,null],["The Chronicles of Narnia: The Lion, the Witch and the Wardrobe",2005,null],["Exorcist: The Beginning",2004,3.5],["United 93",2006,null],["Catwoman",2004,1.5],["Jackie Brown",1997,4.0],["The Lake House",2006,null],["28 Days Later",2002,3.5],["The Matrix Reloaded",2003,3.0],["25th Hour",2002,4.0],["Jaws",1975,2.5],["Reservoir Dogs",1992,4.5],["Malena",2000,null],["Flightplan",2005,2.5],["Alien",1979,4.5],["King Kong",2005,null],["American Pie",1999,2.5],["Aliens",1986,4.0],["The Grand Budapest Hotel",2014,4.0],["Elvira: Mistress of the Dark",1988,3.5],["Gone Girl",2014,4.5],["C.R.A.Z.Y.",2005,4.0],["Twins",1988,null],["Alice in Wonderland",2010,2.5],["Twilight",2008,2.0],["The Way He Looks",2014,2.5],["Twelve Monkeys",1995,4.0],["Sex Drive",2008,null],["Home Alone",1990,3.5],["Mission: Impossible",1996,3.5],["Home Alone 2: Lost in New York",1992,2.5],["The Kate Bush Story: Running Up That Hill",2014,4.0],["Shame",2011,3.5],["Easy A",2010,3.5],["Eternal Sunshine of the Spotless Mind",2004,5.0],["Minority Report",2002,null],["Boyhood",2014,4.5],["Bubble Boy",2001,3.0],["Tattoo",2013,4.5],["Superman",1978,3.0],["Maps to the Stars",2014,4.0],["Ghost World",2001,4.0],["Under the Skin",2013,4.5],["Star Trek",2009,null],["Signs",2002,3.0],["Her",2013,3.5],["Sicario",2015,2.5],["The Stepford Wives",2004,null],["Sister Act",1992,null],["Ida",2013,4.0],["The Lobster",2015,4.5],["The Girl with the Dragon Tattoo",2011,4.0],["Futuro Beach",2014,3.0],["Die Hard",1988,4.0],["The Hours",2002,4.5],["Pretty Woman",1990,null],["The Royal Tenenbaums",2001,4.0],["Juno",2007,3.5],["Fantastic Mr. Fox",2009,4.0],["The Mask of Zorro",1998,null],["The Babadook",2014,4.0],["Fracture",2007,3.5],["Side Effects",2013,4.0],["Finding Nemo",2003,3.5],["John Wick",2014,4.0],["Bandidas",2006,1.0],["Moonrise Kingdom",2012,null],["Pirates of the Caribbean: The Curse of the Black Pearl",2003,null],["The Fighter",2010,null],["The Guest",2014,3.0],["The Master",2012,3.0],["Before Night Falls",2000,3.5],["21 Grams",2003,4.0],["Ocean's Eleven",2001,3.5],["Lost Highway",1997,4.5],["Trainspotting",1996,3.5],["Blue Velvet",1986,5.0],["Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb",1964,5.0],["Red Dragon",2002,null],["Powder Keg",2001,null],["Mad Max 2",1981,4.5],["Frances Ha",2012,4.0],["Vertigo",1958,5.0],["Breakfast at Tiffany's",1961,4.0],["Mad Max",1979,4.0],["Mad Max: Fury Road",2015,4.5],["The Passion of the Christ",2004,null],["The Butterfly Effect",2004,null],["Clash of the Titans",2010,2.5],["8½",1963,4.5],["Bicycle Thieves",1948,4.5],["Terminator 2: Judgment Day",1991,4.5],["The Lord of the Rings: The Fellowship of the Ring",2001,4.5],["My Girl",1991,4.0],["The Mummy",1999,null],["RoboCop",1987,null],["Constantine",2005,1.5],["Rear Window",1954,4.5],["Eraserhead",1977,4.0],["Eyes Wide Shut",1999,4.5],["Dial M for Murder",1954,4.0],["Citizen Kane",1941,5.0],["Punch-Drunk Love",2002,5.0],["Sunset Boulevard",1950,5.0],["The Fly",1986,4.0],["It Follows",2014,4.0],["Goodnight Mommy",2014,4.0],["Before the Devil Knows You're Dead",2007,4.0],["Oldboy",2003,4.0],["The Godfather Part III",1990,3.5],["North by Northwest",1959,4.5],["GoodFellas",1990,4.5],["Schindler's List",1993,4.5],["Inherent Vice",2014,2.5],["In Bruges",2008,2.0],["Videodrome",1983,5.0],["Thelma & Louise",1991,4.5],["Lost in Translation",2003,4.5],["The Tree of Life",2011,5.0],["Shortbus",2006,4.0],["The Empire Strikes Back",1980,4.5],["Chinatown",1974,4.5],["Hannibal",2001,3.0],["The Second Mother",2015,4.0],["All About Eve",1950,4.5],["Return of the Jedi",1983,4.0],["Central Station",1998,4.0],["The Fountain",2006,3.0],["Looper",2012,3.5],["Star Wars",1977,4.0],["On the Waterfront",1954,3.5],["The Virgin Suicides",1999,null],["The Thing",1982,4.0],["Amarcord",1973,4.0],["Dangerous Liaisons",1988,4.0],["Jurassic World",2015,2.0],["101 Dalmatians",1996,1.5],["Dark City",1998,4.0],["Hocus Pocus",1993,3.5],["Jumanji",1995,3.0],["The Martian",2015,2.0],["Snowpiercer",2013,null],["They Live",1988,5.0],["Magic Mike XXL",2015,3.0],["10 Things I Hate About You",1999,3.5],["Escape from New York",1981,3.5],["The Curious Case of Benjamin Button",2008,3.5],["Miller's Crossing",1990,4.5],["Ferris Bueller's Day Off",1986,5.0],["Cast Away",2000,2.5],["Blade Runner",1982,5.0],["War of the Worlds",2005,null],["Evil Dead II",1987,3.5],["Moon",2009,4.0],["Midnight Special",2016,2.0],["Source Code",2011,3.5],["Blow-Up",1966,5.0],["La Notte",1961,5.0],["10 Cloverfield Lane",2016,3.5],["X-Men Origins: Wolverine",2009,1.5],["Amy",2015,3.5],["Lemonade",2016,3.5],["X-Men: Apocalypse",2016,2.5],["Tangerine",2015,4.0],["Persona",1966,5.0],["The Conversation",1974,4.0],["The Graduate",1967,4.5],["12 Angry Men",1957,5.0],["Repulsion",1965,4.0],["Rope",1948,4.5],["Bonnie and Clyde",1967,4.0],["Mean Streets",1973,2.5],["The Blue Lagoon",1980,null],["Monty Python and the Holy Grail",1975,4.5],["It's a Wonderful Life",1946,4.0],["Apocalypse Now",1979,5.0],["Rebel Without a Cause",1955,3.0],["Rushmore",1998,null],["Small Soldiers",1998,null],["The Truman Show",1998,4.0],["Some Like It Hot",1959,4.0],["Wild Strawberries",1957,5.0],["The Hunt",2012,null],["The Seventh Seal",1957,4.5],["Brazil",1985,5.0],["The Piano",1993,3.5],["Double Indemnity",1944,5.0],["Notorious",1946,3.5],["The Big Sleep",1946,3.5],["The Pianist",2002,4.5],["The Third Man",1949,4.0],["Strangers on a Train",1951,4.0],["Cries and Whispers",1972,4.5],["Fanny and Alexander",1982,4.5],["Big Trouble in Little China",1986,3.5],["The Goonies",1985,3.5],["My Neighbor Totoro",1988,4.0],["Eastern Promises",2007,3.5],["Speed",1994,null],["Grave of the Fireflies",1988,4.5],["Touch of Evil",1958,4.5],["Clueless",1995,4.0],["The Fog",1980,3.5],["A History of Violence",2005,3.5],["Hiroshima Mon Amour",1959,4.0],["The Wrestler",2008,3.5],["Coming to America",1988,2.0],["Van Helsing",2004,null],["Marie Antoinette",2006,4.0],["Hour of the Wolf",1968,3.5],["Nights of Cabiria",1957,5.0],["Elektra",2005,1.0],["Ghosts",1996,3.5],["Wings of Desire",1987,4.0],["The Day After Tomorrow",2004,2.0],["Nocturnal Animals",2016,3.5],["Dunkirk",2017,2.0],["Gerald's Game",2017,2.0],["Lady Bird",2017,3.5],["The Killing of a Sacred Deer",2017,3.5],["Contagion",2011,3.0],["The Hobbit: The Desolation of Smaug",2013,null],["The Hobbit: An Unexpected Journey",2012,null],["World War Z",2013,null],["Star Wars: Episode III – Revenge of the Sith",2005,3.0],["Star Wars: Episode II – Attack of the Clones",2002,2.0],["Star Wars: Episode I – The Phantom Menace",1999,2.5],["Call Me by Your Name",2017,4.0],["Star Wars: The Last Jedi",2017,4.0],["Frida",2002,null],["Kingsman: The Golden Circle",2017,3.5],["True Grit",2010,3.5],["Ingrid Goes West",2017,4.0],["Super Dark Times",2017,3.0],["Logan Lucky",2017,3.5],["Wild at Heart",1990,4.0],["Good Time",2017,4.0],["God's Own Country",2017,3.5],["Wind River",2017,3.0],["John Wick: Chapter 2",2017,3.0],["Atomic Blonde",2017,3.5],["Zero Dark Thirty",2012,3.5],["It Comes at Night",2017,3.0],["War for the Planet of the Apes",2017,2.0],["Blade Runner 2049",2017,4.0],["The Conjuring 2",2016,null],["The Beguiled",2017,3.5],["mother!",2017,4.5],["David Bowie: The Last Five Years",2017,null],["Buffalo '66",1998,4.0],["The Wild Bunch",1969,4.0],["Batman v Superman: Dawn of Justice",2016,2.0],["It",2017,3.5],["Catch Me If You Can",2002,null],["Contact",1997,4.0],["White Out, Black In",2014,2.5],["Forrest Gump",1994,3.5],["The Wolf of Wall Street",2013,4.0],["Belle de Jour",1967,4.5],["The Discreet Charm of the Bourgeoisie",1972,4.5],["There is Life in the Snowy Forests",1978,null],["Assault on Precinct 13",1976,2.5],["Birds",1981,null],["Indian Summer",1972,null],["Deep Red",1975,null],["The Deer Hunter",1978,3.5],["Guardians of the Galaxy Vol. 2",2017,3.0],["Alien: Covenant",2017,2.0],["Once Upon a Time in the West",1968,4.0],["Jackie",2016,3.0],["Baby Driver",2017,4.0],["Nowhere",1997,null],["Twin Peaks: Fire Walk with Me",1992,4.0],["Twin Peaks: The Missing Pieces",2014,3.5],["Twin Peaks",1989,4.5],["Donnie Brasco",1997,null],["Lolita",1962,3.5],["Once Upon a Time in America",1984,4.5],["Hall Pass",2011,null],["Split",2016,2.0],["Personal Shopper",2016,3.5],["Shaun of the Dead",2004,3.5],["Mortal Kombat",1995,null],["Green Room",2015,4.0],["Power Rangers",2017,3.0],["Beauty and the Beast",2017,3.0],["Wonder Woman",2017,3.5],["Get Out",2017,4.5],["Breaking the Waves",1996,4.5],["Volver",2006,3.0],["Charade",1963,3.5],["Black Book",2006,4.0],["The Rocky Horror Picture Show",1975,4.0],["Midnight in Paris",2011,3.5],["Only Lovers Left Alive",2013,3.5],["Seven Psychopaths",2012,null],["Platoon",1986,null],["Beach Rats",2017,3.5],["Brawl in Cell Block 99",2017,3.5],["Hanna",2011,null],["Prestige",1932,null],["I, Frankenstein",2014,null],["Half Light",2006,null],["Bruce Almighty",2003,null],["Final Destination 2",2003,null],["Final Destination 5",2011,null],["Shelter",2007,3.0],["Blade: Trinity",2004,null],["Dawn of the Dead",1978,null],["The Hills Have Eyes",2006,null],["Dragonball Evolution",2009,0.5],["Terminator Salvation",2009,null],["The 40 Year Old Virgin",2005,null],["Meet the Fockers",2004,null],["Meet the Parents",2000,null],["Casper",1995,null],["Cellular",2004,null],["Duplex",2003,null],["Jason X",2001,1.0],["RED",2010,null],["Over the Hedge",2006,null],["The Princess Diaries",2001,2.5],["Freddy vs. Jason",2003,null],["Madagascar",2005,null],["Night at the Museum",2006,null],["Click",2006,null],["Unleashed",2005,null],["Night at the Museum: Battle of the Smithsonian",2009,null],["DodgeBall: A True Underdog Story",2004,null],["Mr. Deeds",2002,null],["AVP: Alien vs. Predator",2004,null],["Mrs. Doubtfire",1993,null],["Shrek",2001,null],["The Tuxedo",2002,null],["Blade II",2002,null],["Blade",1998,null],["American Pie 2",2001,null],["American Wedding",2003,null],["American Pie Presents: The Book of Love",2009,null],["American Pie Presents: Beta House",2007,null],["Die Another Day",2002,null],["National Treasure",2004,null],["American Pie Presents: The Naked Mile",2006,null],["American Pie Presents: Band Camp",2005,null],["Dracula 2000",2000,null],["Music and Lyrics",2007,null],["Bridget Jones's Diary",2001,null],["My Super Ex-Girlfriend",2006,null],["Hollow Man",2000,null],["Chicken Run",2000,null],["A Bug's Life",1998,null],["Ri¢hie Ri¢h",1994,null],["Godfather",1991,null],["Hostel: Part II",2007,null],["Happy Gilmore",1996,null],["The Transporter",2002,null],["The Parent Trap",1998,null],["The Hangover",2009,null],["The Hot Chick",2002,null],["She's the Man",2006,null],["Final Destination 3",2006,3.5],["Shark Tale",2004,null],["2012",2009,null],["The Shape of Water",2017,2.0],["The Florida Project",2017,4.0],["I, Tonya",2017,4.0],["Three Billboards Outside Ebbing, Missouri",2017,3.0],["Life Is Beautiful",1997,3.5],["Before Sunrise",1995,4.5],["A Ghost Story",2017,4.0],["Before Sunset",2004,4.0],["Black Mirror: Crocodile",2017,3.5],["Black Mirror: Black Museum",2017,4.0],["Black Mirror: Metalhead",2017,2.5],["Black Mirror: Hang the DJ",2017,4.5],["Black Mirror: USS Callister",2017,3.5],["Black Mirror: Arkangel",2017,3.5],["Cloverfield",2008,3.0],["Before Midnight",2013,4.0],["Taking Lives",2004,1.5],["Rashomon",1950,4.5],["La Strada",1954,4.0],["The Night of the Hunter",1955,4.5],["The Killing",1956,4.0],["L'Avventura",1960,3.5],["La Jetée",1962,4.0],["The Birds",1963,3.5],["The Godfather",1972,5.0],["The Godfather Part II",1974,5.0],["King Kong",1976,2.5],["That Obscure Object of Desire",1977,3.5],["Bram Stoker's Dracula",1992,3.5],["The Handmaiden",2016,4.0],["Blood Simple",1984,3.5],["The Cloverfield Paradox",2018,2.5],["Black Panther",2018,3.5],["Fury",2014,2.5],["Phantom Thread",2017,3.5],["Unbreakable",2000,2.5],["A Fantastic Woman",2017,3.5],["The Death of Stalin",2017,3.5],["Annihilation",2018,3.5],["A Quiet Place",2018,3.5],["The Ritual",2017,3.0],["Avengers: Age of Ultron",2015,1.5],["Poltergeist",1982,3.5],["A Trip to the Moon",1902,4.5],["Thelma",2017,3.5],["Tremors",1990,2.5],["You Were Never Really Here",2017,2.0],["Love, Simon",2018,3.5],["Alien³",1992,3.0],["The Game",1997,3.5],["Thoroughbreds",2017,4.0],["The Tale",2018,3.5],["The Cabin in the Woods",2011,1.0],["Hereditary",2018,3.5],["Crash",1996,2.5],["The Warriors",1979,3.5],["Starship Troopers",1997,4.0],["Incredibles 2",2018,3.5],["Bronson",2008,3.5],["Bao",2018,3.5],["The Machinist",2004,3.0],["Unsane",2018,3.5],["Happiness",1998,4.0],["Fish Tank",2009,3.5],["Good Manners",2017,3.5],["The Terminator",1984,4.0],["Super 8",2011,3.5],["Metropolis",1927,4.5],["Battle Royale",2000,4.0],["Avengers: Infinity War",2018,3.5],["Underground",1995,4.0],["First Reformed",2017,2.5],["Babe",1995,2.5],["Close Encounters of the Third Kind",1977,2.0],["Edge of Tomorrow",2014,3.5],["Coherence",2013,4.0],["Primer",2004,3.0],["The Evil Dead",1981,3.5],["Beauty and the Beast",1991,4.0],["Synecdoche, New York",2008,5.0],["Deadpool 2",2018,3.5],["The Raid",2011,3.5],["The Raid 2",2014,4.0],["M",1931,4.5],["Doubt",2008,4.0],["Frozen",2013,3.0],["Transformers: Dark of the Moon",2011,0.5],["The Hobbit: The Battle of the Five Armies",2014,3.5],["Shrek the Third",2007,null],["Snow White and the Seven Dwarfs",1937,3.5],["The Searchers",1956,3.5],["Three Colours: Blue",1993,4.0],["Three Colours: Red",1994,4.5],["The Man Who Shot Liberty Valance",1962,4.5],["Seven Samurai",1954,5.0],["Rebecca",1940,4.0],["Twin Peaks: The Return",2017,4.0],["The Straight Story",1999,3.5],["Crouching Tiger, Hidden Dragon",2000,3.5],["The Philadelphia Story",1940,4.0],["Memories of Murder",2003,5.0],["Viridiana",1961,4.0],["Upgrade",2018,4.0],["The Death of Superman",2018,3.5],["American Animals",2018,3.5],["Ocean's Eight",2018,3.0],["They Shoot Horses, Don't They?",1969,4.0],["The French Connection",1971,4.5],["The Grapes of Wrath",1940,4.0],["Rumble Fish",1983,4.0],["The Great Mystical Circus",2018,2.0],["The Darjeeling Limited",2007,3.5],["Ran",1985,4.5],["Dredd",2012,3.5],["The Bridge on the River Kwai",1957,4.5],["Big Little Lies",2017,null],["Sharp Objects",2018,null],["The Hunger Games: Mockingjay – Part 1",2014,2.5],["Happy Death Day",2017,3.0],["Legally Blonde",2001,3.5],["A Prophet",2009,4.0],["Strange Days",1995,4.0],["Sympathy for Mr. Vengeance",2002,4.0],["Tokyo Story",1953,4.5],["Lady Vengeance",2005,4.0],["Katy Perry:  Will You Be My Witness?",2017,4.0],["Katy Perry: Making of the Pepsi Super Bowl Halftime Show",2015,5.0],["The General",1926,4.5],["Singin' in the Rain",1952,4.0],["Life of Brian",1979,4.0],["Die Hard With a Vengeance",1995,3.0],["Mad Max Beyond Thunderdome",1985,3.0],["McCabe & Mrs. Miller",1971,4.0],["Mandy",2018,3.0],["Jurassic World: Fallen Kingdom",2018,1.5],["The Nun",2018,1.5],["Mission: Impossible – Fallout",2018,3.5],["The Lives of Others",2006,4.0],["The Long Goodbye",1973,3.5],["The Maltese Falcon",1941,3.5],["Dawn of the Dead",2004,3.0],["In the Mood for Love",2000,4.0],["The Ring",2002,3.5],["The Hitcher",2007,null],["Planet of the Apes",2001,null],["The Mask",1994,null],["My Bloody Valentine",2009,2.0],["Searching",2018,4.0],["In a Lonely Place",1950,4.5],["Kiss Kiss Bang Bang",2005,3.5],["Black Mirror: White Christmas",2014,4.5],["Black Mirror: Fifteen Million Merits",2011,4.0],["Black Mirror: Shut Up and Dance",2016,4.5],["Black Mirror: The Entire History of You",2011,4.5],["Black Mirror: Playtest",2016,3.0],["Black Mirror: Hated in the Nation",2016,4.5],["Black Mirror: Men Against Fire",2016,4.0],["Black Mirror: Be Right Back",2013,4.5],["Black Mirror: The National Anthem",2011,3.0],["Black Mirror: San Junipero",2016,5.0],["Black Mirror: Nosedive",2016,4.5],["Black Mirror: White Bear",2013,4.5],["Black Mirror: The Waldo Moment",2013,0.5],["Possession",1981,4.5],["Justice League",2017,2.0],["Okja",2017,3.0],["BlacKkKlansman",2018,3.5],["Scary Movie 4",2006,3.0],["Free Willy",1993,null],["Sorry to Bother You",2018,4.0],["PlayTime",1967,4.5],["Eighth Grade",2018,3.5],["The New World",2005,3.0],["Thunder Road",2018,3.5],["Burning",2018,4.0],["Blindspotting",2018,4.0],["Loveling",2018,4.0],["Creed",2015,3.5],["Widows",2018,4.0],["Phone Booth",2002,2.0],["Halloween",2018,3.0],["Tully",2018,3.5],["The Wolverine",2013,2.5],["22 July",2018,3.0],["The Clovehitch Killer",2018,2.5],["A Simple Favor",2018,2.5],["Roma",2018,4.5],["The House That Jack Built",2018,4.0],["Game Night",2018,3.5],["Hitch",2005,null],["The Gift",2015,3.5],["Joy Ride",2001,3.5],["Eight Below",2006,null],["Into the Blue",2005,null],["Fantastic Four",2005,2.0],["Bad Times at the El Royale",2018,4.0],["The Innocents",1961,4.0],["The Umbrellas of Cherbourg",1964,4.0],["Harakiri",1962,4.5],["First Daughter",2004,1.0],["Hunger",2008,2.5],["Bird Box",2018,2.5],["In Darkness",2018,2.0],["Aquaman",2018,3.0],["Black Mirror: Bandersnatch",2018,2.0],["Rise of the Guardians",2012,3.0],["San Andreas",2015,1.5],["Zathura: A Space Adventure",2005,null],["Under the Silver Lake",2018,3.5],["Spider-Man: Into the Spider-Verse",2018,4.5],["Batman",1989,3.5],["Boy Erased",2018,2.5],["Support the Girls",2018,4.0],["Suspiria",2018,3.5],["Green Book",2018,2.0],["The Favourite",2018,4.0],["Can You Ever Forgive Me?",2018,3.5],["Toy Story",1995,4.0],["Toy Story 2",1999,3.5],["Happy Death Day 2U",2019,2.5],["Dragon Ball Super: Broly",2018,3.0],["Cargo",2017,2.5],["Toy Story 3",2010,4.5],["The Bourne Identity",2002,3.0],["The Treasure of the Sierra Madre",1948,4.0],["If Beale Street Could Talk",2018,3.5],["O Brother, Where Art Thou?",2000,4.0],["Us",2019,4.0],["Dragged Across Concrete",2018,4.0],["Glass",2019,3.0],["Bone Tomahawk",2015,3.5],["Captain Marvel",2019,3.0],["In the Mouth of Madness",1994,3.5],["Boyz n the Hood",1991,4.0],["Vox Lux",2018,3.5],["Aguirre, the Wrath of God",1972,4.0],["Avengers: Endgame",2019,4.0],["Maleficent",2014,2.5],["Up",2009,4.0],["High School Musical",2006,null],["The Rover",2014,3.0],["The Town",2010,3.5],["Creed II",2018,3.5],["Westworld",1973,3.0],["Blue Ruin",2013,3.0],["Do the Right Thing",1989,4.0],["Mommy",2014,3.5],["John Wick: Chapter 3 – Parabellum",2019,4.0],["Dark Phoenix",2019,2.5],["Black Mirror: Striking Vipers",2019,3.0],["Chernobyl",2019,4.5],["Black Mirror: Smithereens",2019,3.5],["They Don't Wear Black Tie",1981,4.5],["Black Mirror: Rachel, Jack and Ashley Too",2019,2.5],["Pixote",1980,4.0],["Os Saltimbancos Trapalhões",1981,null],["Elite Squad: The Enemy Within",2010,4.0],["Kiss of the Spider Woman",1985,4.5],["Yojimbo",1961,3.5],["L.A. Confidential",1997,3.5],["Training Day",2001,3.5],["Sherlock Jr.",1924,4.5],["Modern Times",1936,4.5],["Paris Is Burning",1990,4.5],["Un Chien Andalou",1929,4.0],["Saving Private Ryan",1998,3.5],["The Hurt Locker",2008,3.5],["Neon Genesis Evangelion: The End of Evangelion",1997,5.0],["Coraline",2009,4.0],["Atonement",2007,4.0],["Downfall",2004,3.5],["The Sting",1973,4.5],["Shazam!",2019,3.0],["Black Hawk Down",2001,3.5],["Toy Story 4",2019,4.0],["I Am Mother",2019,2.5],["Slumdog Millionaire",2008,3.5],["Cube",1997,2.5],["Evangelion: 2.0 You Can (Not) Advance",2009,4.0],["Evangelion: 1.0 You Are (Not) Alone",2007,3.5],["Evangelion: 3.0 You Can (Not) Redo",2012,3.0],["Das Boot",1981,4.5],["Inside Out",2015,4.0],["Mulan",1998,4.0],["Captain Fantastic",2016,4.0],["The Invitation",2015,3.5],["The Lion King",2019,2.5],["Pokémon Detective Pikachu",2019,3.0],["Godzilla",2014,3.0],["Anatomy of a Murder",1959,4.0],["The Beach Bum",2019,2.5],["Road to Perdition",2002,4.0],["Godzilla: King of the Monsters",2019,2.0],["Teen Spirit",2018,3.0],["Brooklyn",2015,3.5],["Carrie",2013,1.0],["Rocketman",2019,3.5],["Parasite",2019,5.0],["To Kill a Mockingbird",1962,3.0],["Mother",2009,4.0],["Train to Busan",2016,3.5],["Suicide Squad",2016,1.0],["Aladdin",1992,null],["Happy as Lazzaro",2018,4.0],["Captain America: Civil War",2016,3.0],["The Ghost Writer",2010,3.5],["Aladdin",2019,2.5],["Skyfall",2012,3.5],["Scott Pilgrim vs. the World",2010,3.5],["Once Upon a Time... in Hollywood",2019,4.0],["Annabelle Comes Home",2019,2.0],["Brightburn",2019,3.5],["Annabelle: Creation",2017,3.0],["Birds of Passage",2018,4.0],["Bacurau",2019,4.5],["Hot Fuzz",2007,3.5],["Spider-Man: Far From Home",2019,3.0],["Spider-Man: Homecoming",2017,3.0],["When They See Us",2019,4.5],["I Saw the Devil",2010,4.0],["Finding Dory",2016,3.5],["Midsommar",2019,3.5],["Crawl",2019,2.5],["Raiders of the Lost Ark",1981,2.5],["About Time",2013,4.0],["It Chapter Two",2019,3.0],["Joker",2019,4.0],["Little Monsters",2019,2.5],["El Camino: A Breaking Bad Movie",2019,3.0],["Zombieland",2009,3.5],["Seventeen",2019,3.5],["Dolemite Is My Name",2019,3.5],["Maleficent: Mistress of Evil",2019,3.0],["Center of My World",2016,4.0],["The King",2019,2.5],["The Laundromat",2019,2.5],["Basic Sanitation, the Movie",2007,3.5],["Ready or Not",2019,3.5],["The Irishman",2019,3.5],["Hustlers",2019,3.5],["Marriage Story",2019,4.0],["Freaks",2018,3.5],["Zombieland: Double Tap",2019,2.5],["The Lighthouse",2019,4.0],["The Forest of Love",2019,3.5],["Star Wars: The Rise of Skywalker",2019,2.0],["Frozen II",2019,3.0],["Atlantics",2019,3.5],["Knives Out",2019,4.0],["The Farewell",2019,3.5],["Bingo: The King of the Mornings",2017,3.0],["The Two Popes",2019,3.5],["A Hard Day",2014,3.0],["Booksmart",2019,4.0],["Portrait of a Lady on Fire",2019,4.0],["Jojo Rabbit",2019,3.5],["The Edge of Democracy",2019,4.0],["Watchmen",2019,4.5],["Nise: The Heart of Madness",2015,3.5],["Uncut Gems",2019,3.5],["Two Rabbits",2012,4.0],["Birds of Prey (and the Fantabulous Emancipation of One Harley Quinn)",2020,3.5],["Charlie's Angels",2019,2.5],["Black God, White Devil",1964,4.0],["Pain and Glory",2019,4.0],["Invisible Life",2019,4.0],["Ford v Ferrari",2019,2.5],["Little Women",2019,4.0],["The Host",2006,3.0],["A Bittersweet Life",2005,4.5],["Twenty Years Later",1984,4.5],["The Man from Nowhere",2010,4.0],["1917",2019,3.0],["Boy & the World",2013,3.5],["The Invisible Man",2020,3.5],["The Hunt",2020,3.5],["The Platform",2019,3.0],["The Adventures of Priscilla, Queen of the Desert",1994,3.5],["Paradise Hills",2019,1.5],["Harry Potter and the Chamber of Secrets",2002,3.0],["Harry Potter and the Prisoner of Azkaban",2004,4.0],["Harry Potter and the Goblet of Fire",2005,3.5],["The Gentlemen",2019,3.0],["Harry Potter and the Order of the Phoenix",2007,3.5],["The Square",2017,3.5],["Bus 174",2002,3.5],["Shoplifters",2018,3.5],["Harry Potter and the Half-Blood Prince",2009,3.0],["Harry Potter and the Deathly Hallows: Part 1",2010,3.5],["Harry Potter and the Deathly Hallows: Part 2",2011,4.0],["Sabrina",1954,3.0],["The Color Purple",1985,3.0],["In the Heat of the Night",1967,4.0],["The Player",1992,4.0],["Detroit",2017,3.5],["The First Temptation of Christ",2019,null],["Eli",2019,2.0],["Annabelle",2014,null],["The Final Destination",2009,null],["P2",2007,null],["Turistas",2006,0.5],["The Texas Chainsaw Massacre",2003,3.0],["Jeepers Creepers",2001,null],["Jeepers Creepers 2",2003,null],["Bride of Chucky",1998,null],["Urban Legend",1998,null],["Anaconda",1997,null],["High Noon",1952,4.5],["[REC]",2007,3.5],["I Am Jonas",2018,3.0],["Ghost in the Shell",1995,4.0],["Savage X Fenty Show",2019,4.0],["Blue Jasmine",2013,3.5],["Sauvage",2018,4.0],["Hail Mary",1985,3.5],["The Vanishing",1988,3.5],["The Road",2009,2.5],["Olive Kitteridge",2014,4.5],["Who Killed Eloá?",2015,3.5],["To Catch a Thief",1955,3.0],["Inside Man",2006,3.5],["The Bling Ring",2013,3.0],["Primal Fear",1996,3.5],["Time to Hunt",2020,4.0],["Mortal Kombat Legends: Scorpion's Revenge",2020,3.0],["The Haunting of Hill House",2018,4.0],["Fullmetal Alchemist: Brotherhood",2009,4.5],["The Lodge",2019,3.0],["Changeling",2008,3.5],["Point Break",1991,3.5],["The Man Who Knew Too Much",1956,3.5],["Out of the Past",1947,5.0],["Eyes Without a Face",1960,4.0],["The Conformist",1970,4.0],["The World's End",2013,2.0],["Jacob's Ladder",1990,3.5],["The Earrings of Madame de...",1953,4.5],["West Side Story",1961,2.0],["Bad Education",2019,3.5],["Death Becomes Her",1992,3.5],["Stagecoach",1939,3.5],["The Magnificent Ambersons",1942,3.5],["I Lost My Body",2019,3.5],["Swallow",2019,3.5],["High and Low",1963,4.5],["Justice League Dark",2017,3.5],["Justice League vs. Teen Titans",2016,3.0],["Justice League Dark: Apokolips War",2020,4.0],["Cazuza: Time Doesn't Stop",2004,null],["Teen Titans: The Judas Contract",2017,3.0],["Suicide Squad: Hell to Pay",2018,4.0],["Wonder Woman: Bloodlines",2019,3.0],["The King of Comedy",1982,4.0],["Constantine: City of Demons - The Movie",2018,3.5],["Rocky",1976,4.0],["The Vast of Night",2019,3.5],["Traffic",2000,3.5],["The Diving Bell and the Butterfly",2007,3.5],["The Room",2019,3.0],["13th",2016,4.0],["3:10 to Yuma",2007,3.5],["Look Who's Talking",1989,null],["Da 5 Bloods",2020,3.5],["I, Daniel Blake",2016,3.5],["3 Women",1977,3.5],["A Tale of Two Sisters",2003,4.0],["Princess Mononoke",1997,4.5],["Beasts of No Nation",2015,4.0],["The Shallows",2016,2.5],["The Old Guard",2020,3.5],["Your Name.",2016,4.5],["Relic",2020,2.0],["Palm Springs",2020,4.0],["A Time to Kill",1996,3.5],["Scary Stories to Tell in the Dark",2019,3.0],["The Hater",2020,3.5],["Mission: Impossible – Ghost Protocol",2011,3.5],["Host",2020,3.5],["Scooby-Doo",2002,3.5],["I Still Know What You Did Last Summer",1998,null],["Dark Skies",2013,3.0],["Sputnik",2020,3.0],["The Ballad of Buster Scruggs",2018,2.5],["Dark Waters",2019,3.0],["Peninsula",2020,2.0],["Mulan",2020,3.0],["I'm Thinking of Ending Things",2020,3.5],["Prometheus",2012,3.5],["Alien Resurrection",1997,2.0],["House of Flying Daggers",2004,4.0],["Bombshell",2019,2.0],["The Devil All the Time",2020,3.0],["#Alive",2020,2.5],["Brick",2005,3.0],["Enola Holmes",2020,3.0],["Life of Pi",2012,3.5],["Hulk",2003,null],["Little Miss Sunshine",2006,3.5],["The Boys in the Band",2020,3.5],["The Impossible",2012,3.5],["Kong: Skull Island",2017,3.0],["The Guilty",2018,3.5],["The Rite",2011,null],["Drained",2006,3.5],["The Wolf of Snow Hollow",2020,3.0],["The Man from U.N.C.L.E.",2015,3.0],["Savage X Fenty Show Vol. 2",2020,4.0],["Gentlemen Prefer Blondes",1953,3.5],["The Trial of the Chicago 7",2020,3.5],["The Haunting of Bly Manor",2020,4.0],["Robots",2005,null],["The Witches",1990,3.5],["Dogman",2018,3.5],["Airplane!",1980,2.0],["Heavenly Creatures",1994,4.5],["Reflections of a Blender",2010,3.5],["Noah",2014,2.0],["The Cold Front Brought by the Rain",2015,3.5],["His House",2020,3.5],["Ever After",1998,null],["Hotel Rwanda",2004,3.5],["Sorry Angel",2018,4.0],["Possessor",2020,3.5],["The Queen's Gambit",2020,null],["The New Mutants",2020,2.5],["The Orphanage",2007,3.5],["The Invisible Guest",2016,3.5],["Kajillionaire",2020,3.5],["Knife+Heart",2018,3.5],["Interstellar",2014,2.5],["The Nice Guys",2016,3.0],["Marshland",2014,3.5],["Perfect Blue",1997,4.0],["Threads",1984,4.0],["Tenet",2020,2.5],["Mank",2020,3.0],["Freaky",2020,3.5],["Monster",2003,3.5],["In Time",2011,null],["Ma Rainey's Black Bottom",2020,3.5],["The Prom",2020,1.0],["The Call",2020,3.5],["Stoker",2013,4.0],["Home Alone 3",1997,null],["Wonder Woman 1984",2020,3.0],["Holidate",2020,3.0],["Happiest Season",2020,3.5],["Digimon Adventure: Last Evolution Kizuna",2020,4.0],["The Dark and the Wicked",2020,3.0],["La Llorona",2019,3.5],["Pieces of a Woman",2020,3.5],["Burlesque",2010,2.5],["Promising Young Woman",2020,3.5],["Cinderella",1950,3.5],["Saint Maud",2019,2.5],["Run",2020,2.5],["The Little Mermaid",1989,3.5],["Sleeping Beauty",1959,3.5],["Thor: Ragnarok",2017,2.5],["Zack Snyder's Justice League",2021,4.0],["Iron Man 3",2013,3.0],["Antônia",2006,3.5],["Ant-Man",2015,3.0],["Ant-Man and the Wasp",2018,2.0],["Doctor Strange",2016,3.0],["Godzilla vs. Kong",2021,2.5],["Minari",2020,4.0],["The Father",2020,4.5],["Nomadland",2020,4.0],["Superman: Red Son",2020,null],["I Care a Lot",2020,3.0],["Judas and the Black Messiah",2021,4.0],["One Night in Miami...",2020,3.5],["Overlord",2018,3.0],["WandaVision",2021,null],["Thor: The Dark World",2013,1.5],["Ghost Rider: Spirit of Vengeance",2011,1.0],["Love and Monsters",2020,2.5],["Framing Britney Spears",2021,3.0],["Mortal Kombat",2021,1.0],["Sound of Metal",2019,4.0],["Justice Society: World War II",2021,2.0],["Superman: Man of Tomorrow",2020,1.5],["Reign of the Supermen",2019,2.5],["Justice League: Throne of Atlantis",2015,3.0],["Maurice",1987,3.0],["The Rental",2020,3.0],["Neon Genesis Evangelion",1995,4.0],["Cruella",2021,2.5],["The Final Girls",2015,3.0],["The Conjuring: The Devil Made Me Do It",2021,3.5],["In the Heights",2021,3.5],["A Quiet Place Part II",2020,3.5],["Black Widow",2021,3.0],["Fear Street: 1994",2021,3.5],["Fear Street: 1978",2021,3.5],["Loki",2021,null],["Scary Movie",2000,3.5],["Scary Movie 2",2001,3.0],["Scary Movie 3",2003,3.5],["Fear Street: 1666",2021,3.5],["A Classic Horror Story",2021,3.0],["Orphan",2009,3.0],["Doctor Sleep",2019,2.0],["Gretel & Hansel",2020,2.0],["Blood Red Sky",2021,2.5],["The Bye Bye Man",2017,1.5],["The Suicide Squad",2021,4.0],["Mare of Easttown",2021,4.5],["Vixen: The Movie",2017,3.0],["Evangelion: 3.0+1.0 Thrice Upon a Time",2021,null],["The Green Knight",2021,4.0],["Zola",2020,4.0],["If I Were You",2006,null],["Minha Vida em Marte",2018,null],["Head Over Heels",2010,null],["Almost Famous",2000,4.0],["Throne of Blood",1957,4.5],["Serenity",2005,2.5],["Candyman",1992,3.5],["No Sudden Move",2021,2.5],["Respect",2021,3.0],["Shang-Chi and the Legend of the Ten Rings",2021,3.5],["The Girl Who Killed Her Parents",2021,2.5],["The Boy Who Killed My Parents",2021,1.5],["Britney vs. Spears",2021,4.0],["Malignant",2021,1.0],["The Night House",2020,3.5],["Injustice",2021,2.5],["My Mom Is a Character",2013,3.0],["My Mom Is a Character 3",2019,3.0],["My Mom Is a Character 2",2016,2.5],["Dune",2021,4.0],["Eternals",2021,4.0],["Candyman",2021,3.5],["Friday the 13th",1980,3.0],["High School Musical 2",2007,2.0],["The Adventures of Sharkboy and Lavagirl",2005,1.0],["Aquamarine",2006,2.5],["Squid Game",2021,null],["Passing",2021,3.5],["No Time to Die",2021,3.0],["Free Guy",2021,3.0],["Titane",2021,2.0],["Adele One Night Only",2021,3.5],["Last Night in Soho",2021,3.5],["Spencer",2021,3.5],["Your Name Engraved Herein",2020,4.0],["Friday the 13th Part 2",1981,3.0],["The Power of the Dog",2021,4.5],["Single All the Way",2021,3.0],["Spider-Man: No Way Home",2021,4.0],["Coco",2017,4.5],["The Descent",2005,3.5],["The Matrix Revolutions",2003,2.5],["The Matrix Resurrections",2021,3.0],["Don't Look Up",2021,2.5],["Encanto",2021,3.5],["The Lost Daughter",2021,3.5],["The Faculty",1998,2.5],["Identity",2003,3.5],["The House of the Devil",2009,3.5],["Moana",2016,4.0],["Before I Go to Sleep",2014,2.5],["Child's Play",1988,3.0],["Scream",2022,3.5],["Triangle",2009,3.5],["Rio 2",2014,3.0],["Martyrs",2008,3.5],["The Wild Boys",2017,null],["Fallen Angels",1995,null],["Black Bear",2020,3.5],["Soul",2020,3.5],["The Fallout",2021,3.5],["The Mist",2007,null],["Pet Sematary",2019,1.5],["The Boy",2016,1.5],["JANET JACKSON.",2022,4.0],["Luca",2021,4.0],["Creep",2014,3.0],["Spring",2014,3.0],["The Strangers",2008,3.0],["Creep 2",2017,3.5],["Parallel Mothers",2021,4.0],["Ratatouille",2007,4.0],["Fresh",2022,3.5],["The Batman",2022,4.0],["Lamb",2021,3.0],["The Devil's Candy",2015,3.0],["Green Street Hooligans",2005,null],["Midnight Mass",2021,null],["Oculus",2013,3.0],["After Yang",2021,4.0],["Flee",2021,4.5],["The Village",2004,null],["House at the End of the Street",2012,1.5],["The Cursed",2021,1.5],["Drag Me to Hell",2009,3.5],["Hell House LLC",2015,3.5],["The Messengers",2007,1.5],["When a Stranger Calls",2006,null],["Turning Red",2022,3.5],["Trick 'r Treat",2007,3.0],["Haunt",2019,3.5],["Shutter",2004,3.5],["You're Next",2011,3.0],["Dead End",2003,3.5],["We Are What We Are",2013,4.0],["Raya and the Last Dragon",2021,3.5],["Ice Age",2002,null],["Pocahontas",1995,null],["The Innkeepers",2011,2.5],["Funny Games",2007,3.5],["Eden Lake",2008,3.0],["X",2022,3.5],["Kill List",2011,4.0],["Near Dark",1987,3.5],["How to Train Your Dragon",2010,4.0],["How to Train Your Dragon 2",2014,4.0],["Hunter Hunter",2020,3.5],["Women on the Verge of a Nervous Breakdown",1988,4.0],["How to Train Your Dragon: The Hidden World",2019,3.5],["The Crazies",2010,2.5],["The Endless",2017,3.5],["Zootopia",2016,3.0],["Chronicle",2012,3.5],["Doctor Strange in the Multiverse of Madness",2022,2.5],["Revenge",2017,3.5],["The Autopsy of Jane Doe",2016,3.5],["The Northman",2022,4.0],["Great Freedom",2021,4.0],["Everything Everywhere All at Once",2022,4.5],["Onward",2020,3.5],["The Empty Man",2020,3.0],["The Blackcoat's Daughter",2015,2.0],["Emergency",2022,3.5],["Fire Island",2022,3.5],["West Side Story",2021,4.0],["One Love Manchester",2017,null],["Dolly Parton: A MusiCares Tribute",2021,null],["Top Gun: Maverick",2022,4.0],["The Innocents",2021,3.5],["Cure",1997,2.5],["O Auto da Compadecida",1999,4.5],["Big Hero 6",2014,4.0],["The Mitchells vs. the Machines",2021,4.0],["Watcher",2022,3.5],["The Phantom",1996,1.5],["Sunshine",2007,3.5],["Crimes of the Future",2022,3.5],["Thor: Love and Thunder",2022,2.5],["Men",2022,4.0],["The Three Musketeers",2011,null],["Elvis",2022,3.5],["Divine Divas",2016,4.5],["You Won't Be Alone",2022,4.0],["The Body",2012,3.5],["The Sea Beast",2022,3.5],["The Black Phone",2021,3.5],["Jurassic World Dominion",2022,1.5],["Summer of 84",2018,3.5],["Calibre",2018,3.0],["Dirty Computer",2018,4.5],["Prey",2022,3.5],["As Above, So Below",2014,3.0],["Marrowbone",2017,3.0],["Orphan: First Kill",2022,3.0],["Resurrection",2022,3.5],["Dragon Ball Z: Battle of Gods",2013,3.0],["Dragon Ball Z: Resurrection 'F'",2015,3.0],["Decision to Leave",2022,3.5],["Nope",2022,4.5],["Alone",2020,2.5],["Terrified",2017,3.0],["A Dark Song",2016,3.5],["High Tension",2003,3.0],["Mirage",2018,4.0],["Hagazussa",2017,2.0],["Fighting with My Family",2019,3.0],["Speak No Evil",2022,3.5],["The Woman King",2022,3.5],["Bodies Bodies Bodies",2022,4.0],["Hocus Pocus 2",2022,2.5],["All My Friends Hate Me",2021,2.5],["High School Musical 3: Senior Year",2008,null],["Inside",2007,3.5],["Entergalactic",2022,3.0],["Sissy",2022,4.0],["Deadstream",2022,3.0],["Beau Travail",1999,3.0],["Housebound",2014,3.5],["The Skeleton Key",2005,3.5],["Black Adam",2022,3.0],["Stir of Echoes",1999,3.0],["Barbarian",2022,3.0],["Pearl",2022,4.0],["Terrifier 2",2022,3.5],["Smile",2022,3.0],["Lou",2022,1.5],["Enola Holmes 2",2022,2.5],["Black Panther: Wakanda Forever",2022,3.0],["Bros",2022,3.5],["Blonde",2022,1.5],["Piggy",2022,3.0],["Anything for Jackson",2020,3.0],["The Girl with All the Gifts",2016,2.5],["Victoria",2015,3.5],["Bug",2006,4.0],["The Medium",2021,3.5],["Thirteen Lives",2022,3.0],["What Josiah Saw",2021,3.5],["Noroi: The Curse",2005,3.0],["Skinamarink",2022,2.0],["Guillermo del Toro's Pinocchio",2022,3.5],["The Stranger",2022,3.5],["Avatar: The Way of Water",2022,4.0],["Nanny",2022,3.0],["Glass Onion",2022,3.5],["Aftersun",2022,4.0],["Bullet Train",2022,3.5],["All Quiet on the Western Front",2022,3.5],["The Guardians of the Galaxy Holiday Special",2022,3.0],["Dennis the Menace",1993,null],["Cheaper by the Dozen",2003,null],["Roald Dahl's Matilda the Musical",2022,3.5],["Bones and All",2022,4.0],["The Menu",2022,4.0],["Sick",2022,3.5],["Close",2022,4.5],["Session 9",2001,2.5],["I See You",2019,3.0],["May",2002,3.5],["Carrie",2002,1.0],["M3GAN",2022,3.0],["A Brutal Pact: The Murder of Daniella Perez",2022,4.0],["The Endless Night",2023,4.0],["The Nightmare Before Christmas",1993,3.0],["Apollo 10½: A Space Age Childhood",2022,3.5],["Ant-Man and the Wasp: Quantumania",2023,2.5],["Knock at the Cabin",2023,3.5],["The Visit",2015,3.0],["Rent-A-Pal",2020,3.0],["The Whale",2022,3.5],["Scream VI",2023,3.5],["Missing",2023,3.5],["Shazam! Fury of the Gods",2023,2.5],["Puss in Boots: The Last Wish",2022,4.0],["Gone Baby Gone",2007,3.5],["Werewolf by Night",2022,3.5],["Censor",2021,3.0],["Cold Prey",2006,2.5],["Speed 2: Cruise Control",1997,null],["Boys",2014,3.0],["Dungeons & Dragons: Honor Among Thieves",2023,3.5],["Hostel: Part III",2011,null],["28 Weeks Later",2007,3.5],["The Super Mario Bros. Movie",2023,3.0],["An American Crime",2007,3.5],["Guardians of the Galaxy Vol. 3",2023,4.0],["Evil Dead Rise",2023,3.5],["Love to Love You, Donna Summer",2023,3.5],["Legion of Super-Heroes",2023,2.5],["Hellraiser",2022,3.0],["The Little Mermaid",2023,3.0],["The Perfection",2018,2.5],["The Loved Ones",2009,3.0],["Spider-Man: Across the Spider-Verse",2023,4.5],["The Artifice Girl",2022,3.0],["To Catch a Killer",2023,3.5],["The Sadness",2021,3.5],["Wolf Creek",2005,3.0],["The Flash",2023,3.0],["The Last Samurai",2003,2.5],["The Last House on the Left",2009,3.0],["Better Watch Out",2016,3.5],["Pitch Perfect",2012,3.0],["Impetigore",2019,4.0],["[REC]²",2009,2.5],["Barbie",2023,4.0],["John Wick: Chapter 4",2023,4.0],["Black Mirror: Joan Is Awful",2023,3.5],["Black Mirror: Loch Henry",2023,3.5],["Black Mirror: Mazey Day",2023,2.0],["Black Mirror: Demon 79",2023,3.0],["Black Mirror: Beyond the Sea",2023,4.0],["They Cloned Tyrone",2023,3.5],["The Devil's Backbone",2001,3.5],["Red, White & Royal Blue",2023,3.0],["Maniac",2012,3.0],["Huesera: The Bone Woman",2022,3.5],["Nimona",2023,3.5],["Absentia",2011,2.5],["Lot 36",2022,2.0],["Ghostland",2018,3.0],["Talk to Me",2022,4.0],["Graveyard Rats",2022,3.5],["Triangle of Sadness",2022,4.0],["No One Will Save You",2023,3.5],["Beau Is Afraid",2023,2.0],["Totally Killer",2023,3.5],["Bottoms",2023,4.0],["The Autopsy",2022,3.5],["The Viewing",2022,3.5],["The Outside",2022,2.5],["Pickman's Model",2022,1.5],["Dreams in the Witch House",2022,2.0],["Julia's Eyes",2010,3.5],["Sleep Tight",2011,3.5],["When Evil Lurks",2023,4.0],["Saw X",2023,3.0],["The Nun II",2023,1.0],["Sister Death",2023,3.5],["The Girl Who Killed Her Parents: The Confession",2023,2.0],["The Killer",2023,4.0],["Blue Beetle",2023,3.5],["Vicious Fun",2020,3.0],["Copycat",1995,3.5],["Shin Godzilla",2016,3.5],["Gonjiam: Haunted Asylum",2018,3.5],["Priscilla",2023,3.5],["Leave the World Behind",2023,2.0],["The Hunger Games: The Ballad of Songbirds & Snakes",2023,2.5],["Chicken Run: Dawn of the Nugget",2023,3.0],["Saltburn",2023,4.0],["Thanksgiving",2023,2.0],["Lake Mungo",2008,3.0],["Legally Blonde 2: Red, White & Blonde",2003,2.5],["A Cinderella Story",2004,null],["The Blackening",2022,3.0],["Society of the Snow",2023,3.5],["Anatomy of a Fall",2023,4.0],["Past Lives",2023,4.5],["The Holdovers",2023,3.5],["Oppenheimer",2023,3.5],["The Marvels",2023,1.5],["American Fiction",2023,3.5],["The Zone of Interest",2023,4.0],["Poor Things",2023,4.5],["Dune: Part Two",2024,5.0],["Killers of the Flower Moon",2023,4.5],["Spirit: Stallion of the Cimarron",2002,null],["Klaus",2019,4.0],["Sallie Gardner at a Gallop",1878,null],["Hell House LLC Origins: The Carmichael Manor",2023,2.5],["The Passenger",2023,3.5],["La Haine",1995,4.0],["No Hard Feelings",2023,3.0],["Sorcerer",1977,3.5],["Close-Up",1990,3.5],["All of Us Strangers",2023,4.5],["Let Me In",2010,2.5],["Grave Encounters",2011,2.5],["Chained",2012,3.0],["Thesis",1996,3.5],["Aquaman and the Lost Kingdom",2023,1.5],["The Maze Runner",2014,3.0],["Late Night with the Devil",2023,3.5],["Maze Runner: The Scorch Trials",2015,2.5],["Maze Runner: The Death Cure",2018,2.5],["Anyone But You",2023,3.0],["The Woman",2011,3.0],["Southbound",2015,2.5],["Justice League: Crisis on Infinite Earths Part One",2024,2.5],["Madonna: The Celebration Tour in Rio",2024,4.5],["Godzilla Minus One",2023,4.0],["Abigail",2024,3.5],["Challengers",2024,4.0],["Civil War",2024,3.5],["The First Omen",2024,3.5],["Mean Girls",2024,2.5],["Exhuma",2024,4.0],["Infested",2023,3.5],["I Saw the TV Glow",2024,3.5],["Bramayugam",2024,3.5],["The Canal",2014,3.0],["Love, Death & Robots: Bad Travelling",2022,4.0],["In a Violent Nature",2024,1.5],["The Fall Guy",2024,2.5],["The Emperor's New Groove",2000,null],["The Devil's Bath",2024,4.0],["Twister",1996,3.0],["Immaculate",2024,2.5],["Caveat",2020,3.5],["Deadpool & Wolverine",2024,3.5],["Furiosa: A Mad Max Saga",2024,4.0],["A Quiet Place: Day One",2024,3.0],["MaXXXine",2024,3.5],["Twisters",2024,2.5],["Longlegs",2024,4.0],["Oddity",2024,3.5],["Rogue One: A Star Wars Story",2016,3.5],["Frailty",2001,3.5],["Satan's Slaves",2017,2.5],["Dark Water",2002,3.0],["The Platform 2",2024,2.0],["The Substance",2024,4.5],["Alien: Romulus",2024,4.0],["It's What's Inside",2024,3.5],["I'm Still Here",2024,4.5],["Terrifier 3",2024,3.0],["The Good Son",1993,3.0],["Monster",2023,4.5],["Smile 2",2024,3.5],["Strange Darling",2023,3.5],["The Wild Robot",2024,3.5],["MadS",2024,3.5],["Heretic",2024,3.5],["Speak No Evil",2024,3.0],["Juror #2",2024,3.5],["Lowlifes",2024,3.0],["Hellraiser",1987,4.0],["30 Days of Night",2007,3.0],["Villains",2019,3.0],["What You Wish For",2023,3.5],["Satan's Slaves 2: Communion",2022,3.5],["Red Rooms",2023,4.0],["Conclave",2024,3.0],["Anora",2024,4.0],["Nickel Boys",2024,3.5],["Wicked",2024,3.5],["Companion",2025,3.5],["Presence",2024,3.0],["Birth/Rebirth",2023,3.0],["Flow",2024,4.0],["The Ninth Gate",1999,2.0],["The Coffee Table",2022,4.0],["Grafted",2024,2.0],["The Queen of Black Magic",2019,3.5],["The Borderlands",2013,2.5],["Captain America: Brave New World",2025,2.0],["Black Mirror: Common People",2025,4.0],["Black Mirror: Bête Noire",2025,3.5],["Black Mirror: Hotel Reverie",2025,3.5],["The Awakening",2011,3.0],["Black Mirror: Plaything",2025,2.0],["Martha Marcy May Marlene",2011,2.5],["Black Bag",2025,3.5],["Caddo Lake",2024,3.5],["Thunderbolts*",2025,4.0],["The Ugly Stepsister",2025,3.5],["Sinners",2025,4.0],["Final Destination Bloodlines",2025,3.5],["Predator: Killer of Killers",2025,3.5],["Troll Hunter",2010,3.5],["Time Lapse",2014,3.5],["Latin Blood – The Ballad of Ney Matogrosso",2025,4.0],["Marshmallow",2025,2.5],["Bring Her Back",2025,4.0],["Superman",2025,4.0],["Resolution",2012,3.0],["One Hour Photo",2002,3.5],["The Fantastic 4: First Steps",2025,3.0],["28 Years Later",2025,2.0],["Dangerous Animals",2025,3.0],["Hallow Road",2025,3.5],["KPop Demon Hunters",2025,3.0],["Together",2025,3.5],["The Conjuring: Last Rites",2025,2.5],["Weapons",2025,4.0],["Young Hearts",2024,4.0],["The Trip",2021,3.5],["Demon Slayer: Kimetsu no Yaiba Infinity Castle",2025,4.0],["Blink Twice",2024,3.0],["Caught Stealing",2025,3.5],["How to Train Your Dragon",2025,3.0],["Twinless",2025,3.5],["The Long Walk",2025,3.0],["Good Boy",2025,3.0],["Plainclothes",2025,3.5],["Queer",2024,2.0],["Black Phone 2",2025,1.5],["Lurker",2025,3.5],["Nosferatu",2024,3.5],["The Secret Agent",2025,4.0],["Wake Up Dead Man",2025,3.5],["Avatar: Fire and Ash",2025,3.5],["If I Had Legs I'd Kick You",2025,3.5],["Sentimental Value",2025,4.5],["It Ends",2025,3.0],["Chainsaw Man – The Movie: Reze Arc",2025,4.0],["Jujutsu Kaisen 0",2021,4.0],["JUJUTSU KAISEN: Hidden Inventory / Premature Death - The Movie",2025,4.0],["Predator: Badlands",2025,3.5],["Bugonia",2025,3.5],["City of Men",2007,3.5],["Pillion",2025,2.0],["Train Dreams",2025,3.0],["It Was Just an Accident",2025,3.5],["The Housemaid",2025,2.0],["Hamnet",2025,4.5],["Marty Supreme",2025,3.5],["28 Years Later: The Bone Temple",2026,3.5],["One Battle After Another",2025,4.5],["Frankenstein",2025,2.5],["F1",2025,2.5],["The Plague",2025,3.5],["The Cure",1995,3.5],["Send Help",2026,3.5],["The Worst Person in the World",2021,4.5],["Sebastian",2024,4.0],["Cruising",1980,3.5],["Heartstone",2016,3.5],["Madonna: Rebel Heart Tour",2016,3.5],["Katy Perry: The Prismatic World Tour Live",2015,3.5],["Ready or Not 2: Here I Come",2026,3.0],["undertone",2025,2.5],["Maid in Manhattan",2002,null],["Crystal Moon",1990,null],["Return to the Blue Lagoon",1991,null],["The Beverly Hillbillies",1993,null],["Exit 8",2025,2.5],["Project Hail Mary",2026,3.5],["Scream 7",2026,2.5],["Michael",2026,2.5],["Faces of Death",2026,3.5],["Hokum",2026,3.0]];   // seed inicial [[titulo,ano,nota|null],...]
 const GENRES = {28:"Ação",12:"Aventura",16:"Animação",35:"Comédia",80:"Crime",99:"Documentário",18:"Drama",10751:"Família",14:"Fantasia",36:"História",27:"Terror",10402:"Música",9648:"Mistério",10749:"Romance",878:"Ficção científica",10770:"Cinema TV",53:"Thriller",10752:"Guerra",37:"Faroeste"};
@@ -411,6 +517,15 @@ async function _setAppIcon(variant){
   }catch(e){console.warn('icon gen:',e);}
 }
 
+function _applyIconVer(){
+  try{
+    const v=bio.iconVer||0;
+    const map=[['lnkApple1','apple-touch-icon.png'],['lnkApple2','apple-touch-icon.png'],['lnkIcon192','icon-192.png'],['lnkIcon512','icon-512.png'],['lnkManifest','manifest.webmanifest']];
+    map.forEach(([id,file])=>{const el=document.getElementById(id);if(el)el.href=file+'?v='+v;});
+  }catch(e){}
+}
+function _bumpIconVer(){bio.iconVer=(bio.iconVer||0)+1;saveBio();_applyIconVer();}
+
 // ── GitHub icon push ──────────────────────────────────────────────────────────
 function getGhToken(){try{return localStorage.getItem('cs_gh_token')||null;}catch(e){return null;}}
 function setGhToken(k){try{if(k)localStorage.setItem('cs_gh_token',k);else localStorage.removeItem('cs_gh_token');}catch(e){}}
@@ -459,7 +574,8 @@ async function publishIcons(){
       const b64=await _cvToB64(cv);
       await _ghPut(token,repo,name,b64,'chore: update app icon ('+variant+')');
     }
-    toast('Ícones publicados! Aguarde ~1 min e adicione à tela inicial.');
+    _bumpIconVer();
+    toast('Ícones publicados! Aguarde ~1 min e adicione à tela inicial. No iPhone, remova e adicione o ícone à tela inicial de novo para o iOS buscar a versão nova.');
     renderGhIconArea();
   }catch(e){
     const msg=e.code===401?'Token inválido ou sem permissão de escrita':'Erro: '+e.message;
@@ -526,6 +642,7 @@ const GLOBE_SVG='<svg class="gicon" viewBox="0 0 24 24" fill="none" stroke="curr
 // ícones do tema (herdam a cor via currentColor)
 const ICON_SHARE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px;margin-right:5px"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>';
 const ICON_EXT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;vertical-align:-1px;margin-right:3px"><path d="M8 17L17 8M9 8h8v8"/></svg>';
+const ICON_EYE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="2.6"/></svg>';
 const ANIM_ICONS=[
   '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
   '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="11 5 11 19 2 12"/><polygon points="22 5 22 19 13 12"/></svg>',
@@ -537,18 +654,56 @@ const ICON_SPARK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 let KEY=null, cache={}, db=null, tab='bio', busy=false, PEOPLE=null;
 let pSort='rt', pDec=null, rScope='all', rDec=null, rYr=null, gSort='count', expanded={};
 let fView='list', rView='list', gView='list';  // 'list' or 'country'
+let fMode='all', fDur='', fLang='', fTag='';  // filtros da aba Filmes
+let rankSort='count';                          // ranking: 'count' | 'avg'
+let statsYear=null;                            // ano selecionado no heatmap/aba Stats
+const LANGS={en:'Inglês',ja:'Japonês',ko:'Coreano',fr:'Francês',it:'Italiano',de:'Alemão',es:'Espanhol',pt:'Português',ru:'Russo',zh:'Chinês',cn:'Chinês',sv:'Sueco',da:'Dinamarquês',fi:'Finlandês',no:'Norueguês',pl:'Polonês',cs:'Tcheco',hu:'Húngaro',nl:'Holandês',fa:'Persa',hi:'Hindi',ar:'Árabe',tr:'Turco',th:'Tailandês',el:'Grego',he:'Hebraico',ro:'Romeno',is:'Islandês',sr:'Sérvio',uk:'Ucraniano',vi:'Vietnamita',tl:'Filipino',id:'Indonésio',ka:'Georgiano',et:'Estoniano'};
 
 /* ---------- storage ---------- */
-function getKey(){try{return localStorage.getItem('cs_key');}catch(e){return KEY;}}
+const TMDB_KEY_DEFAULT='a68b6662c54f35231df684dceef9c8ef';
+function getKey(){try{return localStorage.getItem('cs_key')||TMDB_KEY_DEFAULT;}catch(e){return KEY||TMDB_KEY_DEFAULT;}}
 function setKey(k){KEY=k;try{localStorage.setItem('cs_key',k);}catch(e){}}
+
+// ── Supabase: sincronização entre navegadores/dispositivos ──────────────────
+const SUPABASE_URL='https://ysikyxbnflitlgqvpwzg.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_D3JOqk4e4KRQW5ZrfDb2Aw_IGF9D6iT';
+const CS_ROW_ID='tiago';
+let sb=null, _cloudReady=false, _cloudSaveTimer=null, _cloudLoading=false;
+try{ if(window.supabase) sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY); }catch(e){ console.warn('supabase init:',e); }
+
+async function cloudLoad(){
+  if(!sb)return null;
+  try{
+    const {data,error}=await sb.from('cinestats_state').select('bio,films').eq('id',CS_ROW_ID).maybeSingle();
+    if(error){console.warn('cloudLoad:',error);return null;}
+    _cloudReady=true;
+    return data||null;
+  }catch(e){console.warn('cloudLoad:',e);return null;}
+}
+function cloudSave(){
+  if(!sb)return;
+  clearTimeout(_cloudSaveTimer);
+  _cloudSaveTimer=setTimeout(async()=>{
+    if(_cloudLoading)return; // evita sobrescrever durante o load inicial
+    try{
+      const filmsObj={};Object.keys(cache||{}).forEach(k=>filmsObj[k]=cache[k]);
+      await sb.from('cinestats_state').upsert({id:CS_ROW_ID,bio,films:filmsObj,updated_at:new Date().toISOString()});
+    }catch(e){console.warn('cloudSave:',e);}
+  },1200);
+}
+
 function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('cinestats',1);
   r.onupgradeneeded=()=>r.result.createObjectStore('films');
   r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 function loadAll(){return new Promise(res=>{const out={};try{const c=db.transaction('films').objectStore('films').openCursor();
   c.onsuccess=e=>{const k=e.target.result;if(k){out[k.key]=k.value;k.continue();}else res(out);};c.onerror=()=>res(out);}catch(e){res(out);}});}
-function put(k,v){try{db.transaction('films','readwrite').objectStore('films').put(v,k);}catch(e){}}
-function clearCredits(){Object.values(cache).forEach(r=>{delete r.ca;delete r.di;delete r.cc;delete r.id;delete r.po;delete r.gids;delete r.s;put(key(r.t,r.y),r);});}
-function films(){return Object.values(cache);}
+function put(k,v){try{db.transaction('films','readwrite').objectStore('films').put(v,k);}catch(e){}cloudSave();}
+function del(k){delete cache[k];try{db.transaction('films','readwrite').objectStore('films').delete(k);}catch(e){}cloudSave();}
+function clearCredits(){Object.values(cache).forEach(r=>{delete r.ca;delete r.di;delete r.cc;delete r.id;delete r.po;delete r.gids;delete r.s;delete r.pc;delete r.lang;delete r.rt;put(key(r.t,r.y),r);});}
+// allRecords() = tudo no cache (inclui watchlist). films() = só assistidos. watchlist() = "quero ver".
+function allRecords(){return Object.values(cache);}
+function films(){return Object.values(cache).filter(r=>!r.wl);}
+function watchlist(){return Object.values(cache).filter(r=>r.wl);}
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
 
 /* ---------- TMDB ---------- */
@@ -574,7 +729,7 @@ function pickMatch(res,t,y){
 async function searchFilm(t,y){
   for(const params of [{query:t,primary_release_year:y},{query:t,year:y},{query:t}]){
     const j=await tmdb('/search/movie',params); const res=(j&&j.results)||[]; if(!res.length)continue;
-    const m=pickMatch(res,t,y); if(m) return {id:m.id,po:m.poster_path||null,ti:m.title||t,ye:(m.release_date||'').slice(0,4)||y,gids:m.genre_ids||[]};
+    const m=pickMatch(res,t,y); if(m) return {id:m.id,po:m.poster_path||null,ti:m.title||t,ye:(m.release_date||'').slice(0,4)||y,gids:m.genre_ids||[],lang:m.original_language||null};
   } return null;
 }
 async function credits(id){
@@ -583,7 +738,18 @@ async function credits(id){
   const ca=(cr.cast||[]).slice().sort((a,b)=>(a.order??999)-(b.order??999)).slice(0,8).map(c=>[c.id,c.name,c.gender||0,c.profile_path||null,c.character||'']);
   const di=(cr.crew||[]).filter(c=>c.job==='Director').map(c=>[c.id,c.name,c.profile_path||null]);
   const co=(j.production_countries||[]).map(c=>c.iso_3166_1);
-  return {ca,di,co};
+  return {ca,di,co,rt:j.runtime||null,lang:j.original_language||null};
+}
+// provedores de streaming (Brasil) para uma recomendação
+const _provCache={};
+async function watchProviders(id){
+  if(_provCache[id]!==undefined)return _provCache[id];
+  try{const j=await tmdb('/movie/'+id+'/watch/providers',{});
+    const br=j&&j.results&&j.results.BR;if(!br)return(_provCache[id]=null);
+    const flat=(br.flatrate||[]).map(p=>p.provider_name);
+    const seen=new Set(),names=[];flat.forEach(n=>{if(!seen.has(n)){seen.add(n);names.push(n);}});
+    return(_provCache[id]={names:names.slice(0,4),link:br.link||null});
+  }catch(e){return(_provCache[id]=null);}
 }
 async function movieDetails(id){
   const j=await tmdb('/movie/'+id,{language:'pt-BR'}); if(!j)return null;
@@ -603,14 +769,14 @@ function hideProg(){$('#prog').classList.remove('show');}
 async function sync(){
   if(busy||!KEY)return; busy=true;
   try{
-    const n1=films().filter(r=>!r.id&&!r.nf);
+    const n1=allRecords().filter(r=>!r.id&&!r.nf);
     if(n1.length){let n=0;await runPool(n1,async r=>{const m=await searchFilm(r.t,r.y);if(m)Object.assign(r,m);else r.nf=1;r.s=1;put(key(r.t,r.y),r);if(++n%18===0&&tab==='films')renderFilms();},6,(d,t)=>showProg('Buscando pôsteres '+fmt(d)+'/'+fmt(t),d/t*0.5));if(tab==='films')renderFilms();}
-    const n2=films().filter(r=>r.id&&!r.cc);
-    if(n2.length){let n=0;await runPool(n2,async r=>{const c=await credits(r.id);if(c){r.ca=c.ca;r.di=c.di;r.co=c.co;}r.cc=1;put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0&&tab!=='films'&&tab!=='genre')render();},6,(d,t)=>showProg('Buscando elenco '+fmt(d)+'/'+fmt(t),0.5+d/t*0.55));}
-    // backfill: filmes já sincronizados antes da feature de país (sem r.co)
-    const n3=films().filter(r=>r.id&&r.cc&&r.co===undefined);
-    if(n3.length){let n=0;await runPool(n3,async r=>{const c=await credits(r.id);if(c){r.co=c.co;if(!r.ca)r.ca=c.ca;if(!r.di)r.di=c.di;}else r.co=[];put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0&&rView==='country'||fView==='country'||gView==='country')render();},6,(d,t)=>showProg('Buscando países '+fmt(d)+'/'+fmt(t),0.55+d/t*0.45));}
-    hideProg();PEOPLE=null;render();
+    const n2=allRecords().filter(r=>r.id&&!r.cc);
+    if(n2.length){let n=0;await runPool(n2,async r=>{const c=await credits(r.id);if(c){r.ca=c.ca;r.di=c.di;r.co=c.co;if(c.rt)r.rt=c.rt;r.lang=c.lang;}r.cc=1;put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0&&tab!=='films'&&tab!=='genre')render();},6,(d,t)=>showProg('Buscando elenco '+fmt(d)+'/'+fmt(t),0.5+d/t*0.55));}
+    // backfill: filmes sincronizados antes de país/estúdio/idioma/duração
+    const n3=allRecords().filter(r=>r.id&&r.cc&&(r.co===undefined||r.lang===undefined||r.rt===undefined));
+    if(n3.length){let n=0;await runPool(n3,async r=>{const c=await credits(r.id);if(c){r.co=c.co;if(c.rt)r.rt=c.rt;r.lang=c.lang;if(!r.ca)r.ca=c.ca;if(!r.di)r.di=c.di;}else{if(r.co===undefined)r.co=[];}put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0&&(rView==='country'||fView==='country'||gView==='country'||tab==='stats'))render();},6,(d,t)=>showProg('Completando dados (país/idioma/duração) '+fmt(d)+'/'+fmt(t),0.55+d/t*0.45));}
+    hideProg();PEOPLE=null;render();_checkMilestone();
   }catch(e){hideProg();if(e&&e.code===401)openOnb('Chave recusada pelo TMDB. Cole de novo.');}
   finally{busy=false;}
 }
@@ -685,22 +851,51 @@ function renderFilms(){
     $$('.ctr').forEach(el=>el.onclick=()=>openCountry(el.dataset.c));
     return;
   }
-  let list=films().map(r=>({t:r.t,y:r.y,r:r.r,rec:r}));
+  // base conforme o modo de filtro
+  let base,modeNote;
+  if(fMode==='watchlist'){base=watchlist();modeNote='na watchlist';}
+  else if(fMode==='rewatch'){base=films().filter(r=>(r.rw||0)>=1);modeNote='revisto(s)';}
+  else if(fMode==='unrated'){base=films().filter(r=>r.r==null);modeNote='sem nota';}
+  else{base=films();modeNote='filmes';}
+  const durTest=r=>{if(!fDur)return true;const rt=r.rt||0;if(!rt)return false;if(fDur==='short')return rt<90;if(fDur==='mid')return rt>=90&&rt<120;if(fDur==='long')return rt>=120&&rt<180;if(fDur==='epic')return rt>=180;return true;};
+  let list=base.filter(r=>durTest(r)&&(!fLang||r.lang===fLang)&&(!fTag||(r.tags&&r.tags.includes(fTag)))).map(r=>({t:r.t,y:r.y,r:r.r,rec:r}));
   if(pDec!=null)list=list.filter(x=>Math.floor(x.y/10)*10===pDec);
+  const tagCounts={};base.forEach(r=>(r.tags||[]).forEach(tg=>tagCounts[tg]=(tagCounts[tg]||0)+1));
+  const tagOpts=Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,40);
   if(pSort==='rt')list.sort((a,b)=>(b.r||0)-(a.r||0)||b.y-a.y);
   else if(pSort==='yr')list.sort((a,b)=>b.y-a.y);
   else if(pSort==='az')list.sort((a,b)=>a.t.localeCompare(b.t));
   else for(let i=list.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[list[i],list[j]]=[list[j],list[i]];}
-  const decs=decadesOf();
-  const ctrl=`<div class="controls"><div class="seg" id="pSort">
-    ${[['rt','Nota'],['yr','Ano'],['az','A–Z'],['rnd','Aleatório']].map(([s,l])=>`<button data-s="${s}" class="${pSort===s?'on':''}">${l}</button>`).join('')}
-    </div><div class="chips" id="pDec"><button class="chip ${pDec==null?'on':''}" data-d="all">Todas</button>${decs.map(d=>`<button class="chip ${pDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>
-    <button class="chip" id="fCPais">${GLOBE_SVG} País</button></div>`;
-  const cells=list.map(x=>{const r=x.rec;const po=(r&&r.po)?`<img loading="lazy" src="${IMG}/w185${r.po}"/>`:`<div class="ph">${x.t}<br><span style="opacity:.6">(${x.y})</span></div>`;
-    return `<div class="po" data-k="${(x.t+'|'+x.y).replace(/"/g,'&quot;')}">${po}${x.r!=null?`<span class="rt">${star(x.r)}</span>`:''}</div>`;}).join('');
-  $('#view').innerHTML=ctrl+`<div class="grid">${cells}</div><div class="note">${fmt(list.length)} filmes${pDec!=null?' nos '+pDec+'s':''}. Toque num pôster para ver elenco e direção.</div>`;
+  const decs=[...new Set(base.map(r=>Math.floor(r.y/10)*10))].filter(d=>d).sort((a,b)=>b-a);
+  const langCounts={};base.forEach(r=>{if(r.lang)langCounts[r.lang]=(langCounts[r.lang]||0)+1;});
+  const langOpts=Object.entries(langCounts).sort((a,b)=>b[1]-a[1]).slice(0,18);
+  const modes=[['all','Todos'],['watchlist','Quero ver'],['rewatch','Revistos'],['unrated','Sem nota']];
+  const durSel=`<select id="fDur">${[['','Duração: todas'],['short','Curtos (<90min)'],['mid','~90 min'],['long','2h+'],['epic','3h+ (épicos)']].map(([v,l])=>`<option value="${v}" ${fDur===v?'selected':''}>${l}</option>`).join('')}</select>`;
+  const langSel=langOpts.length?`<select id="fLang"><option value="">Idioma: todos</option>${langOpts.map(([c,n])=>`<option value="${c}" ${fLang===c?'selected':''}>${LANGS[c]||c.toUpperCase()} · ${n}</option>`).join('')}</select>`:'';
+  const tagSel=tagOpts.length?`<select id="fTag"><option value="">Tags: todas (${fmt(Object.keys(tagCounts).length)})</option>${tagOpts.map(([t,n])=>`<option value="${t.replace(/"/g,'&quot;')}" ${fTag===t?'selected':''}>${t} · ${n}</option>`).join('')}</select>`:'';
+  const ctrl=`<div class="controls"><div class="seg" id="pSort">${[['rt','Nota'],['yr','Ano'],['az','A–Z'],['rnd','Aleatório']].map(([s,l])=>`<button data-s="${s}" class="${pSort===s?'on':''}">${l}</button>`).join('')}</div><button class="chip" id="fCPais">${GLOBE_SVG} País</button></div>`
+    +`<div class="chips" id="fMode" style="margin:0 0 9px">${modes.map(([m,l])=>`<button class="chip ${fMode===m?'on':''}" data-m="${m}">${l}</button>`).join('')}</div>`
+    +(decs.length?`<div class="chips" id="pDec" style="margin:0 0 9px"><button class="chip ${pDec==null?'on':''}" data-d="all">Todas</button>${decs.map(d=>`<button class="chip ${pDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>`:'')
+    +`<div class="controls" style="margin:0 0 11px">${durSel}${langSel}${tagSel}</div>`;
+  let body;
+  if(!list.length){
+    body=fMode==='watchlist'
+      ?`<div class="empty">Sua watchlist está vazia.<br>Busque um filme (lupa no topo) e toque em <b>Quero ver</b>, ou importe o <b>watchlist.csv</b> do Letterboxd nos Ajustes.</div>`
+      :`<div class="empty">Nenhum filme neste recorte. Ajuste os filtros acima.</div>`;
+  }else{
+    const cells=list.map(x=>{const r=x.rec;const po=(r&&r.po)?`<img loading="lazy" src="${IMG}/w185${r.po}"/>`:`<div class="ph">${x.t}<br><span style="opacity:.6">(${x.y})</span></div>`;
+      const badge=x.r!=null?`<span class="rt">${star(x.r)}</span>`:(r&&r.wl?`<span class="rt" style="color:var(--acc2)">${ICON_EYE}</span>`:'');
+      const rwb=(r&&(r.rw||0)>=1)?`<span class="po-rw" title="revisto ${r.rw}×">↺${r.rw>1?r.rw:''}</span>`:'';
+      return `<div class="po" data-k="${(x.t+'|'+x.y).replace(/"/g,'&quot;')}">${po}${badge}${rwb}</div>`;}).join('');
+    body=`<div class="grid">${cells}</div><div class="note">${fmt(list.length)} ${modeNote}${pDec!=null?' nos '+pDec+'s':''}${fLang?' · '+(LANGS[fLang]||fLang.toUpperCase()):''}. Toque num pôster para detalhes.</div>`;
+  }
+  $('#view').innerHTML=ctrl+body;
   $('#pSort').onclick=e=>{const b=e.target.closest('button');if(b){pSort=b.dataset.s;renderFilms();}};
-  $('#pDec').onclick=e=>{const b=e.target.closest('button');if(b){pDec=b.dataset.d==='all'?null:+b.dataset.d;renderFilms();}};
+  const pd=$('#pDec');if(pd)pd.onclick=e=>{const b=e.target.closest('button');if(b){pDec=b.dataset.d==='all'?null:+b.dataset.d;renderFilms();}};
+  $('#fMode').onclick=e=>{const b=e.target.closest('button');if(b){fMode=b.dataset.m;pDec=null;fTag='';renderFilms();}};
+  const fd=$('#fDur');if(fd)fd.onchange=e=>{fDur=e.target.value;renderFilms();};
+  const fl2=$('#fLang');if(fl2)fl2.onchange=e=>{fLang=e.target.value;renderFilms();};
+  const ftg=$('#fTag');if(ftg)ftg.onchange=e=>{fTag=e.target.value;renderFilms();};
   const fcp=$('#fCPais');if(fcp)fcp.onclick=()=>{fView='country';renderFilms();};
   $$('.po').forEach(el=>el.onclick=()=>openFilm(el.dataset.k));
 }
@@ -709,8 +904,10 @@ function renderFilms(){
 function rankList(){const P=people();let arr;
   if(tab==='dir')arr=P.D;else if(tab==='actor')arr=P.A.filter(p=>p.g===2);else if(tab==='actress')arr=P.A.filter(p=>p.g===1);else arr=P.A;
   const inS=f=>rScope==='all'?true:rScope==='dec'?Math.floor(f.y/10)*10===rDec:f.y===rYr;
-  const out=[];arr.forEach(p=>{const fl=p.f.filter(inS);if(!fl.length)return;const rd=fl.filter(f=>f.r!=null);const avg=rd.length?rd.reduce((s,f)=>s+f.r,0)/rd.length:null;out.push({...p,fl,n_:fl.length,avg});});
-  out.sort((a,b)=>b.n_-a.n_||(b.avg||0)-(a.avg||0)||a.n.localeCompare(b.n));return out;}
+  const out=[];arr.forEach(p=>{const fl=p.f.filter(inS);if(!fl.length)return;const rd=fl.filter(f=>f.r!=null);const avg=rd.length?rd.reduce((s,f)=>s+f.r,0)/rd.length:null;out.push({...p,fl,n_:fl.length,avg,nr:rd.length});});
+  if(rankSort==='avg')out.sort((a,b)=>{const aa=a.nr>=2?a.avg:-1,bb=b.nr>=2?b.avg:-1;return bb-aa||b.n_-a.n_||a.n.localeCompare(b.n);});
+  else out.sort((a,b)=>b.n_-a.n_||(b.avg||0)-(a.avg||0)||a.n.localeCompare(b.n));
+  return out;}
 function personDetail(p){
   const mini=p.fl.slice().sort((a,b)=>(b.r||0)-(a.r||0)).slice(0,10).map(f=>f.p?`<img loading="lazy" src="${IMG}/w92${f.p}" title="${(f.t||'').replace(/"/g,'')} (${f.y})"/>`:`<div class="pp"></div>`).join('');
   const bf=p.fl.filter(f=>f.r!=null).sort((a,b)=>b.r-a.r)[0];
@@ -732,7 +929,8 @@ function renderRanking(){
   if(rYr==null&&years.length)rYr=years[0];if(rDec==null&&decs.length)rDec=decs[0];
   const ctrl=`<div class="controls"><div class="seg" id="rScope">
     ${[['all','Geral'],['dec','Década'],['yr','Ano']].map(([s,l])=>`<button data-s="${s}" class="${rScope===s?'on':''}">${l}</button>`).join('')}
-    </div>${rScope==='dec'?`<div class="chips" id="rDec">${decs.map(d=>`<button class="chip ${rDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>`:''}${rScope==='yr'?`<select id="rYr">${years.map(y=>`<option ${y===rYr?'selected':''}>${y}</option>`).join('')}</select>`:''}<button class="chip" id="rCPais">${GLOBE_SVG} País</button></div>`;
+    </div>${rScope==='dec'?`<div class="chips" id="rDec">${decs.map(d=>`<button class="chip ${rDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>`:''}${rScope==='yr'?`<select id="rYr">${years.map(y=>`<option ${y===rYr?'selected':''}>${y}</option>`).join('')}</select>`:''}<button class="chip" id="rCPais">${GLOBE_SVG} País</button></div>`
+    +`<div class="controls" style="margin:0 0 11px"><div class="seg" id="rSort"><button data-s="count" class="${rankSort==='count'?'on':''}">Mais filmes</button><button data-s="avg" class="${rankSort==='avg'?'on':''}">Melhor nota</button></div></div>`;
   let body;
   if(!r.length)body=`<div class="empty">Ninguém nesse recorte.</div>`;
   else{
@@ -745,13 +943,14 @@ function renderRanking(){
       return `<div class="rw ${op?'open':''}" data-r="${rank}"><div class="rk">${rank}</div>${av}<div class="nm">${p.n}</div>
         <div class="ct"><b>${p.n_}</b> f${p.avg!=null?' · <span class="g">'+star(+p.avg.toFixed(2))+'</span>':''}</div><div class="car"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></div></div>
         <div class="exp ${op?'show':''}" data-e="${rank}">${bf?`<div class="best">Melhor: <b>${bf.t}</b> (${bf.y}) ${star(bf.r)}</div>`:''}<div class="mini">${mini}</div></div>`;}).join('');
-    let note=`Top ${Math.min(30,r.length)} de ${fmt(r.length)} pessoas com 2+ filmes neste recorte. Toque do 6º ao 30º para ver os filmes.`;
+    let note=(rankSort==='avg'?'Ordenado pela sua nota média (mín. 2 filmes avaliados). ':'')+`Top ${Math.min(30,r.length)} de ${fmt(r.length)} pessoas neste recorte. Toque do 6º ao 30º para ver os filmes.`;
     if(tab==='actor'||tab==='actress')note+=' Divisão por gênero vem do TMDB e pode falhar.';
     if(tab!=='dir')note+=' "Ator" = elenco principal (top 8).';
     body=`<div class="podium">${cards}</div>${rows?`<div class="rows">${rows}</div>`:''}<div class="note">${note}</div>`;
   }
   $('#view').innerHTML=ctrl+body;
   const sc=$('#rScope');if(sc)sc.onclick=e=>{const b=e.target.closest('button');if(b){rScope=b.dataset.s;expanded={};renderRanking();}};
+  const rs=$('#rSort');if(rs)rs.onclick=e=>{const b=e.target.closest('button');if(b){rankSort=b.dataset.s;expanded={};renderRanking();}};
   const rd=$('#rDec');if(rd)rd.onclick=e=>{const b=e.target.closest('button');if(b){rDec=+b.dataset.d;renderRanking();}};
   const ry=$('#rYr');if(ry)ry.onchange=e=>{rYr=+e.target.value;renderRanking();};
   $$('.rw').forEach(el=>el.onclick=()=>{const rk=el.dataset.r;expanded[tab+rk]=!expanded[tab+rk];el.classList.toggle('open');const ex=$(`.exp[data-e="${rk}"]`);if(ex)ex.classList.toggle('show');});
@@ -853,7 +1052,7 @@ function flagImgLarge(c,w){
 }
 const BIO_SEED={};// preenchido por "Salvar HTML" — restaura bio em qualquer aparelho
 let bio=(()=>{try{const s=localStorage.getItem('cs_bio');return s?JSON.parse(s):(Object.keys(BIO_SEED).length?BIO_SEED:{});}catch(e){return Object.keys(BIO_SEED).length?BIO_SEED:{};}})();
-function saveBio(){try{localStorage.setItem('cs_bio',JSON.stringify(bio));}catch(e){}}
+function saveBio(){try{localStorage.setItem('cs_bio',JSON.stringify(bio));}catch(e){}cloudSave();}
 let curFav=0;
 function entities(cat){
   const m=3;  // min aparicoes/avaliacoes para entrar nos favoritos
@@ -865,9 +1064,37 @@ function entities(cat){
 }
 async function openPerson(p){const {mini,bf}=personDetail({fl:p.f});
   const ph=p.pic?`<img style="width:92px;border-radius:8px" src="${IMG}/w185${p.pic}"/>`:`<div style="width:92px;height:138px;border-radius:8px;background:var(--p2);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--dim);font-size:30px">${initials(p.n)}</div>`;
-  $('#sheet').innerHTML=`<div class="top">${ph}<div><h3>${p.n}</h3><div class="yr"><b>${p.f.length}</b> filme(s) vistos</div>${bf?`<div class="yr" style="margin-top:6px">Melhor: <b style="color:var(--gold)">${bf.t}</b> ${star(bf.r)}</div>`:''}</div></div><div class="lbl">Biografia</div><p id="pBio" style="font-size:13px;color:var(--mut);line-height:1.6;margin:0 0 4px">Carregando…</p><div class="lbl">Filmes vistos</div><div class="mini">${mini}</div>`;
+  const isDir=p.id&&films().some(r=>(r.di||[]).some(d=>d[0]===p.id));
+  $('#sheet').innerHTML=`<div class="top">${ph}<div><h3>${p.n}</h3><div class="yr"><b>${p.f.length}</b> filme(s) vistos</div>${bf?`<div class="yr" style="margin-top:6px">Melhor: <b style="color:var(--gold)">${bf.t}</b> ${star(bf.r)}</div>`:''}</div></div><div class="lbl">Biografia</div><p id="pBio" style="font-size:13px;color:var(--mut);line-height:1.6;margin:0 0 4px">Carregando…</p>${isDir?'<div id="dirFilmo"><div class="lbl">Filmografia como diretor</div><div class="note" style="margin:0">Calculando o que falta…</div></div>':''}<div class="lbl">Filmes vistos</div><div class="mini">${mini}</div>`;
   $('#modal').classList.add('show');
   if(p.id){const b=await personBio(p.id);const el=$('#pBio');if(el)el.textContent=b||'Sem biografia disponível.';}
+  if(isDir)fillDirFilmography(p);
+}
+const _filmoCache={};
+async function directorFilmography(id){
+  if(_filmoCache[id])return _filmoCache[id];
+  try{const j=await tmdb('/person/'+id+'/movie_credits',{language:'pt-BR'});if(!j)return null;
+    const seen=new Map();(j.crew||[]).filter(c=>c.job==='Director'&&!c.adult).forEach(c=>{if(!seen.has(c.id))seen.set(c.id,c);});
+    return(_filmoCache[id]=[...seen.values()]);
+  }catch(e){return null;}
+}
+async function fillDirFilmography(p){
+  const el=$('#dirFilmo');if(!el)return;
+  const list=await directorFilmography(p.id);
+  if(!list||!list.length){el.innerHTML='';return;}
+  const seenIds=new Set(films().filter(r=>r.id).map(r=>r.id));
+  const seenTitles=new Set(films().map(r=>norm(r.t)).concat(films().map(r=>norm(r.ti||''))));
+  const isSeen=m=>seenIds.has(m.id)||seenTitles.has(norm(m.title||''))||seenTitles.has(norm(m.original_title||''));
+  const total=list.length,seen=list.filter(isSeen).length,pct=total?Math.round(seen/total*100):0;
+  const unseen=list.filter(m=>!isSeen(m)&&(m.release_date||'').length>=4).sort((a,b)=>(b.vote_count||0)-(a.vote_count||0)).slice(0,8);
+  const items=unseen.map(m=>{const y=(m.release_date||'').slice(0,4);const po=m.poster_path?`<img loading="lazy" src="${IMG}/w92${m.poster_path}"/>`:'<div class="pp"></div>';
+    return `<div class="sr">${po}<div class="si"><div class="st">${m.title}</div><div class="sy">${y||'—'}${m.vote_count?' · '+fmt(m.vote_count)+' votos':''}</div></div><button class="wl-btn" data-t="${(m.title||'').replace(/"/g,'&quot;')}" data-y="${y}" data-id="${m.id}" data-po="${m.poster_path||''}">+ ver</button></div>`;}).join('');
+  el.innerHTML=`<div class="lbl">Filmografia como diretor</div>`
+    +`<div class="filmo-prog"><div class="filmo-bar"><i style="width:${pct}%"></i></div><span>${seen} de ${total} vistos · ${pct}%</span></div>`
+    +(unseen.length?`<div class="note" style="margin:8px 0 4px">Ainda não viu (mais populares):</div>${items}`:'<div class="note" style="margin:6px 0 0">'+ICON_CHECK+' Você viu toda a filmografia principal dele.</div>');
+  el.querySelectorAll('.wl-btn[data-id]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();const k=key(b.dataset.t,+b.dataset.y);if(cache[k]){toast('Já está na sua lista');return;}
+    const rec={t:b.dataset.t,y:+b.dataset.y,r:null,wl:1,id:+b.dataset.id||undefined,po:b.dataset.po||null,ti:b.dataset.t,ye:b.dataset.y,src:'user'};cache[k]=rec;put(k,rec);PEOPLE=null;b.textContent='✓ na lista';b.classList.add('on');toast('Quero ver: '+b.dataset.t);
+    if(rec.id){credits(rec.id).then(c=>{if(c){rec.ca=c.ca;rec.di=c.di;rec.co=c.co;if(c.rt)rec.rt=c.rt;rec.lang=c.lang;}rec.cc=1;put(k,rec);PEOPLE=null;});}});
 }
 function openGenre(g){const fl=films().filter(r=>(r.gids||[]).some(id=>(GENRES[id]||('#'+id))===g)).map(r=>({t:r.ti||r.t,y:+(r.ye||r.y),r:r.r,p:r.po}));
   const {mini,bf}=personDetail({fl});const rd=fl.filter(f=>f.r!=null);const avg=rd.length?rd.reduce((s,f)=>s+f.r,0)/rd.length:null;
@@ -1085,7 +1312,35 @@ function statsBioHTML(){
 }
 
 /* ── CARD GENERATOR ── */
-let _sfKey=null,_sfType='retrato';
+let _sfKey=null,_sfType='retrato',_recapYear=null;
+const CS_SITE='https://otiagons.github.io/statscinema';
+// desenha um QR code no canvas (usa qrcode-generator via CDN; ignora se indisponível)
+function _cQR(ctx,text,x,y,size){
+  if(typeof qrcode==='undefined')return false;
+  try{
+    const qr=qrcode(0,'M');qr.addData(text);qr.make();
+    const n=qr.getModuleCount(),cell=size/n,pad=cell*1.4;
+    ctx.fillStyle='rgba(244,240,230,0.94)';_crr(ctx,x-pad,y-pad,size+pad*2,size+pad*2,6);ctx.fill();
+    ctx.fillStyle='#0a0a0c';
+    for(let r=0;r<n;r++)for(let c=0;c<n;c++){if(qr.isDark(r,c))ctx.fillRect(x+c*cell,y+r*cell,cell+0.6,cell+0.6);}
+    return true;
+  }catch(e){return false;}
+}
+function _recapStats(year){
+  const fl=films().filter(r=>r.ts&&new Date(r.ts).getFullYear()===year);
+  const rated=fl.filter(r=>r.r!=null);
+  const avg=rated.length?rated.reduce((s,r)=>s+r.r,0)/rated.length:null;
+  const mins=fl.reduce((s,r)=>s+(r.rt||0),0);
+  const g={};fl.forEach(r=>(r.gids||[]).forEach(id=>{const gg=GENRES[id];if(gg)g[gg]=(g[gg]||0)+1;}));
+  const d={};fl.forEach(r=>(r.di||[]).forEach(x=>{d[x[1]]=(d[x[1]]||0)+1;}));
+  const co=new Set();fl.forEach(r=>{const c=r.co&&(Array.isArray(r.co)?r.co[0]:r.co);if(c)co.add(normalizeKey(c)||c);});
+  const mon=Array(12).fill(0);fl.forEach(r=>mon[new Date(r.ts).getMonth()]++);
+  return {year,n:fl.length,avg,hours:Math.round(mins/60),
+    topGenre:Object.entries(g).sort((a,b)=>b[1]-a[1])[0],
+    topDir:Object.entries(d).sort((a,b)=>b[1]-a[1])[0],
+    countries:co.size,topMon:mon.indexOf(Math.max(...mon)),
+    top5:rated.slice().sort((a,b)=>b.r-a.r||(+(b.ye||b.y))-(+(a.ye||a.y))).slice(0,3)};
+}
 const _CW=540,_CH=960,_CS=2; // canvas 1080×1920, preview em 540×960
 
 /* ── RECOMENDAÇÕES ── */
@@ -1327,13 +1582,15 @@ function _recoCard(o){
     scoreHtml='<div class="reco-score">★ '+o.score+' TMDB'+(o.tag?' · '+o.tag:'')+'</div>';
   else if(o.status)
     scoreHtml='<div class="reco-score" style="color:var(--acc1)">'+o.status+'</div>';
+  const provHtml=(o.providers&&o.providers.length)?'<div class="reco-prov">'+ICON_PLAY+'Streaming BR: <b>'+o.providers.join(' · ')+'</b></div>':'';
   return '<div class="reco-card">'+po+'<div class="reco-info">'
     +'<div class="reco-title">'+o.title+(o.year?' ('+o.year+')':'')+'</div>'
     +(meta?'<div class="reco-meta">'+meta+'</div>':'')
     +(o.why?'<div class="reco-why'+(o.main?' reco-why-main':'')+'">'+o.why+'</div>':'')
-    +scoreHtml
+    +scoreHtml+provHtml
     +'</div></div>';
 }
+const ICON_PLAY='<svg viewBox="0 0 24 24" fill="currentColor" style="width:11px;height:11px;vertical-align:-1px;margin-right:4px"><path d="M8 5v14l11-7z"/></svg>';
 
 // ── rodar com IA ──
 async function _runRecoLLM(vibe){
@@ -1354,13 +1611,14 @@ async function _runRecoLLM(vibe){
   if(!recs.length){res.innerHTML='<div class="reco-empty">As sugestões da IA você já tinha visto! Toque na vibe de novo.</div>';return;}
   const cards=[];
   for(let i=0;i<recs.length;i++){
-    const r=recs[i]; let poster=null,imdbRating=null;
-    try{const m=await searchFilm(r.title,+r.year||0); if(m){if(m.id&&seenIds.has(m.id))continue; poster=m.po; if(m.ye&&!r.year)r.year=m.ye;}}catch(e){}
+    const r=recs[i]; let poster=null,imdbRating=null,mid=null,providers=null;
+    try{const m=await searchFilm(r.title,+r.year||0); if(m){if(m.id&&seenIds.has(m.id))continue; poster=m.po; mid=m.id; if(m.ye&&!r.year)r.year=m.ye;}}catch(e){}
     if(getOmdbKey()){
       try{const od=await omdbFetch(r.title,r.year||'',r.title); if(od){const v=parseFloat(od.imdbRating);if(!isNaN(v))imdbRating=v;}}catch(e){}
     }
+    if(mid){try{const pv=await watchProviders(mid);if(pv&&pv.names&&pv.names.length)providers=pv.names;}catch(e){}}
     const sub=[r.director,r.country,r.runtime].filter(Boolean).join(' · ');
-    cards.push(_recoCard({poster,title:r.title,year:r.year,sub,why:r.why,main:i===0,imdbRating,status:imdbRating==null?'Inédito p/ você':null}));
+    cards.push(_recoCard({poster,title:r.title,year:r.year,sub,why:r.why,main:i===0,imdbRating,providers,status:imdbRating==null?'Inédito p/ você':null}));
   }
   res.innerHTML=cards.length?cards.join(''):'<div class="reco-empty">Tudo que veio você já viu! Toque na vibe de novo.</div>';
 }
@@ -1374,13 +1632,16 @@ async function _runRecoHeuristic(vibe){
   res.innerHTML='<div class="reco-spin"><div class="reco-loader"></div>'+(hasOmdb?'Filtrando com nota IMDb real…':'Buscando via TMDB…')+'</div>';
   const movies=await _fetchRecos(vibe);
   if(!movies.length){res.innerHTML='<div class="reco-empty">Não encontrei títulos novos. Tente outra vibe!</div>';return;}
-  res.innerHTML=movies.map((m,i)=>{
+  const cards=[];
+  for(let i=0;i<movies.length;i++){const m=movies[i];
     const yr=(m.release_date||'').slice(0,4);
     const gen=(m.genre_ids||[]).slice(0,3).map(id=>GENRES[id]).filter(Boolean).join(' · ');
     const ov=(m.overview||'').slice(0,110)+(m.overview&&m.overview.length>110?'…':'');
-    return _recoCard({poster:m.poster_path,title:m.title,year:yr,sub:gen,why:ov||'',main:i===0,
-      imdbRating:m._imdb||null,score:(!m._imdb&&m.vote_average)?m.vote_average.toFixed(1):null,tag:cfg.note});
-  }).join('');
+    let providers=null;try{const pv=await watchProviders(m.id);if(pv&&pv.names&&pv.names.length)providers=pv.names;}catch(e){}
+    cards.push(_recoCard({poster:m.poster_path,title:m.title,year:yr,sub:gen,why:ov||'',main:i===0,
+      imdbRating:m._imdb||null,score:(!m._imdb&&m.vote_average)?m.vote_average.toFixed(1):null,tag:cfg.note,providers}));
+  }
+  res.innerHTML=cards.join('');
 }
 
 function _runReco(vibe){return getLLMKey()?_runRecoLLM(vibe):_runRecoHeuristic(vibe);}
@@ -1457,12 +1718,18 @@ function _renderShareOb(){
     ['top5actor',ico('<circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0 1 12 0v1"/>')+'Atores'],
     ['top5actress',ico('<circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0 1 12 0v1"/><path d="M9 19h6M12 16v4"/>')+'Atrizes'],
     ['top5genre',ico('<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>')+'G\u00eaneros'],
+    ['recap',ico('<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>')+'Ano'],
   ];
+  const recapYears=_statsYears();
+  if(_sfType==='recap'&&(_recapYear==null||!recapYears.includes(_recapYear)))_recapYear=recapYears[0]||new Date().getFullYear();
+  const recapSel=(_sfType==='recap'&&recapYears.length)?'<div class="scard-types" id="_recapYears">'+recapYears.slice(0,10).map(y=>'<button class="chip '+(y===_recapYear?'on':'')+'" data-y="'+y+'">'+y+'</button>').join('')+'</div>':'';
   ob.innerHTML='<p style="color:var(--mut);font-size:12px;margin:0 0 8px">Cards 9:16 para Stories \u2014 toque Compartilhar.</p>'
     +'<div class="scard-types" id="_ctypes">'+types.map(([t,l])=>'<button class="chip '+(t===_sfType?'on':'')+'" data-t="'+t+'">'+l+'</button>').join('')+'</div>'
+    +recapSel
     +'<div class="scard-wrap"><canvas id="sfCanvas" class="scard-canvas"></canvas>'
     +'<button class="btn" id="sfShare" style="margin-top:8px">'+ICON_SHARE+'Compartilhar</button></div>';
   $('#_ctypes').onclick=e=>{const b=e.target.closest('button');if(!b)return;_sfType=b.dataset.t;if(_sfType==='destaque'&&!_sfKey){const lf=_lastFilm();if(lf)_sfKey=key(lf.t,lf.y);}_renderShareOb();};
+  const ry=$('#_recapYears');if(ry)ry.onclick=e=>{const b=e.target.closest('button');if(b){_recapYear=+b.dataset.y;_renderShareOb();}};
   $('#sfShare').onclick=_shareCard;
   _drawCard();
 }
@@ -1481,6 +1748,7 @@ function _drawCard(){
   if(_sfType==='retrato')_cRetrato(ctx,c1,c2,s1,s2,st);
   else if(_sfType==='top5')_cTop5(ctx,c1,c2,s1,s2,st);
   else if(_sfType==='top5genre')_cTop5Genre(ctx,c1,c2,s1,s2);
+  else if(_sfType==='recap')_cRecap(ctx,c1,c2,s1,s2);
 }
 async function _drawAsync(){
   const ctx=_gCtx();if(!ctx)return;
@@ -1498,11 +1766,28 @@ function _cbg(ctx,s1,s2){
   g.addColorStop(0,'rgba('+s1+',0.09)');g.addColorStop(1,'rgba(0,0,0,0)');
   ctx.fillStyle=g;ctx.fillRect(0,0,_CW,_CH);
 }
+function _cIconMark(ctx,cx,cy,sz,c1,c2){
+  // Desenha o ícone das espirais opostas (mesma marca do app/favicon) num canvas de card
+  try{
+    ctx.save();
+    ctx.translate(cx-sz/2,cy-sz/2);
+    ctx.scale(sz/48,sz/48);
+    const p1=new Path2D(_SP1), p2=new Path2D(_SP2);
+    ctx.lineWidth=1.7*(48/sz)*(sz/48); // mantém espessura visual relativa
+    ctx.lineWidth=1.9;
+    ctx.lineCap='round';ctx.strokeStyle=c1;ctx.stroke(p1);
+    ctx.strokeStyle=c2;ctx.stroke(p2);
+    ctx.beginPath();ctx.fillStyle='#f4f0e6';ctx.arc(24,24,1.8,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  }catch(e){}
+}
 function _clogo(ctx,c1,c2,y){
   ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.font='800 '+Math.round(_CW*0.055)+'px -apple-system,Arial,sans-serif';
-  ctx.fillStyle=c1;ctx.fillText('Cine',_CW/2-_CW*0.115,y);
-  ctx.fillStyle=c2;ctx.fillText('Stats',_CW/2+_CW*0.085,y);
+  const markSz=_CW*0.075;
+  _cIconMark(ctx,_CW/2-_CW*0.235,y-_CW*0.002,markSz,c1,c2);
+  ctx.fillStyle=c1;ctx.fillText('Cine',_CW/2-_CW*0.06,y);
+  ctx.fillStyle=c2;ctx.fillText('Stats',_CW/2+_CW*0.14,y);
 }
 function _cfooter(ctx,s1){
   ctx.fillStyle='rgba('+s1+',0.10)';ctx.fillRect(0,_CH*0.93,_CW,_CH);
@@ -1607,6 +1892,32 @@ function _cRetrato(ctx,c1,c2,s1,s2,st){
   ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.font=Math.round(_CW*0.033)+'px -apple-system,sans-serif';ctx.fillStyle=c2;ctx.fillText(st.demanding+'% com 4\u2605 ou mais',_CW/2,_CH*0.78);
   if(st.topGenres&&st.topGenres.length){ctx.font=Math.round(_CW*0.029)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.32)';ctx.fillText(st.topGenres.join(' \u00b7 '),_CW/2,_CH*0.825);}
+  _cQR(ctx,CS_SITE,_CW*0.5-_CW*0.06,_CH*0.875,_CW*0.12);
+  _cfooter(ctx,s1);
+}
+
+/* \u2500 RECAP DO ANO ("Seu ano no cinema") \u2500 */
+function _cRecap(ctx,c1,c2,s1,s2){
+  const yr=_recapYear||new Date().getFullYear();const st=_recapStats(yr);
+  _cbg(ctx,s1,s2);ctx.fillStyle=c1;ctx.fillRect(0,0,_CW,5);
+  _clogo(ctx,c1,c2,_CH*0.07);
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font=Math.round(_CW*0.032)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.5)';ctx.fillText('SEU ANO NO CINEMA',_CW/2,_CH*0.125);
+  ctx.font='800 '+Math.round(_CW*0.15)+'px -apple-system,sans-serif';ctx.fillStyle=c1;ctx.fillText(String(yr),_CW/2,_CH*0.205);
+  const nm=bio.name||'';if(nm){ctx.font=Math.round(_CW*0.03)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.35)';ctx.fillText(nm.length>26?nm.slice(0,26)+'\u2026':nm,_CW/2,_CH*0.262);}
+  if(!st.n){ctx.font=Math.round(_CW*0.038)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.4)';_cwrap(ctx,'Sem filmes com data registrada em '+yr,_CW/2,_CH*0.5,_CW*0.8,_CW*0.05);_cfooter(ctx,s1);return;}
+  ctx.font='800 '+Math.round(_CW*0.17)+'px -apple-system,sans-serif';ctx.fillStyle='#f4f0e6';ctx.fillText(fmt(st.n),_CW/2,_CH*0.36);
+  ctx.font=Math.round(_CW*0.036)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.45)';ctx.fillText('filmes vistos',_CW/2,_CH*0.405);
+  const cells=[[fmt(st.hours)+'h','horas'],[st.avg!=null?st.avg.toFixed(1).replace('.',',')+'\u2605':'\u2014','nota m\u00e9dia'],[fmt(st.countries),'pa\u00edses'],[MONTHS_ABBR[st.topMon],'m\u00eas + ativo']];
+  const gx=[_CW*0.28,_CW*0.72],gy=[_CH*0.49,_CH*0.59];
+  cells.forEach(([v,l],i)=>{const x=gx[i%2],y=gy[Math.floor(i/2)];
+    ctx.strokeStyle='rgba('+s1+',0.22)';ctx.lineWidth=1;_crr(ctx,x-_CW*0.19,y-_CH*0.043,_CW*0.38,_CH*0.08,8);ctx.stroke();
+    ctx.font='800 '+Math.round(_CW*0.05)+'px -apple-system,sans-serif';ctx.fillStyle=c1;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(v,x,y-_CH*0.008);
+    ctx.font=Math.round(_CW*0.026)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.4)';ctx.fillText(l,x,y+_CH*0.024);});
+  ctx.textAlign='center';
+  if(st.topGenre){ctx.font=Math.round(_CW*0.028)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.4)';ctx.fillText('G\u00caNERO DO ANO',_CW/2,_CH*0.68);ctx.font='800 '+Math.round(_CW*0.05)+'px -apple-system,sans-serif';ctx.fillStyle=c2;ctx.fillText(st.topGenre[0],_CW/2,_CH*0.715);}
+  if(st.topDir){ctx.font=Math.round(_CW*0.028)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.4)';ctx.fillText('DIRETOR DO ANO',_CW/2,_CH*0.775);ctx.font='800 '+Math.round(_CW*0.044)+'px -apple-system,sans-serif';ctx.fillStyle='#f4f0e6';const dn=st.topDir[0].length>24?st.topDir[0].slice(0,24)+'\u2026':st.topDir[0];ctx.fillText(dn+' \u00b7 '+st.topDir[1]+'f',_CW/2,_CH*0.81);}
+  const qrSz=_CW*0.12;if(_cQR(ctx,CS_SITE,_CW/2-qrSz/2,_CH*0.85,qrSz)){ctx.textAlign='center';ctx.font=Math.round(_CW*0.024)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.3)';ctx.fillText('aponte a c\u00e2mera',_CW/2,_CH*0.93);}
   _cfooter(ctx,s1);
 }
 
@@ -1657,7 +1968,223 @@ async function _cDestaque(ctx,c1,c2,s1,s2){
 
 let _curFilmKey=null;
 
-function render(){if(tab!=='bio')stopSpiralAnim();if(tab==='bio')return renderBio();tab==='films'?renderFilms():tab==='genre'?renderGenre():renderRanking();}
+/* ---------- STATS (hábitos, marcos, conquistas) ---------- */
+const MONTHS_ABBR=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const DOW_NAMES=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+const MILESTONES=[100,250,500,750,1000,1250,1500,1750,2000,2500,3000,4000,5000];
+function _dayIdx(ts){const d=new Date(ts);return Math.floor(new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()/864e5);}
+function _tsFilms(){return films().filter(r=>r.ts);}
+function _statsYears(){return [...new Set(_tsFilms().map(r=>new Date(r.ts).getFullYear()))].sort((a,b)=>b-a);}
+function _streaks(){
+  const days=[...new Set(_tsFilms().map(r=>_dayIdx(r.ts)))].sort((a,b)=>a-b);
+  if(!days.length)return{cur:0,longest:0};
+  let longest=1,run=1;for(let i=1;i<days.length;i++){if(days[i]===days[i-1]+1){run++;if(run>longest)longest=run;}else run=1;}
+  const set=new Set(days),today=Math.floor(Date.now()/864e5);let cur=0,d=today;
+  if(!set.has(today)&&set.has(today-1))d=today-1;
+  if(set.has(d)){cur=1;while(set.has(d-1)){cur++;d--;}}
+  return{cur,longest};
+}
+function _cadence(){
+  const dow=[0,0,0,0,0,0,0];_tsFilms().forEach(r=>dow[new Date(r.ts).getDay()]++);
+  const days=[...new Set(_tsFilms().map(r=>_dayIdx(r.ts)))].sort((a,b)=>a-b);
+  let gap=null;if(days.length>=2){let s=0;for(let i=1;i<days.length;i++)s+=days[i]-days[i-1];gap=s/(days.length-1);}
+  const topDow=dow.reduce((mi,v,i,a)=>v>a[mi]?i:mi,0);
+  return{gap,dow,topDow,count:_tsFilms().length};
+}
+function _byYear(){
+  const Y={};_tsFilms().forEach(r=>{const yr=new Date(r.ts).getFullYear();const o=Y[yr]||(Y[yr]={n:0,rs:0,rc:0,g:{}});o.n++;if(r.r!=null){o.rs+=r.r;o.rc++;}(r.gids||[]).forEach(id=>{const g=GENRES[id];if(g)o.g[g]=(o.g[g]||0)+1;});});
+  return Object.entries(Y).map(([y,o])=>({y:+y,n:o.n,avg:o.rc?o.rs/o.rc:null,top:Object.entries(o.g).sort((a,b)=>b[1]-a[1])[0]})).sort((a,b)=>b.y-a.y);
+}
+function _decadeStats(){
+  const D={};films().forEach(r=>{const d=Math.floor(r.y/10)*10;if(!d||d<1900)return;const o=D[d]||(D[d]={n:0,rs:0,rc:0});o.n++;if(r.r!=null){o.rs+=r.r;o.rc++;}});
+  return Object.entries(D).map(([d,o])=>({d:+d,n:o.n,avg:o.rc?o.rs/o.rc:null,rc:o.rc}));
+}
+// ── Ícones estilizados das conquistas (linha, herdam a cor via currentColor) ──
+const AICON={
+  movement:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M2 7c3-3 5-3 8 0s5 3 8 0M2 13c3-3 5-3 8 0s5 3 8 0M2 19c3-3 5-3 8 0s5 3 8 0"/></svg>',
+  trilogy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 5v14M12 3v18M18 5v14"/></svg>',
+  director:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="3" y="9" width="18" height="11" rx="1.6"/><path d="M3.4 9l2-4 3.6 1.3L7 9.3M9.2 6.1l3.6 1.3L11 10M15 7.3l3.6 1.3"/></svg>',
+  actor:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 5h7v4a3.5 3.5 0 0 1-7 0z"/><path d="M13 9h7v4a3.5 3.5 0 0 1-7 0z" opacity="0.75"/><path d="M6 16c1 1.4 4 1.4 5 0"/></svg>',
+  globe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 2.6 15.3 0 18M12 3c-2.6 2.7-2.6 15.3 0 18"/></svg>',
+  time:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12M6 21h12M8 3v3l4 4 4-4V3M8 21v-3l4-4 4 4v3"/></svg>',
+  lang:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M21 11.5a7.5 7.5 0 0 1-10.6 6.8L4 20l1.7-5A7.5 7.5 0 1 1 21 11.5z"/><path d="M8.5 11h7M8.5 14h4"/></svg>',
+  horror:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M5 21V11a7 7 0 0 1 14 0v10l-2.3-1.6-2.3 1.6-2.4-1.6L9.3 21 7 19.4 5 21z"/><circle cx="9.5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="11" r="1" fill="currentColor" stroke="none"/></svg>',
+  flame:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3c1.2 3-2 4.2-2 7a2 2 0 0 0 4 0c0-.9-.2-1.7-.6-2.6 2.2 1.4 3.6 3.9 3.6 6.4a5 5 0 0 1-10 0C7 9.5 10 6.3 12 3z"/></svg>',
+  silent:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.1"/><circle cx="12" cy="5.6" r="1.5"/><circle cx="12" cy="18.4" r="1.5"/><circle cx="5.6" cy="12" r="1.5"/><circle cx="18.4" cy="12" r="1.5"/></svg>',
+  star:STAR_SVG
+};
+const ICON_CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg>';
+const ICON_TROPHY='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px;margin-right:5px"><path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3M9 16h6M10 20h4M12 13v3"/></svg>';
+let _achCat='Todas';
+// ── Catálogo de conquistas de cinema (movimentos, trilogias, diretores, atores) ──
+const ACH_SETS=[
+  // Movimentos
+  {cat:'Movimentos',icon:'movement',name:'Nouvelle Vague',goal:8,films:[['Breathless',1960],['The 400 Blows',1959],['Jules and Jim',1962],['Cléo from 5 to 7',1962],['Pierrot le Fou',1965],['Band of Outsiders',1964],['Vivre Sa Vie',1962],['Contempt',1963],['Last Year at Marienbad',1961],['Hiroshima Mon Amour',1959],['Masculin Féminin',1966]]},
+  {cat:'Movimentos',icon:'movement',name:'Surrealismo',goal:5,films:[['Un Chien Andalou',1929],['L\'Âge d\'Or',1930],['The Seashell and the Clergyman',1928],['Meshes of the Afternoon',1943],['The Exterminating Angel',1962],['Belle de Jour',1967],['The Discreet Charm of the Bourgeoisie',1972],['The Holy Mountain',1973]]},
+  {cat:'Movimentos',icon:'movement',name:'Expressionismo Alemão',goal:5,films:[['The Cabinet of Dr. Caligari',1920],['Nosferatu',1922],['Metropolis',1927],['M',1931],['Dr. Mabuse the Gambler',1922],['Faust',1926],['The Last Laugh',1924]]},
+  {cat:'Movimentos',icon:'movement',name:'Neorrealismo Italiano',goal:5,films:[['Rome, Open City',1945],['Bicycle Thieves',1948],['Umberto D.',1952],['La Terra Trema',1948],['Paisan',1946],['Shoeshine',1946],['Germany, Year Zero',1948]]},
+  {cat:'Movimentos',icon:'movement',name:'Dogma 95',goal:4,films:[['The Celebration',1998],['The Idiots',1998],['Mifune',1999],['Italian for Beginners',2000],['The King Is Alive',2000]]},
+  {cat:'Movimentos',icon:'movement',name:'New Hollywood',goal:10,films:[['Bonnie and Clyde',1967],['The Graduate',1967],['Easy Rider',1969],['The Wild Bunch',1969],['Midnight Cowboy',1969],['Five Easy Pieces',1970],['The Last Picture Show',1971],['A Clockwork Orange',1971],['The French Connection',1971],['Mean Streets',1973],['Chinatown',1974],['Taxi Driver',1976],['Nashville',1975],['Dog Day Afternoon',1975],['Apocalypse Now',1979]]},
+  {cat:'Movimentos',icon:'movement',name:'Cinema Novo',goal:5,films:[['Black God, White Devil',1964],['Barren Lives',1963],['Entranced Earth',1967],['Macunaíma',1969],['The Guns',1964],['The Red Light Bandit',1968],['Antonio das Mortes',1969]]},
+  {cat:'Movimentos',icon:'movement',name:'Novo Cinema Alemão',goal:5,films:[['Aguirre, the Wrath of God',1972],['The Marriage of Maria Braun',1979],['Wings of Desire',1987],['Paris, Texas',1984],['Fitzcarraldo',1982],['Ali: Fear Eats the Soul',1974],['The American Friend',1977],['Kings of the Road',1976]]},
+  {cat:'Movimentos',icon:'movement',name:'Nova Onda Tcheca',goal:4,films:[['Closely Watched Trains',1966],['Daisies',1966],['The Firemen\'s Ball',1967],['Loves of a Blonde',1965],['Marketa Lazarová',1967],['Valerie and Her Week of Wonders',1970]]},
+  // Trilogias (precisa de todas)
+  {cat:'Trilogias',icon:'trilogy',name:'Trilogia Antes (Linklater)',films:[['Before Sunrise',1995],['Before Sunset',2004],['Before Midnight',2013]]},
+  {cat:'Trilogias',icon:'trilogy',name:'Trilogia do Silêncio (Bergman)',films:[['Through a Glass Darkly',1961],['Winter Light',1963],['The Silence',1963]]},
+  {cat:'Trilogias',icon:'trilogy',name:'As Três Cores (Kieślowski)',films:[['Three Colours: Blue',1993],['Three Colours: White',1994],['Three Colours: Red',1994]]},
+  {cat:'Trilogias',icon:'trilogy',name:'Trilogia Apu (Ray)',films:[['Pather Panchali',1955],['Aparajito',1956],['The World of Apu',1959]]},
+  {cat:'Trilogias',icon:'trilogy',name:'Trilogia dos Dólares (Leone)',films:[['A Fistful of Dollars',1964],['For a Few Dollars More',1965],['The Good, the Bad and the Ugly',1966]]},
+  {cat:'Trilogias',icon:'trilogy',name:'Trilogia da Vingança (Park)',films:[['Sympathy for Mr. Vengeance',2002],['Oldboy',2003],['Sympathy for Lady Vengeance',2005]]},
+  {cat:'Trilogias',icon:'trilogy',name:'Trilogia Cornetto (Wright)',films:[['Shaun of the Dead',2004],['Hot Fuzz',2007],['The World\'s End',2013]]},
+  {cat:'Trilogias',icon:'trilogy',name:'Trilogia Qatsi (Reggio)',films:[['Koyaanisqatsi',1982],['Powaqqatsi',1988],['Naqoyqatsi',2002]]},
+  {cat:'Trilogias',icon:'trilogy',name:'O Poderoso Chefão (Coppola)',films:[['The Godfather',1972],['The Godfather Part II',1974],['The Godfather Part III',1990]]},
+  {cat:'Trilogias',icon:'trilogy',name:'Incomunicabilidade (Antonioni)',films:[['L\'Avventura',1960],['La Notte',1961],['L\'Eclisse',1962]]},
+  // Diretores (filmografia de longas)
+  {cat:'Diretores',icon:'director',name:'Tarkovsky completo',goal:7,films:[['Ivan\'s Childhood',1962],['Andrei Rublev',1966],['Solaris',1972],['Mirror',1975],['Stalker',1979],['Nostalghia',1983],['The Sacrifice',1986]]},
+  {cat:'Diretores',icon:'director',name:'Kubrick completo',goal:12,films:[['Fear and Desire',1953],['Killer\'s Kiss',1955],['The Killing',1956],['Paths of Glory',1957],['Spartacus',1960],['Lolita',1962],['Dr. Strangelove',1964],['2001: A Space Odyssey',1968],['A Clockwork Orange',1971],['Barry Lyndon',1975],['The Shining',1980],['Full Metal Jacket',1987],['Eyes Wide Shut',1999]]},
+  {cat:'Diretores',icon:'director',name:'Lynch completo',goal:10,films:[['Eraserhead',1977],['The Elephant Man',1980],['Dune',1984],['Blue Velvet',1986],['Wild at Heart',1990],['Twin Peaks: Fire Walk with Me',1992],['Lost Highway',1997],['The Straight Story',1999],['Mulholland Drive',2001],['Inland Empire',2006]]},
+  {cat:'Diretores',icon:'director',name:'Bong Joon-ho completo',goal:7,films:[['Barking Dogs Never Bite',2000],['Memories of Murder',2003],['The Host',2006],['Mother',2009],['Snowpiercer',2013],['Okja',2017],['Parasite',2019]]},
+  {cat:'Diretores',icon:'director',name:'Lanthimos completo',goal:6,films:[['Dogtooth',2009],['Alps',2011],['The Lobster',2015],['The Killing of a Sacred Deer',2017],['The Favourite',2018],['Poor Things',2023],['Kinds of Kindness',2024]]},
+  {cat:'Diretores',icon:'director',name:'Robert Eggers completo',goal:4,films:[['The Witch',2015],['The Lighthouse',2019],['The Northman',2022],['Nosferatu',2024]]},
+  {cat:'Diretores',icon:'director',name:'Ari Aster completo',goal:3,films:[['Hereditary',2018],['Midsommar',2019],['Beau Is Afraid',2023]]},
+  {cat:'Diretores',icon:'director',name:'Jordan Peele completo',goal:3,films:[['Get Out',2017],['Us',2019],['Nope',2022]]},
+  {cat:'Diretores',icon:'director',name:'Charlie Kaufman completo',goal:3,films:[['Synecdoche, New York',2008],['Anomalisa',2015],['I\'m Thinking of Ending Things',2020]]},
+  // Atores (papéis essenciais)
+  {cat:'Atores',icon:'actor',name:'Toshiro Mifune',goal:5,films:[['Rashomon',1950],['Seven Samurai',1954],['Throne of Blood',1957],['The Hidden Fortress',1958],['Yojimbo',1961],['Sanjuro',1962],['High and Low',1963],['Drunken Angel',1948],['Stray Dog',1949]]},
+  {cat:'Atores',icon:'actor',name:'Liv Ullmann',goal:4,films:[['Persona',1966],['Hour of the Wolf',1968],['Shame',1968],['The Passion of Anna',1969],['Cries and Whispers',1972],['Scenes from a Marriage',1974],['Autumn Sonata',1978]]},
+  {cat:'Atores',icon:'actor',name:'Max von Sydow',goal:4,films:[['The Seventh Seal',1957],['Wild Strawberries',1957],['The Virgin Spring',1960],['Through a Glass Darkly',1961],['Winter Light',1963],['The Exorcist',1973],['Hour of the Wolf',1968]]},
+  {cat:'Atores',icon:'actor',name:'Marcello Mastroianni',goal:4,films:[['La Dolce Vita',1960],['8½',1963],['La Notte',1961],['Divorce Italian Style',1961],['City of Women',1980],['Dark Eyes',1987]]},
+  {cat:'Atores',icon:'actor',name:'Isabelle Huppert',goal:4,films:[['The Piano Teacher',2001],['Elle',2016],['La Cérémonie',1995],['Things to Come',2016],['White Material',2009],['8 Women',2002]]},
+  {cat:'Atores',icon:'actor',name:'Setsuko Hara',goal:3,films:[['Late Spring',1949],['Early Summer',1951],['Tokyo Story',1953],['Late Autumn',1960]]},
+];
+function _watchedIndex(){
+  const idx=new Map();
+  films().forEach(r=>{const y=+(r.ye||r.y)||r.y;[r.t,r.ti].forEach(t=>{if(!t)return;const k=norm(t);if(!k)return;let arr=idx.get(k);if(!arr){arr=[];idx.set(k,arr);}arr.push(y);});});
+  return idx;
+}
+function _setProgress(list,idx){let c=0;for(const it of list){const arr=idx.get(norm(it[0]));if(arr&&arr.some(y=>Math.abs(y-it[1])<=1))c++;}return c;}
+// espiral dupla estilo Vertigo (1958) — motivo visual das conquistas
+function _vertigoSpiralSVG(size){
+  const cx=size/2,cy=size/2,turns=4.6,rMax=size*0.46,steps=260;
+  const path=ph=>{let d='';for(let i=0;i<=steps;i++){const t=i/steps,a=t*turns*6.28319+ph,r=t*rMax;d+=(i?'L':'M')+(cx+Math.cos(a)*r).toFixed(1)+' '+(cy+Math.sin(a)*r).toFixed(1);}return d;};
+  return '<svg class="vspiral" viewBox="0 0 '+size+' '+size+'" width="'+size+'" height="'+size+'" aria-hidden="true"><path d="'+path(0)+'" fill="none" stroke="var(--acc1)" stroke-width="1.4" stroke-linecap="round"/><path d="'+path(3.14159)+'" fill="none" stroke="var(--acc2)" stroke-width="1.4" stroke-linecap="round"/></svg>';
+}
+function openAchievement(i){
+  const a=ACH_SETS[i];if(!a)return;const idx=_watchedIndex();
+  const rows=a.films.map(it=>{const arr=idx.get(norm(it[0]));const seen=arr&&arr.some(y=>Math.abs(y-it[1])<=1);
+    return '<div class="ach-frow'+(seen?' seen':'')+'">'+(seen?ICON_CHECK:'<span class="ach-dot"></span>')+'<span class="ach-ft">'+it[0]+'</span><span class="ach-fy">'+it[1]+'</span></div>';}).join('');
+  const got=_setProgress(a.films,idx),goal=a.goal||a.films.length;
+  $('#sheet').innerHTML='<div class="top"><div class="ach-bigic">'+(AICON[a.icon]||AICON.star)+'</div><div><h3>'+a.name+'</h3><div class="yr">'+a.cat+' · <b>'+got+'/'+goal+'</b>'+(got>=goal?' · concluída':'')+'</div></div></div><div class="lbl">Filmes · '+got+' de '+a.films.length+' vistos</div><div class="ach-flist">'+rows+'</div>';
+  $('#modal').classList.add('show');
+}
+function _achievements(){
+  const all=films(),idx=_watchedIndex(),out=[];
+  ACH_SETS.forEach((a,i)=>{const goal=a.goal||a.films.length;const v=_setProgress(a.films,idx);
+    out.push({cat:a.cat,icon:a.icon,n:a.name,d:a.desc||(a.cat==='Trilogias'?'Ver a trilogia completa':a.cat==='Movimentos'?goal+' filmes do movimento':a.cat==='Atores'?goal+' papéis essenciais':'Filmografia de longas'),v,goal,setIdx:i});});
+  const countries=new Set();all.forEach(r=>{const co=r.co&&(Array.isArray(r.co)?r.co[0]:r.co);if(co)countries.add(normalizeKey(co)||co);});
+  const decades=new Set();all.forEach(r=>{const d=Math.floor(r.y/10)*10;if(d>=1900)decades.add(d);});
+  const langs=new Set();all.forEach(r=>{if(r.lang)langs.add(r.lang);});
+  const octH={};all.forEach(r=>{if(!r.ts)return;const d=new Date(r.ts);if(d.getMonth()===9&&(r.gids||[]).includes(27))octH[d.getFullYear()]=(octH[d.getFullYear()]||0)+1;});
+  const octMax=Math.max(0,...Object.values(octH));
+  const silent=all.filter(r=>r.y&&r.y<1930).length;
+  out.push({cat:'Panorama',icon:'globe',n:'Volta ao mundo',d:'Filmes de 25 países',v:countries.size,goal:25});
+  out.push({cat:'Panorama',icon:'time',n:'Viagem no tempo',d:'Filmes de 8 décadas',v:decades.size,goal:8});
+  out.push({cat:'Panorama',icon:'lang',n:'Poliglota',d:'12 idiomas originais',v:langs.size,goal:12});
+  out.push({cat:'Panorama',icon:'horror',n:'Maratona de Outubro',d:'5 terrores num mesmo outubro',v:octMax,goal:5});
+  out.push({cat:'Panorama',icon:'flame',n:'Maratonista',d:'7 dias seguidos de cinema',v:_streaks().longest,goal:7});
+  out.push({cat:'Panorama',icon:'silent',n:'Era do silêncio',d:'3 filmes anteriores a 1930',v:silent,goal:3});
+  return out.map(a=>({...a,done:a.v>=a.goal,pct:Math.min(100,Math.round(a.v/a.goal*100))}));
+}
+function _checkMilestone(){
+  const total=films().length;const reached=[...MILESTONES].reverse().find(m=>m<=total);if(reached==null)return;
+  if(bio.lastMilestone===undefined){bio.lastMilestone=reached;saveBio();return;} // primeira execução: registra sem alarde
+  if(reached>bio.lastMilestone){bio.lastMilestone=reached;saveBio();setTimeout(()=>toast('Marco alcançado: '+fmt(reached)+' filmes!'),900);}
+}
+function _heatmapHtml(year){
+  const counts={};let totalDays=0,totalFilms=0;
+  _tsFilms().forEach(r=>{const d=new Date(r.ts);if(d.getFullYear()!==year)return;const k=d.getMonth()+'-'+d.getDate();counts[k]=(counts[k]||0)+1;});
+  const firstDow=new Date(year,0,1).getDay();
+  let cur=new Date(year,0,1-firstDow);const cols=[];
+  for(let w=0;w<53;w++){const col=[];for(let i=0;i<7;i++){
+    const inY=cur.getFullYear()===year;const k=cur.getMonth()+'-'+cur.getDate();const c=inY?(counts[k]||0):-1;
+    if(c>0){totalDays++;totalFilms+=c;}
+    col.push({c,m:cur.getMonth(),date:cur.getDate()});cur=new Date(cur.getFullYear(),cur.getMonth(),cur.getDate()+1);
+  }cols.push(col);}
+  let lastM=-1;const labels=cols.map(col=>{const fd=col.find(d=>d.c>=0&&d.date<=7);let l='';if(fd&&fd.m!==lastM){l=MONTHS_ABBR[fd.m];lastM=fd.m;}return '<div class="hm-lbl">'+l+'</div>';}).join('');
+  const grid=cols.map(col=>'<div class="hm-col">'+col.map(d=>{
+    if(d.c<0)return '<div class="hm-c hm-x"></div>';
+    const lv=d.c===0?0:d.c===1?1:d.c===2?2:d.c<=4?3:4;
+    return '<div class="hm-c hm-l'+lv+'" title="'+d.date+'/'+(d.m+1)+': '+d.c+' filme(s)"></div>';
+  }).join('')+'</div>').join('');
+  return '<div class="hm-summary">'+fmt(totalFilms)+' filmes em '+fmt(totalDays)+' dias de '+year+'</div>'
+    +'<div class="hm-wrap"><div class="hm-labels">'+labels+'</div><div class="hm-grid">'+grid+'</div></div>'
+    +'<div class="hm-legend">menos <span class="hm-c hm-l0"></span><span class="hm-c hm-l1"></span><span class="hm-c hm-l2"></span><span class="hm-c hm-l3"></span><span class="hm-c hm-l4"></span> mais</div>';
+}
+function renderStats(){
+  const all=films();
+  if(!all.length){$('#view').innerHTML='<div class="empty">Avalie ou importe filmes para ver suas estatísticas.</div>';return;}
+  const st=computeStats();
+  const years=_statsYears();
+  if(statsYear==null||!years.includes(statsYear))statsYear=years[0]||new Date().getFullYear();
+  const ms=MILESTONES.find(m=>m>st.total),prev=[...MILESTONES].reverse().find(m=>m<=st.total)||0;
+  const msPct=ms?Math.round((st.total-prev)/(ms-prev)*100):100;
+  // header / marco
+  let html='<div class="st-hd"><div class="st-hd-big">'+fmt(st.total)+'</div><div class="st-hd-sub">filmes · '+fmt(st.totalHours)+'h · '+(st.avg!=null?st.avg.toFixed(2).replace('.',',')+'★ média':'sem nota')+'</div>'
+    +(ms?'<div class="ms-bar"><i style="width:'+msPct+'%"></i></div><div class="ms-lbl">faltam <b>'+fmt(ms-st.total)+'</b> p/ o marco de '+fmt(ms)+'</div>':'<div class="ms-lbl">'+ICON_TROPHY+'Você já passou de '+fmt(prev)+' filmes</div>')
+    +'</div>';
+  // heatmap
+  const hasTs=_tsFilms().length>0;
+  html+='<span class="eyb" style="margin-top:18px">Atividade</span>';
+  if(hasTs){
+    const yrChips=years.length>1?'<div class="chips" id="hmYears" style="margin:0 0 8px">'+years.slice(0,12).map(y=>'<button class="chip '+(y===statsYear?'on':'')+'" data-y="'+y+'">'+y+'</button>').join('')+'</div>':'';
+    html+=yrChips+_heatmapHtml(statsYear);
+  }else{
+    html+='<div class="note" style="margin:2px 0 0">O mapa de atividade usa as datas em que você assistiu. Importe o <b>diary.csv</b> do Letterboxd (Ajustes › Atualizar filmes) ou avalie filmes aqui para preenchê-lo.</div>';
+  }
+  // streak + cadence
+  if(hasTs){
+    const sk=_streaks(),cd=_cadence();
+    html+='<span class="eyb" style="margin-top:18px">Ritmo</span><div class="strow" style="grid-template-columns:repeat(4,1fr)">'
+      +'<div class="stbox"><div class="sv">'+sk.cur+'</div><div class="sl">sequência atual</div></div>'
+      +'<div class="stbox"><div class="sv">'+sk.longest+'</div><div class="sl">maior sequência</div></div>'
+      +'<div class="stbox"><div class="sv">'+(cd.gap!=null?cd.gap.toFixed(1):'—')+'</div><div class="sl">dias entre sessões</div></div>'
+      +'<div class="stbox"><div class="sv" style="font-size:11px">'+DOW_NAMES[cd.topDow].slice(0,3)+'</div><div class="sl">dia favorito</div></div>'
+      +'</div>';
+  }
+  // ano a ano
+  const yy=_byYear();
+  if(yy.length){
+    html+='<span class="eyb" style="margin-top:18px">Ano a ano</span><div class="yy-rows">'
+      +yy.slice(0,12).map(r=>'<div class="yy-row"><span class="yy-y">'+r.y+'</span><span class="yy-n"><b>'+fmt(r.n)+'</b> filmes</span><span class="yy-a">'+(r.avg!=null?r.avg.toFixed(2).replace('.',',')+'★':'—')+'</span><span class="yy-g">'+(r.top?r.top[0]:'—')+'</span></div>').join('')
+      +'</div>';
+  }
+  // décadas por nota
+  const dec=_decadeStats().filter(d=>d.n>=1);
+  if(dec.length){
+    const byAvg=dec.filter(d=>d.rc>=3&&d.avg!=null).sort((a,b)=>b.avg-a.avg);
+    const list=(byAvg.length?byAvg:dec.slice().sort((a,b)=>b.n-a.n));
+    html+='<span class="eyb" style="margin-top:18px">Décadas '+(byAvg.length?'por nota média':'por quantidade')+'</span><div class="bars">'
+      +list.map(d=>{const w=d.avg!=null?d.avg/5*100:0;return '<div class="barrow"><div class="bn">'+d.d+'s</div><div class="track"><div class="fill" style="width:'+w+'%"></div></div><div class="bmeta">'+(d.avg!=null?'<span class="g">'+star(+d.avg.toFixed(2))+'</span> · ':'')+fmt(d.n)+'f</div></div>';}).join('')
+      +'</div><div class="note" style="margin-top:2px">'+(byAvg.length?'Décadas com 3+ filmes avaliados, ordenadas pela sua nota média.':'Ordenado por quantidade.')+'</div>';
+  }
+  // conquistas — catálogo de cinema (movimentos, trilogias, diretores, atores, panorama)
+  const ach=_achievements();
+  const doneN=ach.filter(a=>a.done).length;
+  html+='<span class="eyb" style="margin-top:18px">Conquistas</span>';
+  html+='<div class="ach-hero">'+_vertigoSpiralSVG(154)+'<div class="ach-hero-c"><div class="ach-hero-num">'+doneN+'<span>/'+ach.length+'</span></div><div class="ach-hero-lbl">conquistas</div></div></div>';
+  const acats=['Todas','Concluídas','Movimentos','Trilogias','Diretores','Atores','Panorama'];
+  html+='<div class="chips" id="achCat" style="margin:0 0 10px">'+acats.map(c=>'<button class="chip '+(_achCat===c?'on':'')+'" data-c="'+c+'">'+c+'</button>').join('')+'</div>';
+  let shown=ach;
+  if(_achCat==='Concluídas')shown=ach.filter(a=>a.done);
+  else if(_achCat!=='Todas')shown=ach.filter(a=>a.cat===_achCat);
+  shown=shown.slice().sort((a,b)=>(b.done-a.done)||(b.pct-a.pct)||(b.v-a.v)||a.n.localeCompare(b.n));
+  html+='<div class="ach-grid">'+(shown.length?shown.map(a=>'<div class="ach '+(a.done?'on':'')+'"'+(a.setIdx!=null?' data-ai="'+a.setIdx+'"':'')+'><div class="ach-ic">'+(AICON[a.icon]||AICON.star)+'</div><div class="ach-bd"><div class="ach-n">'+a.n+(a.done?' '+ICON_CHECK:'')+'</div><div class="ach-d">'+a.d+'</div><div class="ach-bar"><i style="width:'+a.pct+'%"></i></div><div class="ach-p">'+fmt(Math.min(a.v,a.goal))+'/'+fmt(a.goal)+(a.setIdx!=null?' · ver filmes':'')+'</div></div></div>').join(''):'<div class="note">Nenhuma conquista neste filtro ainda.</div>')+'</div>';
+  $('#view').innerHTML=html;
+  const hy=$('#hmYears');if(hy)hy.onclick=e=>{const b=e.target.closest('button');if(b){statsYear=+b.dataset.y;renderStats();}};
+  const ac=$('#achCat');if(ac)ac.onclick=e=>{const b=e.target.closest('button');if(b){_achCat=b.dataset.c;renderStats();}};
+  $$('.ach[data-ai]').forEach(el=>el.onclick=()=>openAchievement(+el.dataset.ai));
+}
+function render(){if(tab!=='bio')stopSpiralAnim();if(tab==='bio')return renderBio();if(tab==='stats')return renderStats();tab==='films'?renderFilms():tab==='genre'?renderGenre():renderRanking();}
 
 /* ---------- film modal ---------- */
 async function openFilm(k){_curFilmKey=k;const r=cache[k];if(!r)return;const t=r.t,y=r.y;
@@ -1672,14 +2199,34 @@ async function openFilm(k){_curFilmKey=k;const r=cache[k];if(!r)return;const t=r
   $('#sheet').innerHTML=`<div class="top">${poster}<div><h3>${t}</h3><div class="yr">${y}${runtime?' · <b>'+runtime+'</b>':''}${r.r!=null?` · sua nota <b>${star(r.r)}</b>`:''}</div>${tagline}${gn?`<div class="yr" style="margin-top:6px">${gn}</div>`:''}${dirs?`<div class="yr" style="margin-top:6px">Direção: <b>${dirs}</b></div>`:''}</div></div>
     ${overview}
     <div class="lbl">Sua nota</div>${starWidget(r.r||0,k)}<div class="rate-hint">Toque na metade esquerda da estrela para nota com ,5</div><button class="btn sec" id="filmShareBtn" style="margin-top:11px;font-size:13px">${ICON_SHARE}Compartilhar este filme</button>
+    ${_filmExtrasHtml(r)}
     ${cast?`<div class="lbl">Elenco principal</div><div class="cast">${cast}</div>`:(r.id?'<div class="note">Elenco ainda sendo baixado…</div>':'')}`;
+  _wireFilmExtras(k);
   $('#modal').classList.add('show');}
+function _filmExtrasHtml(r){
+  const isWl=!!r.wl;
+  const wlSection=isWl?`<div class="film-wl">${ICON_EYE} Está na sua <b>watchlist</b>. Toque nas estrelas acima para marcar como visto.</div><button class="btn sec" id="filmWlRemove" style="font-size:13px;margin-top:8px">Tirar da watchlist</button>`:'';
+  const rwN=r.rw||0;
+  const rewatchSection=isWl?'':`<div class="lbl">Revi este filme</div><div class="rw-ctl"><button class="rw-b" id="rwMinus">−</button><span class="rw-n" id="rwN">${rwN} ${rwN===1?'vez':'vezes'}</span><button class="rw-b" id="rwPlus">+</button></div>`;
+  const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const noteSection=`<div class="lbl">Anotação / mini-review</div><textarea class="film-note" id="filmNote" placeholder="o que achou? (opcional)">${esc(r.note)}</textarea>`;
+  const tags=(r.tags||[]);
+  const tagsSection=`<div class="lbl">Tags</div><div class="film-tags" id="filmTags">${tags.map(t=>`<span class="ftag" data-t="${(t||'').replace(/"/g,'&quot;')}">${t} <i>×</i></span>`).join('')}<input class="ftag-in" id="filmTagIn" placeholder="+ tag" autocomplete="off"/></div>`;
+  return wlSection+rewatchSection+noteSection+tagsSection;
+}
+function _wireFilmExtras(k){
+  const nt=$('#filmNote');if(nt)nt.onblur=()=>{const rec=cache[k];if(!rec)return;const v=nt.value.trim();if(v)rec.note=v;else delete rec.note;put(k,rec);};
+  const ti=$('#filmTagIn');if(ti)ti.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();const v=ti.value.trim().toLowerCase();if(v){const rec=cache[k];if(rec){rec.tags=[...new Set([...(rec.tags||[]),v])];put(k,rec);openFilm(k);}}}};
+}
 $('#sheet').addEventListener('click',e=>{
   if(e.target.id==='filmShareBtn'){openShareCard(_curFilmKey);$('#modal').classList.remove('show');return;}
+  if(e.target.id==='rwPlus'||e.target.id==='rwMinus'){const rec=cache[_curFilmKey];if(!rec)return;rec.rw=Math.max(0,(rec.rw||0)+(e.target.id==='rwPlus'?1:-1));put(_curFilmKey,rec);const el=$('#rwN');if(el)el.textContent=rec.rw+' '+(rec.rw===1?'vez':'vezes');return;}
+  if(e.target.id==='filmWlRemove'){del(_curFilmKey);$('#modal').classList.remove('show');PEOPLE=null;toast('Removido da watchlist');render();return;}
+  const ftx=e.target.closest('.ftag');if(ftx&&e.target.tagName==='I'){const rec=cache[_curFilmKey];if(rec){rec.tags=(rec.tags||[]).filter(x=>x!==ftx.dataset.t);if(!rec.tags.length)delete rec.tags;put(_curFilmKey,rec);ftx.remove();}return;}
   const s=e.target.closest('.s');if(!s)return;const k=s.dataset.key,i=+s.dataset.i;
   const rect=s.getBoundingClientRect();const half=(e.clientX-rect.left)<rect.width/2;const val=half?i-0.5:i;
-  const rec=cache[k];if(!rec)return;rec.r=val;rec.s=1;rec.ts=Date.now();put(k,rec);PEOPLE=null;
-  toast('Avaliado: '+rec.t+' '+star(val));openFilm(k);
+  const rec=cache[k];if(!rec)return;const wasWl=!!rec.wl;rec.r=val;delete rec.wl;rec.s=1;rec.ts=Date.now();put(k,rec);PEOPLE=null;
+  toast((wasWl?'Visto! ':'Avaliado: ')+rec.t+' '+star(val));openFilm(k);
 });
 $('#modal').onclick=e=>{if(e.target.id==='modal')$('#modal').classList.remove('show');};
 
@@ -1692,18 +2239,27 @@ async function doSearch(q){
   const j=await tmdb('/search/movie',{query:q}); const res=((j&&j.results)||[]).slice(0,14);
   if(!res.length){$('#searchRes').innerHTML='<div class="note">Nada encontrado.</div>';return;}
   window._sres={};
-  $('#searchRes').innerHTML=res.map(m=>{const y=(m.release_date||'').slice(0,4)||'?';const k=key(m.title,y);window._sres[k]={id:m.id,t:m.title,y:+y||0,po:m.poster_path||null,gids:m.genre_ids||[]};
-    const cur=cache[k]?cache[k].r:null;const po=m.poster_path?`<img src="${IMG}/w92${m.poster_path}"/>`:'<div class="pp"></div>';
-    return `<div class="sr">${po}<div class="si"><div class="st">${m.title}</div><div class="sy">${y}${cur!=null?' · já avaliado '+star(cur):''}</div>${starWidget(cur||0,k)}</div></div>`;}).join('');
+  $('#searchRes').innerHTML=res.map(m=>{const y=(m.release_date||'').slice(0,4)||'?';const k=key(m.title,y);window._sres[k]={id:m.id,t:m.title,y:+y||0,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null};
+    const ex=cache[k];const cur=ex?ex.r:null;const onWl=ex&&ex.wl;const po=m.poster_path?`<img src="${IMG}/w92${m.poster_path}"/>`:'<div class="pp"></div>';
+    const status=cur!=null?' · já avaliado '+star(cur):(onWl?' · na watchlist':'');
+    const wlBtn=`<button class="wl-btn${onWl?' on':''}" data-wl="${k.replace(/"/g,'&quot;')}">${onWl?'✓ Quero ver':'+ Quero ver'}</button>`;
+    return `<div class="sr">${po}<div class="si"><div class="st">${m.title}</div><div class="sy">${y}${status}</div>${starWidget(cur||0,k)}<div style="margin-top:6px">${wlBtn}</div></div></div>`;}).join('');
 }
 $('#searchRes').addEventListener('click',async e=>{
+  const wb=e.target.closest('.wl-btn');
+  if(wb){const k=wb.dataset.wl;const m=window._sres[k];if(!m)return;let rec=cache[k];
+    if(rec&&rec.wl){delete rec.wl;cache[k]=rec;put(k,rec);toast('Tirado da watchlist');}
+    else if(rec&&rec.r!=null){toast('Esse você já assistiu');}
+    else{rec=rec||{t:m.t,y:m.y};rec.wl=1;rec.r=null;rec.id=m.id;rec.po=m.po;rec.gids=m.gids;rec.lang=m.lang;rec.ti=m.t;rec.ye=String(m.y);rec.src='user';cache[k]=rec;put(k,rec);PEOPLE=null;toast('Quero ver: '+m.t);
+      if(rec.id&&!rec.cc){credits(rec.id).then(c=>{if(c){rec.ca=c.ca;rec.di=c.di;rec.co=c.co;if(c.rt)rec.rt=c.rt;rec.lang=c.lang;}rec.cc=1;put(k,rec);PEOPLE=null;});}}
+    doSearch($('#searchIn').value);return;}
   const s=e.target.closest('.s');if(!s)return;const k=s.dataset.key,i=+s.dataset.i;
   const rect=s.getBoundingClientRect();const half=(e.clientX-rect.left)<rect.width/2;const val=half?i-0.5:i;
   const m=window._sres[k];if(!m)return;
-  let rec=cache[k]||{t:m.t,y:m.y};rec.r=val;rec.id=m.id;rec.po=m.po;rec.gids=m.gids;rec.ti=m.t;rec.ye=String(m.y);rec.s=1;rec.src='user';rec.ts=Date.now();
+  let rec=cache[k]||{t:m.t,y:m.y};rec.r=val;delete rec.wl;rec.id=m.id;rec.po=m.po;rec.gids=m.gids;if(m.lang)rec.lang=m.lang;rec.ti=m.t;rec.ye=String(m.y);rec.s=1;rec.src='user';rec.ts=Date.now();
   cache[k]=rec;put(k,rec);PEOPLE=null;toast('Avaliado: '+m.t+' '+star(val));
   doSearch($('#searchIn').value);
-  if(rec.id&&!rec.cc){credits(rec.id).then(c=>{if(c){rec.ca=c.ca;rec.di=c.di;}rec.cc=1;put(k,rec);PEOPLE=null;});}
+  if(rec.id&&!rec.cc){credits(rec.id).then(c=>{if(c){rec.ca=c.ca;rec.di=c.di;rec.co=c.co;if(c.rt)rec.rt=c.rt;rec.lang=c.lang;}rec.cc=1;put(k,rec);PEOPLE=null;});}
 });
 $('#search').onclick=()=>{$('#searchOver').classList.add('show');setTimeout(()=>$('#searchIn').focus(),100);};
 $('#searchClose').onclick=()=>{$('#searchOver').classList.remove('show');render();};
@@ -1718,24 +2274,45 @@ function parseCSV(txt){const rows=[];let i=0,f='',row=[],q=false;
   if(f.length||row.length){row.push(f);rows.push(row);}return rows;}
 function rowsToObjs(rows){const h=rows[0];return rows.slice(1).filter(r=>r.length>1).map(r=>{const o={};h.forEach((k,j)=>o[k]=r[j]);return o;});}
 async function importExport(file){
-  let watched=[],ratings=[];
+  let watched=[],ratings=[],diary=[],wlist=[];
   if(file.name.toLowerCase().endsWith('.zip')){
     if(typeof JSZip==='undefined'){toast('Falha ao carregar leitor de zip (sem internet?)');return;}
     const z=await JSZip.loadAsync(file);
     const rd=async n=>{const f=z.file(n);return f?rowsToObjs(parseCSV(await f.async('string'))):[];};
-    watched=await rd('watched.csv');ratings=await rd('ratings.csv');
+    watched=await rd('watched.csv');ratings=await rd('ratings.csv');diary=await rd('diary.csv');wlist=await rd('watchlist.csv');
   }else{const txt=await file.text();const objs=rowsToObjs(parseCSV(txt));
-    if(objs[0]&&'Rating' in objs[0])ratings=objs;else watched=objs;}
+    if(objs[0]&&'Watched Date' in objs[0])diary=objs;
+    else if(objs[0]&&'Rating' in objs[0])ratings=objs;else watched=objs;}
   const rmap={};ratings.forEach(r=>{const y=parseInt(r.Year);if(y)rmap[key(r.Name,y)]=parseFloat(r.Rating);});
+  const toTs=s=>{const t=Date.parse(s||'');return isNaN(t)?null:t;};
+  const dmap={};
+  diary.forEach(r=>{const y=parseInt(r.Year);if(!y)return;const k=key(r.Name,y);
+    const d=dmap[k]||(dmap[k]={ts:null,views:0,tags:new Set()});
+    d.views++;
+    const wt=toTs(r['Watched Date']||r.Date);if(wt&&(!d.ts||wt>d.ts))d.ts=wt;
+    (r.Tags||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(t=>d.tags.add(t.toLowerCase()));
+    if(rmap[k]==null&&r.Rating)rmap[k]=parseFloat(r.Rating);});
+  const seedTs={};
+  ratings.forEach(r=>{const y=parseInt(r.Year);if(y){const t=toTs(r.Date);if(t)seedTs[key(r.Name,y)]=t;}});
+  watched.forEach(r=>{const y=parseInt(r.Year);if(y){const t=toTs(r.Date);if(t&&!seedTs[key(r.Name,y)])seedTs[key(r.Name,y)]=t;}});
   let added=0,upd=0;
-  const apply=(name,y,rt)=>{const k=key(name,y);if(cache[k]){if(rt!=null&&cache[k].r!==rt){cache[k].r=rt;put(k,cache[k]);upd++;}}else{cache[k]={t:name,y:y,r:rt!=null?rt:null,src:'lb'};put(k,cache[k]);added++;}};
-  (watched.length?watched:ratings).forEach(r=>{const y=parseInt(r.Year);if(y)apply(r.Name,y,rmap[key(r.Name,y)]!=null?rmap[key(r.Name,y)]:null);});
+  const apply=(name,y,rt)=>{const k=key(name,y);let rec=cache[k];
+    if(rec){if(rec.wl)delete rec.wl;if(rt!=null&&rec.r!==rt){rec.r=rt;upd++;}}
+    else{rec={t:name,y:y,r:rt!=null?rt:null,src:'lb'};cache[k]=rec;added++;}
+    const d=dmap[k];
+    if(d){if(d.ts&&!rec.ts)rec.ts=d.ts;if(d.views>1)rec.rw=Math.max(rec.rw||0,d.views-1);
+      if(d.tags.size){rec.tags=[...new Set([...(rec.tags||[]),...d.tags])];}}
+    else if(seedTs[k]&&!rec.ts)rec.ts=seedTs[k];
+    put(k,rec);};
+  (watched.length?watched:(diary.length?diary:ratings)).forEach(r=>{const y=parseInt(r.Year);if(y)apply(r.Name,y,rmap[key(r.Name,y)]!=null?rmap[key(r.Name,y)]:null);});
   Object.keys(rmap).forEach(k=>{if(!cache[k]){const[n,y]=k.split('|');apply(n,+y,rmap[k]);}});
-  PEOPLE=null;toast(added+' novos · '+upd+' notas atualizadas');render();sync();
+  Object.keys(dmap).forEach(k=>{if(!cache[k]){const[n,y]=k.split('|');apply(n,+y,rmap[k]!=null?rmap[k]:null);}});
+  let wlAdded=0;
+  wlist.forEach(r=>{const y=parseInt(r.Year);if(!y)return;const k=key(r.Name,y);if(cache[k])return;cache[k]={t:r.Name,y:y,r:null,wl:1,src:'lb'};put(k,cache[k]);wlAdded++;});
+  PEOPLE=null;toast(added+' novos · '+upd+' notas'+(wlAdded?' · '+wlAdded+' p/ ver':''));render();sync();
 }
 $('#setUpload').onclick=()=>$('#fileIn').click();
 $('#fileIn').onchange=e=>{const f=e.target.files[0];if(f){$('#settings').classList.remove('show');importExport(f);}e.target.value='';};
-
 /* ---------- onboarding / settings ---------- */
 function openOnb(err){$('#onbN').textContent=fmt(films().length);$('#keyErr').textContent=err||'';$('#onb').classList.add('show');}
 $('#keySave').onclick=async()=>{const k=$('#keyIn').value.trim();if(!k){$('#keyErr').textContent='Cole a chave.';return;}
@@ -1843,9 +2420,22 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopSpiralA
 /* ---------- boot ---------- */
 (async()=>{
   try{db=await openDB();cache=await loadAll();}catch(e){cache={};}
+  _cloudLoading=true;
+  try{
+    const remote=await cloudLoad();
+    if(remote){
+      if(remote.bio && Object.keys(remote.bio).length) bio=Object.assign({},remote.bio);
+      if(remote.films && Object.keys(remote.films).length){
+        cache=remote.films;
+        Object.keys(cache).forEach(k=>{try{db.transaction('films','readwrite').objectStore('films').put(cache[k],k);}catch(e){}});
+      }
+    }
+  }catch(e){console.warn('cloud boot:',e);}
+  _cloudLoading=false;
   if(!Object.keys(cache).length){EMBED.forEach(f=>{const r={t:f[0],y:f[1],r:f[2]};cache[key(f[0],f[1])]=r;put(key(f[0],f[1]),r);});}
-  applyAccent();KEY=getKey();render();
-  if(!KEY)openOnb();else sync();
+  applyAccent();KEY=getKey();render();_checkMilestone();
+  sync();
+  _applyIconVer();
   setTimeout(()=>_setAppIcon(bio.icon||'dark'),200);
 })();
 </script>
