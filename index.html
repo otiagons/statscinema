@@ -147,6 +147,7 @@ select{background:var(--panel);color:var(--ink);border:1px solid var(--line);bor
 .sheet{background:var(--panel);border:1px solid var(--line);border-radius:16px 16px 0 0;width:100%;max-width:680px;max-height:90vh;overflow:auto;padding:16px 16px calc(env(safe-area-inset-bottom) + 20px)}
 .sheet .top{display:flex;gap:13px}.sheet .top img{width:92px;border-radius:8px;flex:none;background:var(--p2)}
 .sheet h3{margin:0 0 3px;font-size:18px}.sheet .yr{color:var(--mut);font-size:13px}.sheet .yr b{color:var(--gold)}
+.sheet-close{position:sticky;top:-1px;float:right;background:var(--panel);border:1px solid var(--line);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;color:var(--mut);z-index:5;margin:0 0 6px 8px}
 .sheet .lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:16px 0 8px}
 .cast{display:flex;gap:9px;overflow-x:auto;padding-bottom:4px}
 .cast .c{width:64px;flex:none;text-align:center}
@@ -287,10 +288,6 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .po-rw{position:absolute;right:5px;top:5px;background:rgba(0,0,0,.74);color:var(--ink);font-size:10px;font-weight:800;border-radius:5px;padding:1px 5px}
 /* ── Film modal extras ── */
 .film-wl{background:rgba(255,46,67,.08);border:1px solid color-mix(in srgb,var(--acc2) 40%,var(--line));border-radius:10px;padding:9px 12px;margin-top:13px;font-size:12.5px;color:var(--mut)}
-.lrated{display:flex;flex-direction:column;gap:2px;margin-top:6px}
-.lrow{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--panel);border-radius:7px;font-size:12.5px}
-.ltitle{color:var(--fg);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lrt{color:var(--gold);font-size:12px;margin-left:8px;white-space:nowrap}
 .film-wl b{color:var(--acc2)}
 .rw-ctl{display:flex;align-items:center;gap:12px}
 .rw-b{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:18px;font-weight:800;cursor:pointer;line-height:1}
@@ -671,9 +668,11 @@ function setKey(k){KEY=k;try{localStorage.setItem('cs_key',k);}catch(e){}}
 // ── Supabase: sincronização entre navegadores/dispositivos ──────────────────
 const SUPABASE_URL='https://ysikyxbnflitlgqvpwzg.supabase.co';
 const SUPABASE_ANON_KEY='sb_publishable_D3JOqk4e4KRQW5ZrfDb2Aw_IGF9D6iT';
+async function verifyCloud(){if(!sb)return;try{const{error}=await sb.from('cinestats_state').select('id').eq('id',CS_ROW_ID).maybeSingle();if(error&&error.code==='42P01'){console.warn('Tabela cinestats_state não existe no Supabase. Crie-a manualmente.');toast('⚠️ Supabase: tabela não encontrada. Crie cinestats_state.',4000);}else{console.log('Supabase OK');}}catch(e){console.warn('verifyCloud:',e);}}
 const CS_ROW_ID='tiago';
 let sb=null, _cloudReady=false, _cloudSaveTimer=null, _cloudLoading=false;
 try{ if(window.supabase) sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY); }catch(e){ console.warn('supabase init:',e); }
+setTimeout(()=>verifyCloud&&verifyCloud(),3000);
 
 async function cloudLoad(){
   if(!sb)return null;
@@ -868,7 +867,7 @@ function renderFilms(){
   if(pSort==='rt')list.sort((a,b)=>(b.r||0)-(a.r||0)||b.y-a.y);
   else if(pSort==='yr')list.sort((a,b)=>b.y-a.y);
   else if(pSort==='az')list.sort((a,b)=>a.t.localeCompare(b.t));
-  else for(let i=list.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[list[i],list[j]]=[list[j],list[i]];}
+  else list.sort((a,b)=>b.y-a.y);
   const decs=[...new Set(base.map(r=>Math.floor(r.y/10)*10))].filter(d=>d).sort((a,b)=>b-a);
   const langCounts={};base.forEach(r=>{if(r.lang)langCounts[r.lang]=(langCounts[r.lang]||0)+1;});
   const langOpts=Object.entries(langCounts).sort((a,b)=>b[1]-a[1]).slice(0,18);
@@ -906,7 +905,7 @@ function rankList(){const P=people();let arr;
   if(tab==='dir')arr=P.D;else if(tab==='actor')arr=P.A.filter(p=>p.g===2);else if(tab==='actress')arr=P.A.filter(p=>p.g===1);else arr=P.A;
   const inS=f=>rScope==='all'?true:rScope==='dec'?Math.floor(f.y/10)*10===rDec:f.y===rYr;
   const out=[];arr.forEach(p=>{const fl=p.f.filter(inS);if(!fl.length)return;const rd=fl.filter(f=>f.r!=null);const avg=rd.length?rd.reduce((s,f)=>s+f.r,0)/rd.length:null;out.push({...p,fl,n_:fl.length,avg,nr:rd.length});});
-  if(rankSort==='avg')out.sort((a,b)=>{const aa=a.nr>=3?a.avg:-1,bb=b.nr>=3?b.avg:-1;return bb-aa||b.n_-a.n_||a.n.localeCompare(b.n);});
+  if(rankSort==='avg'){const r2=out.filter(x=>x.n_>=3);r2.sort((a,b)=>{const aa=a.nr>=2?a.avg:-1,bb=b.nr>=2?b.avg:-1;return bb-aa||b.n_-a.n_||a.n.localeCompare(b.n);});return r2;}
   else out.sort((a,b)=>b.n_-a.n_||(b.avg||0)-(a.avg||0)||a.n.localeCompare(b.n));
   return out;}
 function personDetail(p){
@@ -944,7 +943,7 @@ function renderRanking(){
       return `<div class="rw ${op?'open':''}" data-r="${rank}"><div class="rk">${rank}</div>${av}<div class="nm">${p.n}</div>
         <div class="ct"><b>${p.n_}</b> f${p.avg!=null?' · <span class="g">'+star(+p.avg.toFixed(2))+'</span>':''}</div><div class="car"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></div></div>
         <div class="exp ${op?'show':''}" data-e="${rank}">${bf?`<div class="best">Melhor: <b>${bf.t}</b> (${bf.y}) ${star(bf.r)}</div>`:''}<div class="mini">${mini}</div></div>`;}).join('');
-    let note=(rankSort==='avg'?'Ordenado pela sua nota média (mín. 3 filmes avaliados). ':'')+`Top ${Math.min(30,r.length)} de ${fmt(r.length)} pessoas neste recorte. Toque do 6º ao 30º para ver os filmes.`;
+    let note=(rankSort==='avg'?'Ordenado pela sua nota média (mín. 3 filmes vistos, 2 avaliados). ':'')+`Top ${Math.min(30,r.length)} de ${fmt(r.length)} pessoas neste recorte. Toque do 6º ao 30º para ver os filmes.`;
     if(tab==='actor'||tab==='actress')note+=' Divisão por gênero vem do TMDB e pode falhar.';
     if(tab!=='dir')note+=' "Ator" = elenco principal (top 8).';
     body=`<div class="podium">${cards}</div>${rows?`<div class="rows">${rows}</div>`:''}<div class="note">${note}</div>`;
@@ -1063,11 +1062,11 @@ function entities(cat){
   const P=people();let arr=cat==='dir'?P.D:cat==='actor'?P.A.filter(p=>p.g===2):P.A.filter(p=>p.g===1);
   return arr.filter(p=>p.f.length>=m).sort((a,b)=>b.f.length-a.f.length||a.n.localeCompare(b.n)).slice(0,20).map(p=>({kind:'person',ref:p.id,label:p.n,sub:p.f.length+'f',_p:p}));
 }
+function showSheet(html){$('#sheet').innerHTML='<button class="sheet-close" id="sheetClose">✕</button>'+html;$('#modal').classList.add('show');$('#sheetClose').onclick=()=>$('#modal').classList.remove('show');}
 async function openPerson(p){const {mini,bf}=personDetail({fl:p.f});
   const ph=p.pic?`<img style="width:92px;border-radius:8px" src="${IMG}/w185${p.pic}"/>`:`<div style="width:92px;height:138px;border-radius:8px;background:var(--p2);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--dim);font-size:30px">${initials(p.n)}</div>`;
   const isDir=p.id&&films().some(r=>(r.di||[]).some(d=>d[0]===p.id));
-  $('#sheet').innerHTML=`<div class="top">${ph}<div><h3>${p.n}</h3><div class="yr"><b>${p.f.length}</b> filme(s) vistos</div>${bf?`<div class="yr" style="margin-top:6px">Melhor: <b style="color:var(--gold)">${bf.t}</b> ${star(bf.r)}</div>`:''}</div></div><div class="lbl">Biografia</div><p id="pBio" style="font-size:13px;color:var(--mut);line-height:1.6;margin:0 0 4px">Carregando…</p>${isDir?'<div id="dirFilmo"><div class="lbl">Filmografia como diretor</div><div class="note" style="margin:0">Calculando o que falta…</div></div>':''}<div class="lbl">Filmes vistos</div><div class="mini">${mini}</div>`;
-  $('#modal').classList.add('show');
+  showSheet(`<div class="top">${ph}<div><h3>${p.n}</h3><div class="yr"><b>${p.f.length}</b> filme(s) vistos</div>${bf?`<div class="yr" style="margin-top:6px">Melhor: <b style="color:var(--gold)">${bf.t}</b> ${star(bf.r)}</div>`:''}</div></div><div class="lbl">Biografia</div><p id="pBio" style="font-size:13px;color:var(--mut);line-height:1.6;margin:0 0 4px">Carregando…</p>${isDir?'<div id="dirFilmo"><div class="lbl">Filmografia como diretor</div><div class="note" style="margin:0">Calculando o que falta…</div></div>':''}<div class="lbl">Filmes vistos</div><div class="mini">${mini}</div>`);
   if(p.id){const b=await personBio(p.id);const el=$('#pBio');if(el)el.textContent=b||'Sem biografia disponível.';}
   if(isDir)fillDirFilmography(p);
 }
@@ -1089,20 +1088,19 @@ async function fillDirFilmography(p){
   const total=list.length,seen=list.filter(isSeen).length,pct=total?Math.round(seen/total*100):0;
   const unseen=list.filter(m=>!isSeen(m)&&(m.release_date||'').length>=4).sort((a,b)=>(b.vote_count||0)-(a.vote_count||0)).slice(0,8);
   const items=unseen.map(m=>{const y=(m.release_date||'').slice(0,4);const po=m.poster_path?`<img loading="lazy" src="${IMG}/w92${m.poster_path}"/>`:'<div class="pp"></div>';
-    const k2=key(m.title,+y);const inWl=cache[k2]&&cache[k2].wl;
-    return `<div class="sr">${po}<div class="si"><div class="st">${m.title}</div><div class="sy">${y||'—'}${m.vote_count?' · '+fmt(m.vote_count)+' votos':''}</div></div><button class="wl-btn${inWl?' on':''}" data-t="${(m.title||'').replace(/"/g,'&quot;')}" data-y="${y}" data-id="${m.id}" data-po="${m.poster_path||''}">${inWl?'✓ na lista':'+ ver'}</button></div>`;}).join('');
+    const mk=key(m.title,+y);const inWl=!!(cache[mk]&&cache[mk].wl);
+    return `<div class="sr">${po}<div class="si"><div class="st">${m.title}</div><div class="sy">${y||'—'}${m.vote_count?' · '+fmt(m.vote_count)+' votos':''}</div></div><button class="wl-btn${inWl?' on':''}" data-t="${(m.title||'').replace(/"/g,'&quot;')}" data-y="${y}" data-id="${m.id}" data-po="${m.poster_path||''}">${inWl?'✓ ver depois':'+ ver depois'}</button></div>`;}).join('');
   el.innerHTML=`<div class="lbl">Filmografia como diretor</div>`
     +`<div class="filmo-prog"><div class="filmo-bar"><i style="width:${pct}%"></i></div><span>${seen} de ${total} vistos · ${pct}%</span></div>`
     +(unseen.length?`<div class="note" style="margin:8px 0 4px">Ainda não viu (mais populares):</div>${items}`:'<div class="note" style="margin:6px 0 0">'+ICON_CHECK+' Você viu toda a filmografia principal dele.</div>');
   el.querySelectorAll('.wl-btn[data-id]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();const k=key(b.dataset.t,+b.dataset.y);
-    if(cache[k]&&cache[k].wl){del(k);PEOPLE=null;b.textContent='+ ver';b.classList.remove('on');toast('Removido: '+b.dataset.t);return;}
-    if(cache[k]&&cache[k].r!=null){toast('Já assistido: '+b.dataset.t);return;}
-    const rec={t:b.dataset.t,y:+b.dataset.y,r:null,wl:1,id:+b.dataset.id||undefined,po:b.dataset.po||null,ti:b.dataset.t,ye:b.dataset.y,src:'user'};cache[k]=rec;put(k,rec);PEOPLE=null;b.textContent='✓ na lista';b.classList.add('on');toast('Quero ver: '+b.dataset.t);
-    if(rec.id){credits(rec.id).then(c=>{if(c){rec.ca=c.ca;rec.di=c.di;rec.co=c.co;if(c.rt)rec.rt=c.rt;rec.lang=c.lang;}rec.cc=1;put(k,rec);PEOPLE=null;});}});
+    if(cache[k]&&cache[k].wl){del(k);PEOPLE=null;b.textContent='+ ver depois';b.classList.remove('on');toast('Removido da lista');return;}
+    const rec={t:b.dataset.t,y:+b.dataset.y,r:null,wl:1,id:+b.dataset.id||undefined,po:b.dataset.po||null,ti:b.dataset.t,ye:b.dataset.y,src:'user'};cache[k]=rec;put(k,rec);PEOPLE=null;b.textContent='✓ ver depois';b.classList.add('on');toast('Quero ver: '+b.dataset.t);
+    if(rec.id){credits(rec.id).then(cr=>{if(cr){rec.ca=cr.ca;rec.di=cr.di;rec.co=cr.co;if(cr.rt)rec.rt=cr.rt;rec.lang=cr.lang;}rec.cc=1;put(k,rec);PEOPLE=null;});}});
 }
 function openGenre(g){const fl=films().filter(r=>(r.gids||[]).some(id=>(GENRES[id]||('#'+id))===g)).map(r=>({t:r.ti||r.t,y:+(r.ye||r.y),r:r.r,p:r.po}));
   const {mini,bf}=personDetail({fl});const rd=fl.filter(f=>f.r!=null);const avg=rd.length?rd.reduce((s,f)=>s+f.r,0)/rd.length:null;
-  $('#sheet').innerHTML=`<div class="top"><div style="width:92px;height:138px;border-radius:8px;background:linear-gradient(135deg,var(--acc1),var(--acc2));display:flex;align-items:center;justify-content:center"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 4v5M12 4v5M17 4v5M7 9v11M12 9v11M17 9v11" opacity="0.55"/></svg></div><div><h3>${g}</h3><div class="yr"><b>${fl.length}</b> filmes${avg!=null?' · média '+star(+avg.toFixed(2)):''}</div>${bf?`<div class="yr" style="margin-top:6px">Melhor: <b style="color:var(--gold)">${bf.t}</b> ${star(bf.r)}</div>`:''}</div></div><div class="lbl">Mais bem avaliados</div><div class="mini">${mini}</div>`;
+  showSheet(`<div class="top"><div style="width:92px;height:138px;border-radius:8px;background:linear-gradient(135deg,var(--acc1),var(--acc2));display:flex;align-items:center;justify-content:center"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 4v5M12 4v5M17 4v5M7 9v11M12 9v11M17 9v11" opacity="0.55"/></svg></div><div><h3>${g}</h3><div class="yr"><b>${fl.length}</b> filmes${avg!=null?' · média '+star(+avg.toFixed(2)):''}</div>${bf?`<div class="yr" style="margin-top:6px">Melhor: <b style="color:var(--gold)">${bf.t}</b> ${star(bf.r)}</div>`:''}</div></div><div class="lbl">Mais bem avaliados</div><div class="mini">${mini}</div>`);
   $('#modal').classList.add('show');requestAnimationFrame(()=>{const pi=$('#sheet .top img');if(pi){pi.style.cursor='zoom-in';pi.onclick=e=>{e.stopPropagation();openPosterLightbox(pi.src);};};});}
 async function openCountry(c){
   // normalise: match by exact key OR ISO code OR display name (handles old/new data formats)
@@ -1128,12 +1126,11 @@ async function openCountry(c){
     (topDec?stat('Década-pico',topDec[0]+'s'):'')+
     (bf?stat('Melhor nota',star(bf.r)):'');
   const genChips=topGen.length?'<div class="lbl">Gêneros mais frequentes</div><div class="ctr-chips" style="padding:0 14px 4px">'+topGen.map(([g,n])=>'<span class="ctr-chip">'+g+' · '+n+'</span>').join('')+'</div>':'';
-  $('#sheet').innerHTML='<div class="top"><div class="cflag-wrap">'+(flag||'<div class="cflag-ph"></div>')+'</div><div><h3>'+displayCountry(c)+'</h3><div class="yr"><b>'+all.length+'</b> filmes vistos'+(avg!=null?' · média '+star(+avg.toFixed(2)):'')+'</div>'+(bf?'<div class="yr" style="margin-top:6px">Destaque: <b style="color:var(--gold)">'+bf.t+'</b> '+star(bf.r)+'</div>':'')+'</div></div>'+
+  showSheet('<div class="top"><div class="cflag-wrap">'+(flag||'<div class="cflag-ph"></div>')+'</div><div><h3>'+displayCountry(c)+'</h3><div class="yr"><b>'+all.length+'</b> filmes vistos'+(avg!=null?' · média '+star(+avg.toFixed(2)):'')+'</div>'+(bf?'<div class="yr" style="margin-top:6px">Destaque: <b style="color:var(--gold)">'+bf.t+'</b> '+star(bf.r)+'</div>':'')+'</div></div>'+
     '<div class="cstats">'+stats+'</div>'+
     genChips+
     '<div class="lbl">Mais bem avaliados</div><div class="mini">'+mini+'</div>'+
-    '<div class="note" style="margin:10px 14px 4px">Estatísticas calculadas a partir do seu histórico. País de produção principal segundo o TMDB.</div>';
-  $('#modal').classList.add('show');
+    '<div class="note" style="margin:10px 14px 4px">Estatísticas calculadas a partir do seu histórico. País de produção principal segundo o TMDB.</div>');
 }
 
 function openEntity(e){if(!e)return;if(e.kind==='film')openFilm(e.ref);else if(e.kind==='genre')openGenre(e.ref);else if(e.kind==='country')openCountry(e.ref);else openPerson(e._p);}
@@ -1305,8 +1302,6 @@ function statsBioHTML(){
         +'<div class="dbar"><div class="dfill" style="width:'+pct+'%"></div></div>'
         +'<span class="dct">'+n+'</span></div>';
     }).join('');
-  const lastRated=[...films()].filter(r=>r.r!=null&&r.ts).sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,5);
-  const lastHtml=lastRated.length?lastRated.map(r=>{const rt=r.ti||r.t;const title=rt.length>28?rt.slice(0,27)+'\u2026':rt;return'<div class="lrow"><span class="ltitle">'+title+'</span><span class="lrt">'+star(r.r)+'</span></div>';}).join(''):'';
   return'<span class="eyb" style="margin-top:16px">Estat\u00edsticas</span>'
     +'<div class="strow" style="grid-template-columns:repeat(3,1fr)">'
       +'<div class="stbox"><div class="sv">'+fmt(st.total)+'</div><div class="sl">filmes</div></div>'
@@ -1314,7 +1309,6 @@ function statsBioHTML(){
       +'<div class="stbox"><div class="sv">'+avgT+'</div><div class="sl">nota m\u00e9dia</div></div>'
     +'</div>'
     +'<div class="dist-chart">'+distRows+'</div>'
-    +(lastHtml?'<span class="eyb" style="margin-top:14px">\u00daltimas avalia\u00e7\u00f5es</span><div class="lrated">'+lastHtml+'</div>':'')
     +'<button class="btn sec" id="recoBtn" style="margin:10px 0 2px;font-size:13px">'+ICON_SPARK+'Recomendar um filme agora</button>';
 }
 
@@ -1352,11 +1346,8 @@ const _CW=540,_CH=960,_CS=2; // canvas 1080×1920, preview em 540×960
 
 /* ── RECOMENDAÇÕES ── */
 // Chave opcional da IA (Claude) — fica só no aparelho, como a do TMDB
-function getLLMKey(){try{return localStorage.getItem('cs_llm_key')||null;}catch(e){return null;}}
-function setLLMKey(k){try{if(k)localStorage.setItem('cs_llm_key',k);else localStorage.removeItem('cs_llm_key');}catch(e){}}
-function getOmdbKey(){try{return localStorage.getItem('cs_omdb_key')||'2e29b4de';}catch(e){return '2e29b4de';}}
+function getOmdbKey(){try{return localStorage.getItem('cs_omdb_key')||null;}catch(e){return null;}}
 function setOmdbKey(k){try{if(k)localStorage.setItem('cs_omdb_key',k);else localStorage.removeItem('cs_omdb_key');}catch(e){}}
-const RECO_MODEL='claude-sonnet-4-6';
 
 // Ícones do tema para cada vibe (linha, herdam a cor via currentColor)
 const RICON={
@@ -1476,42 +1467,7 @@ function _tasteDigest(){
     +(dirs?'\nDIRETORES QUE ELE MAIS GOSTA (dados dele): '+dirs:'');
 }
 
-// ── chamada à IA (Anthropic, acesso direto do navegador) ──
-async function _llmRecommend(vibe){
-  const apikey=getLLMKey(); if(!apikey)throw {code:'nokey'};
-  const cfg=VIBE_CFG[vibe], ctx=_recoContext();
-  const genreIds=cfg.genres||[...new Set([..._dayGenres(ctx),..._topGenreIds(3)])].slice(0,4);
-  const userMsg=[
-    'CONTEXTO DE AGORA',
-    'Dia: '+ctx.dow+' · período: '+ctx.periodo+' ('+ctx.h+'h)',
-    'Diretriz do momento: '+ctx.dayNote,
-    (ctx.season?'Estação/sazonalidade: '+ctx.season:''),
-    'Vibe escolhida: '+cfg.name+(cfg.lang==='pt'?' (cinema brasileiro)':'')+'.',
-    '',
-    'RESUMO DO MEU GOSTO (do app)',
-    _tasteDigest(),
-    '',
-    'ALGUNS QUE JÁ VI NESSE TERRITÓRIO (não recomende estes nem similares óbvios):',
-    _watchedForGenres(genreIds,180).join(', '),
-    '',
-    'Recomende seguindo o formato JSON. 1 principal + até 2 alternativas. Nada de mainstream óbvio.'
-  ].filter(x=>x!=='').join('\n');
 
-  const r=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'content-type':'application/json','x-api-key':apikey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:RECO_MODEL,max_tokens:1100,system:RECO_SYSTEM_PROMPT,messages:[{role:'user',content:userMsg}]})
-  });
-  if(r.status===401)throw {code:401};
-  if(!r.ok)throw {code:r.status};
-  const data=await r.json();
-  const text=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
-  let js=text.replace(/```json/gi,'').replace(/```/g,'').trim();
-  const a=js.indexOf('{'), b=js.lastIndexOf('}'); if(a>=0&&b>a)js=js.slice(a,b+1);
-  const obj=JSON.parse(js);
-  const arr=[]; if(obj.main)arr.push(obj.main); (obj.alternatives||[]).forEach(x=>arr.push(x));
-  return arr.filter(x=>x&&x.title);
-}
 
 // ── busca em massa no TMDB (heurística, sem IA) ──
 async function _fetchRecos(vibe){
@@ -1565,7 +1521,7 @@ const _omdbCache={};
 async function omdbFetch(title,year,titleFallback){
   const ck=(title||'')+'|'+(year||'');
   if(_omdbCache[ck]!==undefined)return _omdbCache[ck];
-  const apikey=getOmdbKey(); if(!apikey)return(_omdbCache[ck]=null);
+  const apikey=getOmdbKey()||'2e29b4de';
   const tryFetch=async(t,y)=>{
     try{
       const r=await fetch('https://www.omdbapi.com/?t='+encodeURIComponent(t)+(y?'&y='+y:'')+'&r=json&apikey='+apikey);
@@ -1600,36 +1556,6 @@ function _recoCard(o){
 const ICON_PLAY='<svg viewBox="0 0 24 24" fill="currentColor" style="width:11px;height:11px;vertical-align:-1px;margin-right:4px"><path d="M8 5v14l11-7z"/></svg>';
 
 // ── rodar com IA ──
-async function _runRecoLLM(vibe){
-  const ob=$('#recoOb'); if(!ob)return;
-  const res=ob.querySelector('#recoResults');
-  res.innerHTML='<div class="reco-spin"><div class="reco-loader"></div>Pensando como crítico de cinema…</div>';
-  let recs;
-  try{recs=await _llmRecommend(vibe);}
-  catch(e){
-    if(e&&e.code===401){res.innerHTML='<div class="reco-empty">A chave da IA foi recusada. Toque em <b>Trocar chave</b> e cole de novo.</div>';return;}
-    if(e&&e.code==='nokey'){res.innerHTML='<div class="reco-empty">Ative a IA ou use sugestões via TMDB.</div>';return;}
-    res.innerHTML='<div class="reco-empty">IA indisponível agora.<br><button class="btn sec" id="recoFallback" style="margin-top:10px;font-size:13px">Ver sugestões via TMDB'+(getOmdbKey()?'+IMDb':'')+'</button></div>';
-    const fb=res.querySelector('#recoFallback'); if(fb)fb.onclick=()=>_runRecoHeuristic(vibe);
-    return;
-  }
-  const seenTitles=_watchedTitleSet(), seenIds=new Set(films().filter(r=>r.id).map(r=>r.id));
-  recs=recs.filter(r=>!seenTitles.has(norm(r.title))).slice(0,3);
-  if(!recs.length){res.innerHTML='<div class="reco-empty">As sugestões da IA você já tinha visto! Toque na vibe de novo.</div>';return;}
-  const cards=[];
-  for(let i=0;i<recs.length;i++){
-    const r=recs[i]; let poster=null,imdbRating=null,mid=null,providers=null;
-    try{const m=await searchFilm(r.title,+r.year||0); if(m){if(m.id&&seenIds.has(m.id))continue; poster=m.po; mid=m.id; if(m.ye&&!r.year)r.year=m.ye;}}catch(e){}
-    if(getOmdbKey()){
-      try{const od=await omdbFetch(r.title,r.year||'',r.title); if(od){const v=parseFloat(od.imdbRating);if(!isNaN(v))imdbRating=v;}}catch(e){}
-    }
-    if(mid){try{const pv=await watchProviders(mid);if(pv&&pv.names&&pv.names.length)providers=pv.names;}catch(e){}}
-    const sub=[r.director,r.country,r.runtime].filter(Boolean).join(' · ');
-    cards.push(_recoCard({poster,title:r.title,year:r.year,sub,why:r.why,main:i===0,imdbRating,providers,status:imdbRating==null?'Inédito p/ você':null}));
-  }
-  res.innerHTML=cards.length?cards.join(''):'<div class="reco-empty">Tudo que veio você já viu! Toque na vibe de novo.</div>';
-}
-
 // ── rodar via TMDB + OMDb (heurística) ──
 async function _runRecoHeuristic(vibe){
   const ob=$('#recoOb'); if(!ob)return;
@@ -1655,7 +1581,8 @@ function _runReco(vibe){return _runRecoHeuristic(vibe);}
 
 // ── UI das chaves (OMDb + Claude IA) ──
 function _recoEngineHtml(){
-  return '<div class="reco-eng"><span class="dot"></span>Filtro IMDb/OMDb ativo</div>';
+  const custom=!!getOmdbKey();
+  return '<div class="reco-eng"><span class="dot"></span>Filtro IMDb ativo'+(custom?' <button id="recoOmdbDel">Remover chave</button>':' · chave padrão <button id="recoOmdbChg">Usar minha chave</button>')+'</div>';
 }
 function _recoOmdbBoxHtml(){
   return '<div class="reco-keybox" id="recoOmdbBox"><div class="hint">Chave gratuita do OMDb — filtra candidatos pela nota real do IMDb em vez da nota inflada do TMDB. 1.000 chamadas/dia grátis.</div>'
@@ -1663,12 +1590,7 @@ function _recoOmdbBoxHtml(){
     +'<button class="btn" id="recoOmdbSave" style="font-size:13px">Salvar chave OMDb</button>'
     +'<div class="hint" style="margin-top:8px">Obtenha em <span style="color:var(--cyan)">omdbapi.com</span> → API Key (plano gratuito).</div></div>';
 }
-function _recoKeyBoxHtml(){
-  return '<div class="reco-keybox" id="recoKeyBox"><div class="hint">Chave da API da Anthropic — adiciona "por que pra você" com raciocínio real sobre o seu gosto. Uso pago por chamada (~US$0,01–0,03 por recomendação).</div>'
-    +'<input id="recoKeyIn" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sk-ant-…"/>'
-    +'<button class="btn" id="recoKeySave" style="font-size:13px">Salvar chave Claude</button>'
-    +'<div class="hint" style="margin-top:8px">Obtenha em <span style="color:var(--cyan)">console.anthropic.com</span> → API Keys.</div></div>';
-}
+
 
 function openReco(){
   const ctx=_recoContext();
@@ -1683,7 +1605,13 @@ function openReco(){
   _wireRecoEngine();
   $('#recoOver').classList.add('show');
 }
-function _wireRecoEngine(){}
+function _wireRecoEngine(){
+  const eng=$('#recoEng'); if(!eng)return;
+  const showOmdbBox=()=>{if($('#recoOmdbBox'))return;eng.insertAdjacentHTML('afterend',_recoOmdbBoxHtml());$('#recoOmdbSave').onclick=()=>{const v=$('#recoOmdbIn').value.trim();if(!v){toast('Cole a chave');return;}setOmdbKey(v);toast('Chave OMDb salva');openReco();};};
+  const oc=$('#recoOmdbChg'), od=$('#recoOmdbDel');
+  if(oc)oc.onclick=showOmdbBox;
+  if(od)od.onclick=()=>{setOmdbKey(null);toast('Chave removida, usando padrão');openReco();};
+}
 
 
 function _lastFilm(){const fl=films().filter(r=>r.r!=null);if(!fl.length)return null;return fl.sort((a,b)=>(b.ts||0)-(a.ts||0)||(+(b.ye||b.y))-(+(a.ye||a.y))||b.r-a.r)[0];}
