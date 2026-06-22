@@ -287,6 +287,10 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .po-rw{position:absolute;right:5px;top:5px;background:rgba(0,0,0,.74);color:var(--ink);font-size:10px;font-weight:800;border-radius:5px;padding:1px 5px}
 /* ── Film modal extras ── */
 .film-wl{background:rgba(255,46,67,.08);border:1px solid color-mix(in srgb,var(--acc2) 40%,var(--line));border-radius:10px;padding:9px 12px;margin-top:13px;font-size:12.5px;color:var(--mut)}
+.lrated{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+.lrow{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--panel);border-radius:7px;font-size:12.5px}
+.ltitle{color:var(--fg);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lrt{color:var(--gold);font-size:12px;margin-left:8px;white-space:nowrap}
 .film-wl b{color:var(--acc2)}
 .rw-ctl{display:flex;align-items:center;gap:12px}
 .rw-b{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:18px;font-weight:800;cursor:pointer;line-height:1}
@@ -654,7 +658,7 @@ const ICON_SPARK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 let KEY=null, cache={}, db=null, tab='bio', busy=false, PEOPLE=null;
 let pSort='rt', pDec=null, rScope='all', rDec=null, rYr=null, gSort='count', expanded={};
 let fView='list', rView='list', gView='list';  // 'list' or 'country'
-let fMode='all', fDur='', fLang='', fTag='';  // filtros da aba Filmes
+let fMode='all', fLang='', fTag='';  // filtros da aba Filmes
 let rankSort='count';                          // ranking: 'count' | 'avg'
 let statsYear=null;                            // ano selecionado no heatmap/aba Stats
 const LANGS={en:'Inglês',ja:'Japonês',ko:'Coreano',fr:'Francês',it:'Italiano',de:'Alemão',es:'Espanhol',pt:'Português',ru:'Russo',zh:'Chinês',cn:'Chinês',sv:'Sueco',da:'Dinamarquês',fi:'Finlandês',no:'Norueguês',pl:'Polonês',cs:'Tcheco',hu:'Húngaro',nl:'Holandês',fa:'Persa',hi:'Hindi',ar:'Árabe',tr:'Turco',th:'Tailandês',el:'Grego',he:'Hebraico',ro:'Romeno',is:'Islandês',sr:'Sérvio',uk:'Ucraniano',vi:'Vietnamita',tl:'Filipino',id:'Indonésio',ka:'Georgiano',et:'Estoniano'};
@@ -857,8 +861,7 @@ function renderFilms(){
   else if(fMode==='rewatch'){base=films().filter(r=>(r.rw||0)>=1);modeNote='revisto(s)';}
   else if(fMode==='unrated'){base=films().filter(r=>r.r==null);modeNote='sem nota';}
   else{base=films();modeNote='filmes';}
-  const durTest=r=>{if(!fDur)return true;const rt=r.rt||0;if(!rt)return false;if(fDur==='short')return rt<90;if(fDur==='mid')return rt>=90&&rt<120;if(fDur==='long')return rt>=120&&rt<180;if(fDur==='epic')return rt>=180;return true;};
-  let list=base.filter(r=>durTest(r)&&(!fLang||r.lang===fLang)&&(!fTag||(r.tags&&r.tags.includes(fTag)))).map(r=>({t:r.t,y:r.y,r:r.r,rec:r}));
+  let list=base.filter(r=>(!fLang||r.lang===fLang)&&(!fTag||(r.tags&&r.tags.includes(fTag)))).map(r=>({t:r.t,y:r.y,r:r.r,rec:r}));
   if(pDec!=null)list=list.filter(x=>Math.floor(x.y/10)*10===pDec);
   const tagCounts={};base.forEach(r=>(r.tags||[]).forEach(tg=>tagCounts[tg]=(tagCounts[tg]||0)+1));
   const tagOpts=Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,40);
@@ -870,13 +873,12 @@ function renderFilms(){
   const langCounts={};base.forEach(r=>{if(r.lang)langCounts[r.lang]=(langCounts[r.lang]||0)+1;});
   const langOpts=Object.entries(langCounts).sort((a,b)=>b[1]-a[1]).slice(0,18);
   const modes=[['all','Todos'],['watchlist','Quero ver'],['rewatch','Revistos'],['unrated','Sem nota']];
-  const durSel=`<select id="fDur">${[['','Duração: todas'],['short','Curtos (<90min)'],['mid','~90 min'],['long','2h+'],['epic','3h+ (épicos)']].map(([v,l])=>`<option value="${v}" ${fDur===v?'selected':''}>${l}</option>`).join('')}</select>`;
   const langSel=langOpts.length?`<select id="fLang"><option value="">Idioma: todos</option>${langOpts.map(([c,n])=>`<option value="${c}" ${fLang===c?'selected':''}>${LANGS[c]||c.toUpperCase()} · ${n}</option>`).join('')}</select>`:'';
   const tagSel=tagOpts.length?`<select id="fTag"><option value="">Tags: todas (${fmt(Object.keys(tagCounts).length)})</option>${tagOpts.map(([t,n])=>`<option value="${t.replace(/"/g,'&quot;')}" ${fTag===t?'selected':''}>${t} · ${n}</option>`).join('')}</select>`:'';
-  const ctrl=`<div class="controls"><div class="seg" id="pSort">${[['rt','Nota'],['yr','Ano'],['az','A–Z'],['rnd','Aleatório']].map(([s,l])=>`<button data-s="${s}" class="${pSort===s?'on':''}">${l}</button>`).join('')}</div><button class="chip" id="fCPais">${GLOBE_SVG} País</button></div>`
+  const ctrl=`<div class="controls"><div class="seg" id="pSort">${[['rt','Nota'],['yr','Ano'],['az','A–Z']].map(([s,l])=>`<button data-s="${s}" class="${pSort===s?'on':''}">${l}</button>`).join('')}</div><button class="chip" id="fCPais">${GLOBE_SVG} País</button></div>`
     +`<div class="chips" id="fMode" style="margin:0 0 9px">${modes.map(([m,l])=>`<button class="chip ${fMode===m?'on':''}" data-m="${m}">${l}</button>`).join('')}</div>`
     +(decs.length?`<div class="chips" id="pDec" style="margin:0 0 9px"><button class="chip ${pDec==null?'on':''}" data-d="all">Todas</button>${decs.map(d=>`<button class="chip ${pDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>`:'')
-    +`<div class="controls" style="margin:0 0 11px">${durSel}${langSel}${tagSel}</div>`;
+    +`<div class="controls" style="margin:0 0 11px">${langSel}${tagSel}</div>`;
   let body;
   if(!list.length){
     body=fMode==='watchlist'
@@ -893,7 +895,6 @@ function renderFilms(){
   $('#pSort').onclick=e=>{const b=e.target.closest('button');if(b){pSort=b.dataset.s;renderFilms();}};
   const pd=$('#pDec');if(pd)pd.onclick=e=>{const b=e.target.closest('button');if(b){pDec=b.dataset.d==='all'?null:+b.dataset.d;renderFilms();}};
   $('#fMode').onclick=e=>{const b=e.target.closest('button');if(b){fMode=b.dataset.m;pDec=null;fTag='';renderFilms();}};
-  const fd=$('#fDur');if(fd)fd.onchange=e=>{fDur=e.target.value;renderFilms();};
   const fl2=$('#fLang');if(fl2)fl2.onchange=e=>{fLang=e.target.value;renderFilms();};
   const ftg=$('#fTag');if(ftg)ftg.onchange=e=>{fTag=e.target.value;renderFilms();};
   const fcp=$('#fCPais');if(fcp)fcp.onclick=()=>{fView='country';renderFilms();};
@@ -905,7 +906,7 @@ function rankList(){const P=people();let arr;
   if(tab==='dir')arr=P.D;else if(tab==='actor')arr=P.A.filter(p=>p.g===2);else if(tab==='actress')arr=P.A.filter(p=>p.g===1);else arr=P.A;
   const inS=f=>rScope==='all'?true:rScope==='dec'?Math.floor(f.y/10)*10===rDec:f.y===rYr;
   const out=[];arr.forEach(p=>{const fl=p.f.filter(inS);if(!fl.length)return;const rd=fl.filter(f=>f.r!=null);const avg=rd.length?rd.reduce((s,f)=>s+f.r,0)/rd.length:null;out.push({...p,fl,n_:fl.length,avg,nr:rd.length});});
-  if(rankSort==='avg')out.sort((a,b)=>{const aa=a.nr>=2?a.avg:-1,bb=b.nr>=2?b.avg:-1;return bb-aa||b.n_-a.n_||a.n.localeCompare(b.n);});
+  if(rankSort==='avg')out.sort((a,b)=>{const aa=a.nr>=3?a.avg:-1,bb=b.nr>=3?b.avg:-1;return bb-aa||b.n_-a.n_||a.n.localeCompare(b.n);});
   else out.sort((a,b)=>b.n_-a.n_||(b.avg||0)-(a.avg||0)||a.n.localeCompare(b.n));
   return out;}
 function personDetail(p){
@@ -943,7 +944,7 @@ function renderRanking(){
       return `<div class="rw ${op?'open':''}" data-r="${rank}"><div class="rk">${rank}</div>${av}<div class="nm">${p.n}</div>
         <div class="ct"><b>${p.n_}</b> f${p.avg!=null?' · <span class="g">'+star(+p.avg.toFixed(2))+'</span>':''}</div><div class="car"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></div></div>
         <div class="exp ${op?'show':''}" data-e="${rank}">${bf?`<div class="best">Melhor: <b>${bf.t}</b> (${bf.y}) ${star(bf.r)}</div>`:''}<div class="mini">${mini}</div></div>`;}).join('');
-    let note=(rankSort==='avg'?'Ordenado pela sua nota média (mín. 2 filmes avaliados). ':'')+`Top ${Math.min(30,r.length)} de ${fmt(r.length)} pessoas neste recorte. Toque do 6º ao 30º para ver os filmes.`;
+    let note=(rankSort==='avg'?'Ordenado pela sua nota média (mín. 3 filmes avaliados). ':'')+`Top ${Math.min(30,r.length)} de ${fmt(r.length)} pessoas neste recorte. Toque do 6º ao 30º para ver os filmes.`;
     if(tab==='actor'||tab==='actress')note+=' Divisão por gênero vem do TMDB e pode falhar.';
     if(tab!=='dir')note+=' "Ator" = elenco principal (top 8).';
     body=`<div class="podium">${cards}</div>${rows?`<div class="rows">${rows}</div>`:''}<div class="note">${note}</div>`;
@@ -1088,11 +1089,14 @@ async function fillDirFilmography(p){
   const total=list.length,seen=list.filter(isSeen).length,pct=total?Math.round(seen/total*100):0;
   const unseen=list.filter(m=>!isSeen(m)&&(m.release_date||'').length>=4).sort((a,b)=>(b.vote_count||0)-(a.vote_count||0)).slice(0,8);
   const items=unseen.map(m=>{const y=(m.release_date||'').slice(0,4);const po=m.poster_path?`<img loading="lazy" src="${IMG}/w92${m.poster_path}"/>`:'<div class="pp"></div>';
-    return `<div class="sr">${po}<div class="si"><div class="st">${m.title}</div><div class="sy">${y||'—'}${m.vote_count?' · '+fmt(m.vote_count)+' votos':''}</div></div><button class="wl-btn" data-t="${(m.title||'').replace(/"/g,'&quot;')}" data-y="${y}" data-id="${m.id}" data-po="${m.poster_path||''}">+ ver</button></div>`;}).join('');
+    const k2=key(m.title,+y);const inWl=cache[k2]&&cache[k2].wl;
+    return `<div class="sr">${po}<div class="si"><div class="st">${m.title}</div><div class="sy">${y||'—'}${m.vote_count?' · '+fmt(m.vote_count)+' votos':''}</div></div><button class="wl-btn${inWl?' on':''}" data-t="${(m.title||'').replace(/"/g,'&quot;')}" data-y="${y}" data-id="${m.id}" data-po="${m.poster_path||''}">${inWl?'✓ na lista':'+ ver'}</button></div>`;}).join('');
   el.innerHTML=`<div class="lbl">Filmografia como diretor</div>`
     +`<div class="filmo-prog"><div class="filmo-bar"><i style="width:${pct}%"></i></div><span>${seen} de ${total} vistos · ${pct}%</span></div>`
     +(unseen.length?`<div class="note" style="margin:8px 0 4px">Ainda não viu (mais populares):</div>${items}`:'<div class="note" style="margin:6px 0 0">'+ICON_CHECK+' Você viu toda a filmografia principal dele.</div>');
-  el.querySelectorAll('.wl-btn[data-id]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();const k=key(b.dataset.t,+b.dataset.y);if(cache[k]){toast('Já está na sua lista');return;}
+  el.querySelectorAll('.wl-btn[data-id]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();const k=key(b.dataset.t,+b.dataset.y);
+    if(cache[k]&&cache[k].wl){del(k);PEOPLE=null;b.textContent='+ ver';b.classList.remove('on');toast('Removido: '+b.dataset.t);return;}
+    if(cache[k]&&cache[k].r!=null){toast('Já assistido: '+b.dataset.t);return;}
     const rec={t:b.dataset.t,y:+b.dataset.y,r:null,wl:1,id:+b.dataset.id||undefined,po:b.dataset.po||null,ti:b.dataset.t,ye:b.dataset.y,src:'user'};cache[k]=rec;put(k,rec);PEOPLE=null;b.textContent='✓ na lista';b.classList.add('on');toast('Quero ver: '+b.dataset.t);
     if(rec.id){credits(rec.id).then(c=>{if(c){rec.ca=c.ca;rec.di=c.di;rec.co=c.co;if(c.rt)rec.rt=c.rt;rec.lang=c.lang;}rec.cc=1;put(k,rec);PEOPLE=null;});}});
 }
@@ -1301,6 +1305,8 @@ function statsBioHTML(){
         +'<div class="dbar"><div class="dfill" style="width:'+pct+'%"></div></div>'
         +'<span class="dct">'+n+'</span></div>';
     }).join('');
+  const lastRated=[...films()].filter(r=>r.r!=null&&r.ts).sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,5);
+  const lastHtml=lastRated.length?lastRated.map(r=>{const rt=r.ti||r.t;const title=rt.length>28?rt.slice(0,27)+'\u2026':rt;return'<div class="lrow"><span class="ltitle">'+title+'</span><span class="lrt">'+star(r.r)+'</span></div>';}).join(''):'';
   return'<span class="eyb" style="margin-top:16px">Estat\u00edsticas</span>'
     +'<div class="strow" style="grid-template-columns:repeat(3,1fr)">'
       +'<div class="stbox"><div class="sv">'+fmt(st.total)+'</div><div class="sl">filmes</div></div>'
@@ -1308,6 +1314,7 @@ function statsBioHTML(){
       +'<div class="stbox"><div class="sv">'+avgT+'</div><div class="sl">nota m\u00e9dia</div></div>'
     +'</div>'
     +'<div class="dist-chart">'+distRows+'</div>'
+    +(lastHtml?'<span class="eyb" style="margin-top:14px">\u00daltimas avalia\u00e7\u00f5es</span><div class="lrated">'+lastHtml+'</div>':'')
     +'<button class="btn sec" id="recoBtn" style="margin:10px 0 2px;font-size:13px">'+ICON_SPARK+'Recomendar um filme agora</button>';
 }
 
@@ -1347,7 +1354,7 @@ const _CW=540,_CH=960,_CS=2; // canvas 1080×1920, preview em 540×960
 // Chave opcional da IA (Claude) — fica só no aparelho, como a do TMDB
 function getLLMKey(){try{return localStorage.getItem('cs_llm_key')||null;}catch(e){return null;}}
 function setLLMKey(k){try{if(k)localStorage.setItem('cs_llm_key',k);else localStorage.removeItem('cs_llm_key');}catch(e){}}
-function getOmdbKey(){try{return localStorage.getItem('cs_omdb_key')||null;}catch(e){return null;}}
+function getOmdbKey(){try{return localStorage.getItem('cs_omdb_key')||'2e29b4de';}catch(e){return '2e29b4de';}}
 function setOmdbKey(k){try{if(k)localStorage.setItem('cs_omdb_key',k);else localStorage.removeItem('cs_omdb_key');}catch(e){}}
 const RECO_MODEL='claude-sonnet-4-6';
 
@@ -1644,21 +1651,11 @@ async function _runRecoHeuristic(vibe){
   res.innerHTML=cards.join('');
 }
 
-function _runReco(vibe){return getLLMKey()?_runRecoLLM(vibe):_runRecoHeuristic(vibe);}
+function _runReco(vibe){return _runRecoHeuristic(vibe);}
 
 // ── UI das chaves (OMDb + Claude IA) ──
 function _recoEngineHtml(){
-  const hasOmdb=!!getOmdbKey(), hasLLM=!!getLLMKey();
-  let rows='';
-  if(hasOmdb)
-    rows+='<div class="reco-eng"><span class="dot"></span>Filtro IMDb/OMDb ativo <button id="recoOmdbChg">Trocar</button><button id="recoOmdbDel">Remover</button></div>';
-  else
-    rows+='<div class="reco-eng"><button id="recoOmdbAdd">'+ICON_SPARK+'Ativar filtro IMDb (OMDb gratuito)</button></div>';
-  if(hasLLM)
-    rows+='<div class="reco-eng" style="margin-top:5px"><span class="dot" style="background:var(--acc2);box-shadow:0 0 6px var(--acc2)"></span>Narrativas por IA ativas <button id="recoKeyChg">Trocar</button><button id="recoKeyDel">Remover</button></div>';
-  else
-    rows+='<div class="reco-eng" style="margin-top:5px"><button id="recoKeyAdd">Ativar narrativas IA (Claude — pago)</button></div>';
-  return rows;
+  return '<div class="reco-eng"><span class="dot"></span>Filtro IMDb/OMDb ativo</div>';
 }
 function _recoOmdbBoxHtml(){
   return '<div class="reco-keybox" id="recoOmdbBox"><div class="hint">Chave gratuita do OMDb — filtra candidatos pela nota real do IMDb em vez da nota inflada do TMDB. 1.000 chamadas/dia grátis.</div>'
@@ -1686,19 +1683,7 @@ function openReco(){
   _wireRecoEngine();
   $('#recoOver').classList.add('show');
 }
-function _wireRecoEngine(){
-  const eng=$('#recoEng'); if(!eng)return;
-  const showOmdbBox=()=>{if($('#recoOmdbBox'))return;eng.insertAdjacentHTML('afterend',_recoOmdbBoxHtml());$('#recoOmdbSave').onclick=()=>{const v=$('#recoOmdbIn').value.trim();if(!v){toast('Cole a chave');return;}setOmdbKey(v);toast('Filtro IMDb ativado');openReco();};};
-  const showLLMBox=()=>{if($('#recoKeyBox'))return;($('#recoOmdbBox')||eng).insertAdjacentHTML('afterend',_recoKeyBoxHtml());$('#recoKeySave').onclick=()=>{const v=$('#recoKeyIn').value.trim();if(!v){toast('Cole a chave');return;}setLLMKey(v);toast('IA ativada');openReco();};};
-  const oa=$('#recoOmdbAdd'), oc=$('#recoOmdbChg'), od=$('#recoOmdbDel');
-  const la=$('#recoKeyAdd'), lc=$('#recoKeyChg'), ld=$('#recoKeyDel');
-  if(oa)oa.onclick=showOmdbBox;
-  if(oc)oc.onclick=showOmdbBox;
-  if(od)od.onclick=()=>{setOmdbKey(null);toast('OMDb removido');openReco();};
-  if(la)la.onclick=showLLMBox;
-  if(lc)lc.onclick=showLLMBox;
-  if(ld)ld.onclick=()=>{setLLMKey(null);toast('Chave IA removida');openReco();};
-}
+function _wireRecoEngine(){}
 
 
 function _lastFilm(){const fl=films().filter(r=>r.r!=null);if(!fl.length)return null;return fl.sort((a,b)=>(b.ts||0)-(a.ts||0)||(+(b.ye||b.y))-(+(a.ye||a.y))||b.r-a.r)[0];}
