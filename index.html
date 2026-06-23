@@ -285,7 +285,15 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 /* ── Filtros / watchlist / rewatch ── */
 .wl-btn{background:var(--panel);border:1px solid var(--line);color:var(--mut);border-radius:7px;padding:5px 11px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap}
 .wl-btn.on{border-color:var(--acc2);color:var(--acc2);background:rgba(255,46,67,.08)}
+.sr-row{cursor:pointer}
+.sr-row:active{background:rgba(255,255,255,.04)}
+.sr-badge{font-size:11.5px;font-weight:600;margin-top:4px;display:flex;align-items:center;gap:4px}
+.sr-badge svg{flex:none}
+.sr-visto{color:var(--acc1)}
+.sr-wl{color:var(--mut)}
 .po-rw{position:absolute;right:5px;top:5px;background:rgba(0,0,0,.74);color:var(--ink);font-size:10px;font-weight:800;border-radius:5px;padding:1px 5px}
+.po-seen{position:absolute;left:5px;top:5px;background:rgba(0,0,0,.74);color:var(--acc1);border-radius:4px;padding:2px 4px;display:flex;align-items:center;line-height:1}
+.po-seen svg{width:10px;height:10px}
 /* ── Film modal extras ── */
 .film-wl{background:rgba(255,46,67,.08);border:1px solid color-mix(in srgb,var(--acc2) 40%,var(--line));border-radius:10px;padding:9px 12px;margin-top:13px;font-size:12.5px;color:var(--mut)}
 .film-wl b{color:var(--acc2)}
@@ -403,7 +411,7 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 <!-- BUSCAR / AVALIAR -->
 <div class="over" id="searchOver"><div class="oh"><h2>Buscar &amp; avaliar</h2><button class="icon-btn" id="searchClose">✕</button></div>
   <input class="tin" id="searchIn" type="text" placeholder="nome do filme…" autocomplete="off"/>
-  <div class="ob" id="searchRes"><div class="note">Digite o nome de um filme e toque nas estrelas para registrar sua nota — toque na metade esquerda de uma estrela para nota com ,5 (ex.: 3 estrelas e meia = 3,5). Ele entra na sua coleção na hora.</div></div>
+  <div class="ob" id="searchRes"><div class="note">Digite o nome do filme. Toque no resultado para abrir a ficha e registrar nota + data.</div></div>
 </div>
 
 <!-- ONBOARDING -->
@@ -899,7 +907,8 @@ function renderFilms(){
     const cells=list.map(x=>{const r=x.rec;const po=(r&&r.po)?`<img loading="lazy" src="${IMG}/w185${r.po}"/>`:`<div class="ph">${x.t}<br><span style="opacity:.6">(${x.y})</span></div>`;
       const badge=x.r!=null?`<span class="rt">${star(x.r)}</span>`:(r&&r.wl?`<span class="rt" style="color:var(--acc2)">${ICON_EYE}</span>`:'');
       const rwb=(r&&(r.rw||0)>=1)?`<span class="po-rw" title="revisto ${r.rw}×">↺${r.rw>1?r.rw:''}</span>`:'';
-      return `<div class="po" data-k="${(x.t+'|'+x.y).replace(/"/g,'&quot;')}">${po}${badge}${rwb}</div>`;}).join('');
+      const vseen=(r&&r.r!=null&&!r.wl)?`<span class="po-seen" title="Visto">${ICON_CHECK}</span>`:'';
+      return `<div class="po" data-k="${(x.t+'|'+x.y).replace(/"/g,'&quot;')}">${po}${badge}${rwb}${vseen}</div>`;}).join('');
     body=`<div class="grid">${cells}</div><div class="note">${fmt(list.length)} ${modeNote}${pDec!=null?' nos '+pDec+'s':''}${fLang?' · '+(LANGS[fLang]||fLang.toUpperCase()):''}. Toque num pôster para detalhes.</div>`;
   }
   $('#view').innerHTML=ctrl+body;
@@ -2179,22 +2188,12 @@ function _wireFilmExtras(k){
     const half=(x-rect.left)<rect.width/2;
     return{stars,val:half?+s.dataset.i-0.5:+s.dataset.i,key:s.dataset.key};
   }
-  function _commitStar(info,fromSearch){
+  function _commitStar(info){
     if(!info)return;
     const{key:k,val}=info;
-    if(fromSearch){
-      const m=window._sres&&window._sres[k];if(!m)return;
-      let rec=cache[k]||{t:m.t,y:m.y};
-      rec.r=val;delete rec.wl;rec.id=m.id;rec.po=m.po;rec.gids=m.gids;if(m.lang)rec.lang=m.lang;
-      rec.ti=m.t;rec.ye=String(m.y);rec.s=1;rec.src='user';rec.ts=Date.now();
-      cache[k]=rec;put(k,rec);PEOPLE=null;toast('Avaliado: '+m.t+' '+star(val));
-      doSearch($('#searchIn').value);
-      if(rec.id&&!rec.cc){credits(rec.id).then(c=>{if(c){rec.ca=c.ca;rec.di=c.di;rec.co=c.co;if(c.rt)rec.rt=c.rt;rec.lang=c.lang;}rec.cc=1;put(k,rec);PEOPLE=null;});}
-      return;
-    }
     const rec=cache[k];if(!rec)return;
     const wasWl=!!rec.wl;const hadRating=rec.r!=null&&!wasWl;
-    rec.r=val;delete rec.wl;rec.s=1;if(!hadRating)rec.ts=Date.now();
+    rec.r=val;delete rec.wl;rec.s=1;if(!hadRating&&!rec.ts)rec.ts=Date.now();
     put(k,rec);PEOPLE=null;
     toast((hadRating?'Nota corrigida: ':(wasWl?'Visto! ':'Avaliado: '))+rec.t+' '+star(val));
     openFilm(k);
@@ -2226,36 +2225,7 @@ function _wireFilmExtras(k){
     if(!_touchActive)return;_touchActive=false;
     const t=e.changedTouches[0];
     const info=_starsFromPoint(t.clientX,t.clientY,sh);
-    if(info){_commitStar(info,false);e.preventDefault();}
-  },{passive:false});
-  /* ── searchRes ── */
-  const sr=$('#searchRes');
-  sr.addEventListener('mousemove',e=>{
-    const s=e.target.closest&&e.target.closest('.s');if(!s)return;
-    const stars=s.closest('.stars');if(!stars)return;
-    const rect=s.getBoundingClientRect();const half=(e.clientX-rect.left)<rect.width/2;
-    _previewStars(stars,half?+s.dataset.i-0.5:+s.dataset.i);
-  });
-  sr.addEventListener('mouseleave',e=>{
-    const stars=e.target.classList&&e.target.classList.contains('stars')?e.target:null;
-    if(stars)_previewStars(stars,+(stars.dataset.orig||0));
-  },true);
-  let _srTouchActive=false;
-  sr.addEventListener('touchstart',e=>{
-    const s=e.target.closest&&e.target.closest('.s');_srTouchActive=!!s;
-  },{passive:true});
-  sr.addEventListener('touchmove',e=>{
-    if(!_srTouchActive)return;
-    const t=e.touches[0];
-    const info=_starsFromPoint(t.clientX,t.clientY,sr);
-    if(info)_previewStars(info.stars,info.val);
-    e.preventDefault();
-  },{passive:false});
-  sr.addEventListener('touchend',e=>{
-    if(!_srTouchActive)return;_srTouchActive=false;
-    const t=e.changedTouches[0];
-    const info=_starsFromPoint(t.clientX,t.clientY,sr);
-    if(info){_commitStar(info,true);e.preventDefault();}
+    if(info){_commitStar(info);e.preventDefault();}
   },{passive:false});
 })();
 $('#sheet').addEventListener('click',e=>{
@@ -2267,10 +2237,10 @@ $('#sheet').addEventListener('click',e=>{
   const k=s.dataset.key,i=+s.dataset.i;
   const rect=s.getBoundingClientRect();const half=(e.clientX-rect.left)<rect.width/2;const val=half?i-0.5:i;
   const rec=cache[k];if(!rec)return;const wasWl=!!rec.wl;const hadRating=rec.r!=null&&!wasWl;
-  rec.r=val;delete rec.wl;rec.s=1;if(!hadRating)rec.ts=Date.now();put(k,rec);PEOPLE=null;
+  rec.r=val;delete rec.wl;rec.s=1;if(!hadRating&&!rec.ts)rec.ts=Date.now();put(k,rec);PEOPLE=null;
   toast((hadRating?'Nota corrigida: ':(wasWl?'Visto! ':'Avaliado: '))+rec.t+' '+star(val));openFilm(k);
 })
-$('#modal').onclick=e=>{if(e.target.id==='modal')$('#modal').classList.remove('show');};
+$('#modal').onclick=e=>{if(e.target.id==='modal'){$('#modal').classList.remove('show');const si=$('#searchIn');if(si&&si.value.trim()&&$('#searchOver').classList.contains('show'))doSearch(si.value);}};
 
 /* ---------- buscar & avaliar ---------- */
 let searchTimer=null;
@@ -2283,26 +2253,24 @@ async function doSearch(q){
   if(!res.length){$('#searchRes').innerHTML='<div class="note">Nada encontrado.</div>';return;}
   window._sres={};
   $('#searchRes').innerHTML=res.map(m=>{const y=(m.release_date||'').slice(0,4)||'?';const k=key(m.title,y);window._sres[k]={id:m.id,t:m.title,y:+y||0,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null};
-    const ex=cache[k];const cur=ex?ex.r:null;const onWl=ex&&ex.wl;const po=m.poster_path?`<img src="${IMG}/w92${m.poster_path}"/>`:'<div class="pp"></div>';
-    const status=cur!=null?' · já avaliado '+star(cur):(onWl?' · na watchlist':'');
-    const wlBtn=`<button class="wl-btn${onWl?' on':''}" data-wl="${k.replace(/"/g,'&quot;')}">${onWl?'✓ Quero ver':'+ Quero ver'}</button>`;
-    return `<div class="sr">${po}<div class="si"><div class="st">${m.title}</div><div class="sy">${y}${status}</div>${starWidget(cur||0,k)}<div style="margin-top:6px">${wlBtn}</div></div></div>`;}).join('');
+    const ex=cache[k];const cur=ex?ex.r:null;const onWl=ex&&!!ex.wl;const isRated=cur!=null;
+    const po=m.poster_path?`<img src="${IMG}/w92${m.poster_path}"/>`:'<div class="pp"></div>';
+    const badge=isRated?`<span class="sr-badge sr-visto">${ICON_CHECK} Visto · ${star(cur)}</span>`:onWl?`<span class="sr-badge sr-wl">${ICON_EYE} Na watchlist</span>`:'';
+    const wlBtn=!isRated?`<button class="wl-btn${onWl?' on':''}" data-wl="${k.replace(/"/g,'&quot;')}">${onWl?'✓ Quero ver':'+ Quero ver'}</button>`:'';
+    return `<div class="sr sr-row" data-k="${k.replace(/"/g,'&quot;')}">${po}<div class="si"><div class="st">${m.title}</div><div class="sy">${y}</div>${badge}${wlBtn?`<div style="margin-top:5px">${wlBtn}</div>`:''}</div></div>`;}).join('');
 }
 $('#searchRes').addEventListener('click',async e=>{
   const wb=e.target.closest('.wl-btn');
-  if(wb){const k=wb.dataset.wl;const m=window._sres[k];if(!m)return;let rec=cache[k];
+  if(wb){e.stopPropagation();const k=wb.dataset.wl;const m=window._sres[k];if(!m)return;let rec=cache[k];
     if(rec&&rec.wl){delete rec.wl;cache[k]=rec;put(k,rec);toast('Tirado da watchlist');}
     else if(rec&&rec.r!=null){toast('Esse você já assistiu');}
     else{rec=rec||{t:m.t,y:m.y};rec.wl=1;rec.r=null;rec.id=m.id;rec.po=m.po;rec.gids=m.gids;rec.lang=m.lang;rec.ti=m.t;rec.ye=String(m.y);rec.src='user';cache[k]=rec;put(k,rec);PEOPLE=null;toast('Quero ver: '+m.t);
       if(rec.id&&!rec.cc){credits(rec.id).then(c=>{if(c){rec.ca=c.ca;rec.di=c.di;rec.co=c.co;if(c.rt)rec.rt=c.rt;rec.lang=c.lang;}rec.cc=1;put(k,rec);PEOPLE=null;});}}
     doSearch($('#searchIn').value);return;}
-  const s=e.target.closest('.s');if(!s)return;const k=s.dataset.key,i=+s.dataset.i;
-  const rect=s.getBoundingClientRect();const half=(e.clientX-rect.left)<rect.width/2;const val=half?i-0.5:i;
-  const m=window._sres[k];if(!m)return;
-  let rec=cache[k]||{t:m.t,y:m.y};rec.r=val;delete rec.wl;rec.id=m.id;rec.po=m.po;rec.gids=m.gids;if(m.lang)rec.lang=m.lang;rec.ti=m.t;rec.ye=String(m.y);rec.s=1;rec.src='user';rec.ts=Date.now();
-  cache[k]=rec;put(k,rec);PEOPLE=null;toast('Avaliado: '+m.t+' '+star(val));
-  doSearch($('#searchIn').value);
-  if(rec.id&&!rec.cc){credits(rec.id).then(c=>{if(c){rec.ca=c.ca;rec.di=c.di;rec.co=c.co;if(c.rt)rec.rt=c.rt;rec.lang=c.lang;}rec.cc=1;put(k,rec);PEOPLE=null;});}
+  const row=e.target.closest('.sr-row');if(!row)return;
+  const k=row.dataset.k;const m=window._sres&&window._sres[k];if(!m)return;
+  if(!cache[k]){cache[k]={t:m.t,y:m.y,id:m.id,po:m.po,gids:m.gids,lang:m.lang,ti:m.t,ye:String(m.y),src:'user'};}
+  await openFilm(k);
 });
 $('#search').onclick=()=>{$('#searchOver').classList.add('show');setTimeout(()=>$('#searchIn').focus(),100);};
 $('#searchClose').onclick=()=>{$('#searchOver').classList.remove('show');render();};
