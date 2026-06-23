@@ -409,9 +409,10 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 <div class="toast" id="toast"></div>
 
 <!-- BUSCAR / AVALIAR -->
-<div class="over" id="searchOver"><div class="oh"><h2>Buscar &amp; avaliar</h2><button class="icon-btn" id="searchClose">✕</button></div>
+<div class="over" id="searchOver"><div class="oh"><button class="icon-btn" id="srBack" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button><h2 id="srTitle">Buscar &amp; avaliar</h2><button class="icon-btn" id="searchClose">✕</button></div>
   <input class="tin" id="searchIn" type="text" placeholder="nome do filme…" autocomplete="off"/>
   <div class="ob" id="searchRes"><div class="note">Digite o nome do filme. Toque no resultado para abrir a ficha e registrar nota + data.</div></div>
+  <div class="ob" id="srDetail" style="display:none"></div>
 </div>
 
 <!-- ONBOARDING -->
@@ -2177,56 +2178,86 @@ function _wireFilmExtras(k){
   const ti=$('#filmTagIn');if(ti)ti.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();const v=ti.value.trim().toLowerCase();if(v){const rec=cache[k];if(rec){rec.tags=[...new Set([...(rec.tags||[]),v])];put(k,rec);openFilm(k);}}}};
   const fd=$('#filmDate');if(fd)fd.onchange=()=>{const rec=cache[k];if(!rec||rec.wl)return;const v=fd.value;if(!v){delete rec.ts;put(k,rec);toast('Data removida');render();return;}const d=new Date(v+'T12:00:00');if(!isNaN(d)){rec.ts=d.getTime();put(k,rec);toast('Data atualizada');render();}};
 }
-/* ── star hover/touch preview ── */
-(function(){
-  function _starsFromPoint(x,y,container){
-    const el=document.elementFromPoint(x,y);if(!el)return null;
-    const s=el.closest&&el.closest('.s');if(!s)return null;
-    if(container&&!container.contains(s))return null;
-    const stars=s.closest('.stars');if(!stars)return null;
-    const rect=s.getBoundingClientRect();
-    const half=(x-rect.left)<rect.width/2;
-    return{stars,val:half?+s.dataset.i-0.5:+s.dataset.i,key:s.dataset.key};
-  }
-  function _commitStar(info){
-    if(!info)return;
-    const{key:k,val}=info;
-    const rec=cache[k];if(!rec)return;
-    const wasWl=!!rec.wl;const hadRating=rec.r!=null&&!wasWl;
-    rec.r=val;delete rec.wl;rec.s=1;if(!hadRating&&!rec.ts)rec.ts=Date.now();
-    put(k,rec);PEOPLE=null;
+/* ── star helpers (module-level) ── */
+function _starsFromPoint(x,y,container){
+  const el=document.elementFromPoint(x,y);if(!el)return null;
+  const s=el.closest&&el.closest('.s');if(!s)return null;
+  if(container&&!container.contains(s))return null;
+  const stars=s.closest('.stars');if(!stars)return null;
+  const rect=s.getBoundingClientRect();
+  const half=(x-rect.left)<rect.width/2;
+  return{stars,val:half?+s.dataset.i-0.5:+s.dataset.i,key:s.dataset.key};
+}
+let _srDetailMode=false,_srAbort=null;
+function _commitStar(info){
+  if(!info)return;
+  const{key:k,val}=info;
+  const rec=cache[k];if(!rec)return;
+  const wasWl=!!rec.wl;const hadRating=rec.r!=null&&!wasWl;
+  rec.r=val;delete rec.wl;rec.s=1;if(!hadRating&&!rec.ts)rec.ts=Date.now();
+  put(k,rec);PEOPLE=null;
+  toast((hadRating?'Nota corrigida: ':(wasWl?'Visto! ':'Avaliado: '))+rec.t+' '+star(val));
+  if(_srDetailMode)openFilmInSearch(k);else openFilm(k);
+}
+function _srGoBack(){
+  _srDetailMode=false;
+  if(_srAbort){_srAbort.abort();_srAbort=null;}
+  const sd=$('#srDetail');if(sd){sd.style.display='none';sd.innerHTML='';}
+  const si=$('#searchIn');if(si)si.style.display='';
+  const sr=$('#searchRes');if(sr)sr.style.display='';
+  const srb=$('#srBack');if(srb)srb.style.display='none';
+  const srt=$('#srTitle');if(srt)srt.textContent='Buscar & avaliar';
+  const sinp=$('#searchIn');if(sinp&&sinp.value.trim())doSearch(sinp.value);
+}
+async function openFilmInSearch(k){
+  _srDetailMode=true;_curFilmKey=k;
+  const r=cache[k];if(!r)return;
+  const t=r.t,y=r.y;
+  const poster=r.po?`<img src="${IMG}/w342${r.po}"/>`:'';
+  const dirs=(r.di||[]).map(d=>d[1]).join(', ');
+  const gn=(r.gids||[]).map(id=>GENRES[id]).filter(Boolean).join(' · ');
+  if(r.id&&r.ov===undefined){const d=await movieDetails(r.id);if(d){r.ov=d.ov;r.rt=d.rt;r.tg=d.tg;put(k,r);}}
+  const runtime=r.rt?`${Math.floor(r.rt/60)}h ${r.rt%60}min`:'';
+  const tagline=r.tg?`<div class="yr" style="margin-top:4px;font-style:italic;color:var(--dim)">"${r.tg}"</div>`:'';
+  const overview=r.ov?`<div class="lbl">Sinopse</div><p style="font-size:13px;color:var(--mut);line-height:1.6;margin:0 0 4px">${r.ov}</p>`:'';
+  const html=`<div class="top">${poster}<div><h3>${t}</h3><div class="yr">${y}${runtime?' · <b>'+runtime+'</b>':''}${r.r!=null?' · sua nota <b>'+star(r.r)+'</b>':''}</div>${tagline}${gn?`<div class="yr" style="margin-top:6px">${gn}</div>`:''}${dirs?`<div class="yr" style="margin-top:6px">Direção: <b>${dirs}</b></div>`:''}</div></div>${overview}<div class="lbl">Sua nota</div>${starWidget(r.r||0,k)}<div class="rate-hint">Deslize sobre as estrelas · metade esquerda = ,5</div>${_filmExtrasHtml(r)}`;
+  const sd=$('#srDetail');
+  sd.innerHTML=html;sd.style.display='';
+  $('#searchRes').style.display='none';$('#searchIn').style.display='none';
+  const srb=$('#srBack');if(srb)srb.style.display='';
+  const srt=$('#srTitle');if(srt)srt.textContent=t.length>24?t.slice(0,22)+'…':t;
+  _wireFilmExtras(k);
+  if(_srAbort)_srAbort.abort();
+  _srAbort=new AbortController();
+  const sig={signal:_srAbort.signal};
+  sd.addEventListener('mousemove',e=>{const s=e.target.closest&&e.target.closest('.s');if(!s)return;const stars=s.closest('.stars');if(!stars)return;const rect=s.getBoundingClientRect();const half=(e.clientX-rect.left)<rect.width/2;_previewStars(stars,half?+s.dataset.i-0.5:+s.dataset.i);},sig);
+  sd.addEventListener('mouseleave',e=>{const stars=e.target.classList&&e.target.classList.contains('stars')?e.target:null;if(stars)_previewStars(stars,+(stars.dataset.orig||0));},{capture:true,signal:_srAbort.signal});
+  let _ta=false;
+  sd.addEventListener('touchstart',e=>{const s=e.target.closest&&e.target.closest('.s');_ta=!!s;},{passive:true,signal:_srAbort.signal});
+  sd.addEventListener('touchmove',e=>{if(!_ta)return;const tc=e.touches[0];const info=_starsFromPoint(tc.clientX,tc.clientY,sd);if(info)_previewStars(info.stars,info.val);e.preventDefault();},{passive:false,signal:_srAbort.signal});
+  sd.addEventListener('touchend',e=>{if(!_ta)return;_ta=false;const tc=e.changedTouches[0];const info=_starsFromPoint(tc.clientX,tc.clientY,sd);if(info){_commitStar(info);e.preventDefault();}},{passive:false,signal:_srAbort.signal});
+  sd.addEventListener('click',e=>{
+    if(e.target.id==='rwPlus'||e.target.id==='rwMinus'){const rec=cache[_curFilmKey];if(!rec)return;rec.rw=Math.max(0,(rec.rw||0)+(e.target.id==='rwPlus'?1:-1));put(_curFilmKey,rec);const el=$('#rwN');if(el)el.textContent=rec.rw+' '+(rec.rw===1?'vez':'vezes');return;}
+    if(e.target.id==='filmWlRemove'){del(_curFilmKey);PEOPLE=null;toast('Removido da watchlist');_srGoBack();return;}
+    const ftx=e.target.closest('.ftag');if(ftx&&e.target.tagName==='I'){const rec=cache[_curFilmKey];if(rec){rec.tags=(rec.tags||[]).filter(x=>x!==ftx.dataset.t);if(!rec.tags.length)delete rec.tags;put(_curFilmKey,rec);ftx.remove();}return;}
+    const s=e.target.closest('.s');if(!s)return;
+    const k2=s.dataset.key,i=+s.dataset.i;
+    const rect=s.getBoundingClientRect();const half=(e.clientX-rect.left)<rect.width/2;const val=half?i-0.5:i;
+    const rec=cache[k2];if(!rec)return;const wasWl=!!rec.wl;const hadRating=rec.r!=null&&!wasWl;
+    rec.r=val;delete rec.wl;rec.s=1;if(!hadRating&&!rec.ts)rec.ts=Date.now();put(k2,rec);PEOPLE=null;
     toast((hadRating?'Nota corrigida: ':(wasWl?'Visto! ':'Avaliado: '))+rec.t+' '+star(val));
-    openFilm(k);
-  }
-  /* ── sheet (modal filme) ── */
+    openFilmInSearch(k2);
+  },sig);
+}
+/* ── sheet (modal filme) – hover/touch preview ── */
+(function(){
   const sh=$('#sheet');
-  sh.addEventListener('mousemove',e=>{
-    const s=e.target.closest&&e.target.closest('.s');if(!s)return;
-    const stars=s.closest('.stars');if(!stars)return;
-    const rect=s.getBoundingClientRect();const half=(e.clientX-rect.left)<rect.width/2;
-    _previewStars(stars,half?+s.dataset.i-0.5:+s.dataset.i);
-  });
-  sh.addEventListener('mouseleave',e=>{
-    const stars=e.target.classList&&e.target.classList.contains('stars')?e.target:null;
-    if(stars)_previewStars(stars,+(stars.dataset.orig||0));
-  },true);
+  sh.addEventListener('mousemove',e=>{const s=e.target.closest&&e.target.closest('.s');if(!s)return;const stars=s.closest('.stars');if(!stars)return;const rect=s.getBoundingClientRect();const half=(e.clientX-rect.left)<rect.width/2;_previewStars(stars,half?+s.dataset.i-0.5:+s.dataset.i);});
+  sh.addEventListener('mouseleave',e=>{const stars=e.target.classList&&e.target.classList.contains('stars')?e.target:null;if(stars)_previewStars(stars,+(stars.dataset.orig||0));},true);
   let _touchActive=false;
-  sh.addEventListener('touchstart',e=>{
-    const s=e.target.closest&&e.target.closest('.s');_touchActive=!!s;
-  },{passive:true});
-  sh.addEventListener('touchmove',e=>{
-    if(!_touchActive)return;
-    const t=e.touches[0];
-    const info=_starsFromPoint(t.clientX,t.clientY,sh);
-    if(info)_previewStars(info.stars,info.val);
-    e.preventDefault();
-  },{passive:false});
-  sh.addEventListener('touchend',e=>{
-    if(!_touchActive)return;_touchActive=false;
-    const t=e.changedTouches[0];
-    const info=_starsFromPoint(t.clientX,t.clientY,sh);
-    if(info){_commitStar(info);e.preventDefault();}
-  },{passive:false});
+  sh.addEventListener('touchstart',e=>{const s=e.target.closest&&e.target.closest('.s');_touchActive=!!s;},{passive:true});
+  sh.addEventListener('touchmove',e=>{if(!_touchActive)return;const t=e.touches[0];const info=_starsFromPoint(t.clientX,t.clientY,sh);if(info)_previewStars(info.stars,info.val);e.preventDefault();},{passive:false});
+  sh.addEventListener('touchend',e=>{if(!_touchActive)return;_touchActive=false;const t=e.changedTouches[0];const info=_starsFromPoint(t.clientX,t.clientY,sh);if(info){_commitStar(info);e.preventDefault();}},{passive:false});
 })();
 $('#sheet').addEventListener('click',e=>{
   if(e.target.id==='filmShareBtn'){openShareCard(_curFilmKey);$('#modal').classList.remove('show');return;}
@@ -2240,7 +2271,7 @@ $('#sheet').addEventListener('click',e=>{
   rec.r=val;delete rec.wl;rec.s=1;if(!hadRating&&!rec.ts)rec.ts=Date.now();put(k,rec);PEOPLE=null;
   toast((hadRating?'Nota corrigida: ':(wasWl?'Visto! ':'Avaliado: '))+rec.t+' '+star(val));openFilm(k);
 })
-$('#modal').onclick=e=>{if(e.target.id==='modal'){$('#modal').classList.remove('show');const si=$('#searchIn');if(si&&si.value.trim()&&$('#searchOver').classList.contains('show'))doSearch(si.value);}};
+$('#modal').onclick=e=>{if(e.target.id==='modal')$('#modal').classList.remove('show');};
 
 /* ---------- buscar & avaliar ---------- */
 let searchTimer=null;
@@ -2270,10 +2301,11 @@ $('#searchRes').addEventListener('click',async e=>{
   const row=e.target.closest('.sr-row');if(!row)return;
   const k=row.dataset.k;const m=window._sres&&window._sres[k];if(!m)return;
   if(!cache[k]){cache[k]={t:m.t,y:m.y,id:m.id,po:m.po,gids:m.gids,lang:m.lang,ti:m.t,ye:String(m.y),src:'user'};}
-  await openFilm(k);
+  await openFilmInSearch(k);
 });
 $('#search').onclick=()=>{$('#searchOver').classList.add('show');setTimeout(()=>$('#searchIn').focus(),100);};
-$('#searchClose').onclick=()=>{$('#searchOver').classList.remove('show');render();};
+$('#srBack').onclick=()=>_srGoBack();
+$('#searchClose').onclick=()=>{if(_srDetailMode)_srGoBack();$('#searchOver').classList.remove('show');render();};
 $('#searchIn').oninput=e=>{clearTimeout(searchTimer);const q=e.target.value;searchTimer=setTimeout(()=>doSearch(q),350);};
 
 /* ---------- upload export ---------- */
