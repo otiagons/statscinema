@@ -156,7 +156,7 @@ select{background:var(--panel);color:var(--ink);border:1px solid var(--line);bor
 .stars{display:inline-flex;gap:1px;cursor:pointer}
 .stars .s{position:relative;width:22px;height:22px;color:#3a3d46}
 .stars .s svg{width:22px;height:22px;position:absolute;left:0;top:0}
-.stars .s .fg{color:var(--gold);clip-path:inset(0 100% 0 0)}
+.stars .s .fg{position:absolute;left:0;top:0;width:22px;height:22px;color:var(--gold);clip-path:inset(0 100% 0 0)}
 .stars .s.full .fg{clip-path:inset(0 0 0 0)}.stars .s.half .fg{clip-path:inset(0 50% 0 0)}
 .sr{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--line)}
 .sr img,.sr .pp{width:46px;height:69px;border-radius:5px;object-fit:cover;background:var(--p2);flex:none}
@@ -298,6 +298,8 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .daily-title{font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .daily-sub{font-size:12px;color:var(--mut);margin-top:2px}
 .daily-rating{font-size:13px;color:var(--gold);font-weight:700;white-space:nowrap}
+.daily-del{width:28px;height:28px;flex:none;border-radius:7px;border:1px solid var(--line);background:var(--panel);color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;margin-left:4px}
+.daily-del:hover,.daily-del:active{border-color:var(--acc2);color:var(--acc2);background:rgba(255,46,67,.10)}
 .daily-edit{font-size:11px;color:var(--acc1);border:1px solid var(--acc1);border-radius:5px;padding:2px 7px;background:transparent;cursor:pointer;white-space:nowrap}
 .daily-sec{background:var(--panel);border-radius:10px;padding:10px 12px;margin:0 0 14px;max-height:360px;overflow:hidden}
 .rw-b{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:18px;font-weight:800;cursor:pointer;line-height:1}
@@ -1939,6 +1941,7 @@ const AICON={
 };
 const ICON_CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg>';
 const ICON_TROPHY='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px;margin-right:5px"><path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3M9 16h6M10 20h4M12 13v3"/></svg>';
+const ICON_TRASH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1.3 13a2 2 0 0 1-2 1.85H8.3A2 2 0 0 1 6.3 19L5 6"/><path d="M9 6V4h6v2M10 11v5M14 11v5"/></svg>';
 let _achCat='Todas';
 // ── Catálogo de conquistas de cinema (movimentos, trilogias, diretores, atores) ──
 const ACH_SETS=[
@@ -2049,7 +2052,7 @@ function renderDaily(){
   if(!recent.length)return '<div class="note">Nenhum filme registrado ainda. Avalie ou importe filmes.</div>';
   const fmtD=ts=>{const d=new Date(ts),now=new Date();const diff=Math.floor((now-d)/864e5);if(diff===0)return 'hoje';if(diff===1)return 'ontem';if(diff<7)return diff+'d atrás';return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'});};
   return recent.map(r=>{const k=key(r.t,r.y);const po=r.po?`<img src="${IMG}/w92${r.po}"/>`:'<div class="dp"></div>';
-    return `<div class="daily-row" data-k="${k.replace(/"/g,'&quot;')}">${po}<div class="daily-meta"><div class="daily-title">${r.ti||r.t}</div><div class="daily-sub">${r.y||''}${r.ts?' · '+fmtD(r.ts):''}${(r.rw||0)>=1?' · revisão×'+(r.rw||0):''}${(r.di||[]).length?' · '+(r.di||[])[0][1]:''}</div></div><div class="daily-rating">${r.r!=null?star(r.r):'—'}</div></div>`;
+    return `<div class="daily-row" data-k="${k.replace(/"/g,'&quot;')}">${po}<div class="daily-meta"><div class="daily-title">${r.ti||r.t}</div><div class="daily-sub">${r.y||''}${r.ts?' · '+fmtD(r.ts):''}${(r.rw||0)>=1?' · revisão×'+(r.rw||0):''}${(r.di||[]).length?' · '+(r.di||[])[0][1]:''}</div></div><div class="daily-rating">${r.r!=null?star(r.r):'—'}</div><button class="daily-del" data-del="${k.replace(/"/g,'&quot;')}" title="Remover do histórico">${ICON_TRASH}</button></div>`;
   }).join('');
 }
 function renderStats(){
@@ -2116,7 +2119,11 @@ function renderStats(){
   shown=shown.slice().sort((a,b)=>(b.done-a.done)||(b.pct-a.pct)||(b.v-a.v)||a.n.localeCompare(b.n));
   html+='<div class="ach-grid">'+(shown.length?shown.map(a=>'<div class="ach '+(a.done?'on':'')+'"'+(a.setIdx!=null?' data-ai="'+a.setIdx+'"':'')+'><div class="ach-ic">'+(AICON[a.icon]||AICON.star)+'</div><div class="ach-bd"><div class="ach-n">'+a.n+(a.done?' '+ICON_CHECK:'')+'</div><div class="ach-d">'+a.d+'</div><div class="ach-bar"><i style="width:'+a.pct+'%"></i></div><div class="ach-p">'+fmt(Math.min(a.v,a.goal))+'/'+fmt(a.goal)+(a.setIdx!=null?' · ver filmes':'')+'</div></div></div>').join(''):'<div class="note">Nenhuma conquista neste filtro ainda.</div>')+'</div>';
   $('#view').innerHTML=html;
-  const db=$('#dailyList');if(db){db.onclick=e=>{const row=e.target.closest('.daily-row');if(row)openFilm(row.dataset.k);};}
+  const db=$('#dailyList');if(db){db.onclick=e=>{
+    const del=e.target.closest('.daily-del');
+    if(del){e.stopPropagation();const k=del.dataset.del;const rec=cache[k];if(rec){delete rec.ts;put(k,rec);toast('Registro removido do histórico');renderStats();}return;}
+    const row=e.target.closest('.daily-row');if(row)openFilm(row.dataset.k);
+  };}
   const deb=$('#dailyExpBtn');if(deb)deb.onclick=()=>{const dl=$('#dailyList');if(!dl)return;const isExp=dl.style.maxHeight!=='';dl.style.maxHeight=isExp?'':'none';dl.style.overflow=isExp?'':'visible';deb.textContent=isExp?'Ver todos':'Recolher';};
   const hy=$('#hmYears');if(hy)hy.onclick=e=>{const b=e.target.closest('button');if(b){statsYear=+b.dataset.y;renderStats();}};
   const ac=$('#achCat');if(ac)ac.onclick=e=>{const b=e.target.closest('button');if(b){_achCat=b.dataset.c;renderStats();}};
@@ -2136,7 +2143,7 @@ async function openFilm(k){_curFilmKey=k;const r=cache[k];if(!r)return;const t=r
   const overview=r.ov?`<div class="lbl">Sinopse</div><p style="font-size:13px;color:var(--mut);line-height:1.6;margin:0 0 4px">${r.ov}</p>`:'';
   showSheet(`<div class="top">${poster}<div><h3>${t}</h3><div class="yr">${y}${runtime?' · <b>'+runtime+'</b>':''}${r.r!=null?` · sua nota <b>${star(r.r)}</b>`:''}</div>${tagline}${gn?`<div class="yr" style="margin-top:6px">${gn}</div>`:''}${dirs?`<div class="yr" style="margin-top:6px">Direção: <b>${dirs}</b></div>`:''}</div></div>
     ${overview}
-    <div class="lbl">Sua nota</div>${starWidget(r.r||0,k)}<div class="rate-hint">Toque na metade esquerda da estrela para nota com ,5</div><button class="btn sec" id="filmShareBtn" style="margin-top:11px;font-size:13px">${ICON_SHARE}Compartilhar este filme</button>
+    <div class="lbl">Sua nota</div>${starWidget(r.r||0,k)}<div class="rate-hint">Deslize sobre as estrelas para pré-visualizar · metade esquerda = ,5</div><button class="btn sec" id="filmShareBtn" style="margin-top:11px;font-size:13px">${ICON_SHARE}Compartilhar este filme</button>
     ${_filmExtrasHtml(r)}
     ${cast?`<div class="lbl">Elenco principal</div><div class="cast">${cast}</div>`:(r.id?'<div class="note">Elenco ainda sendo baixado…</div>':'')}`);
   _wireFilmExtras(k);}
@@ -2147,39 +2154,128 @@ function _filmExtrasHtml(r){
   const rewatchSection=isWl?'':`<div class="lbl">Revisões</div><div class="rw-ctl"><button class="rw-b" id="rwMinus">−</button><span class="rw-n" id="rwN">${rwN} ${rwN===1?'vez':'vezes'}</span><button class="rw-b" id="rwPlus">+</button></div>`;
   // data de visualização
   const tsVal=r.ts?new Date(r.ts).toISOString().slice(0,10):'';
-  const dateSection=isWl?'':`<div class="lbl">Data em que assisti</div><input type="date" id="filmDate" class="film-date" value="${tsVal}" style="background:var(--panel);border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:7px 10px;font-size:13px;width:100%;box-sizing:border-box"/>`;
-  // botão editar nota (não conta como revisão)
-  const editNoteBtn=(!isWl&&r.r!=null)?`<button class="btn sec" id="filmEditNote" style="font-size:12px;margin-top:4px">Corrigir nota (sem contar revisão)</button>`:'';
+  const dateHint=(!isWl&&!r.ts)?'<div class="rate-hint" style="margin-top:4px">Adicione uma data para aparecer em Últimos vistos</div>':'';
+  const dateSection=isWl?'':`<div class="lbl">Data em que assisti</div><input type="date" id="filmDate" class="film-date" value="${tsVal}" style="background:var(--panel);border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:7px 10px;font-size:13px;width:100%;box-sizing:border-box"/>${dateHint}`;
+
   const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const noteSection=`<div class="lbl">Anotação / mini-review</div><textarea class="film-note" id="filmNote" placeholder="o que achou? (opcional)">${esc(r.note)}</textarea>`;
   const tags=(r.tags||[]);
   const tagsSection=`<div class="lbl">Tags</div><div class="film-tags" id="filmTags">${tags.map(t=>`<span class="ftag" data-t="${(t||'').replace(/"/g,'&quot;')}">${t} <i>×</i></span>`).join('')}<input class="ftag-in" id="filmTagIn" placeholder="+ tag" autocomplete="off"/></div>`;
-  return wlSection+rewatchSection+dateSection+editNoteBtn+noteSection+tagsSection;
+  return wlSection+rewatchSection+dateSection+noteSection+tagsSection;
 }
-let _filmEditMode=false;
 function _wireFilmExtras(k){
-  _filmEditMode=false;
   const nt=$('#filmNote');if(nt)nt.onblur=()=>{const rec=cache[k];if(!rec)return;const v=nt.value.trim();if(v)rec.note=v;else delete rec.note;put(k,rec);};
   const ti=$('#filmTagIn');if(ti)ti.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();const v=ti.value.trim().toLowerCase();if(v){const rec=cache[k];if(rec){rec.tags=[...new Set([...(rec.tags||[]),v])];put(k,rec);openFilm(k);}}}};
-  const fd=$('#filmDate');if(fd)fd.onchange=()=>{const rec=cache[k];if(!rec||rec.wl)return;const d=new Date(fd.value);if(!isNaN(d)){rec.ts=d.getTime();put(k,rec);toast('Data atualizada');}};
-  const en=$('#filmEditNote');if(en)en.onclick=()=>{_filmEditMode=true;en.textContent='✓ Próxima nota corrige sem revisão';en.style.borderColor='var(--acc1)';en.style.color='var(--acc1)';toast('Avalie as estrelas para corrigir a nota sem contar revisão');};
+  const fd=$('#filmDate');if(fd)fd.onchange=()=>{const rec=cache[k];if(!rec||rec.wl)return;const v=fd.value;if(!v){delete rec.ts;put(k,rec);toast('Data removida');render();return;}const d=new Date(v+'T12:00:00');if(!isNaN(d)){rec.ts=d.getTime();put(k,rec);toast('Data atualizada');render();}};
 }
+/* ── star hover/touch preview ── */
+(function(){
+  function _starsFromPoint(x,y,container){
+    const el=document.elementFromPoint(x,y);if(!el)return null;
+    const s=el.closest&&el.closest('.s');if(!s)return null;
+    if(container&&!container.contains(s))return null;
+    const stars=s.closest('.stars');if(!stars)return null;
+    const rect=s.getBoundingClientRect();
+    const half=(x-rect.left)<rect.width/2;
+    return{stars,val:half?+s.dataset.i-0.5:+s.dataset.i,key:s.dataset.key};
+  }
+  function _commitStar(info,fromSearch){
+    if(!info)return;
+    const{key:k,val}=info;
+    if(fromSearch){
+      const m=window._sres&&window._sres[k];if(!m)return;
+      let rec=cache[k]||{t:m.t,y:m.y};
+      rec.r=val;delete rec.wl;rec.id=m.id;rec.po=m.po;rec.gids=m.gids;if(m.lang)rec.lang=m.lang;
+      rec.ti=m.t;rec.ye=String(m.y);rec.s=1;rec.src='user';rec.ts=Date.now();
+      cache[k]=rec;put(k,rec);PEOPLE=null;toast('Avaliado: '+m.t+' '+star(val));
+      doSearch($('#searchIn').value);
+      if(rec.id&&!rec.cc){credits(rec.id).then(c=>{if(c){rec.ca=c.ca;rec.di=c.di;rec.co=c.co;if(c.rt)rec.rt=c.rt;rec.lang=c.lang;}rec.cc=1;put(k,rec);PEOPLE=null;});}
+      return;
+    }
+    const rec=cache[k];if(!rec)return;
+    const wasWl=!!rec.wl;const hadRating=rec.r!=null&&!wasWl;
+    rec.r=val;delete rec.wl;rec.s=1;if(!hadRating)rec.ts=Date.now();
+    put(k,rec);PEOPLE=null;
+    toast((hadRating?'Nota corrigida: ':(wasWl?'Visto! ':'Avaliado: '))+rec.t+' '+star(val));
+    openFilm(k);
+  }
+  /* ── sheet (modal filme) ── */
+  const sh=$('#sheet');
+  sh.addEventListener('mousemove',e=>{
+    const s=e.target.closest&&e.target.closest('.s');if(!s)return;
+    const stars=s.closest('.stars');if(!stars)return;
+    const rect=s.getBoundingClientRect();const half=(e.clientX-rect.left)<rect.width/2;
+    _previewStars(stars,half?+s.dataset.i-0.5:+s.dataset.i);
+  });
+  sh.addEventListener('mouseleave',e=>{
+    const stars=e.target.classList&&e.target.classList.contains('stars')?e.target:null;
+    if(stars)_previewStars(stars,+(stars.dataset.orig||0));
+  },true);
+  let _touchActive=false;
+  sh.addEventListener('touchstart',e=>{
+    const s=e.target.closest&&e.target.closest('.s');_touchActive=!!s;
+  },{passive:true});
+  sh.addEventListener('touchmove',e=>{
+    if(!_touchActive)return;
+    const t=e.touches[0];
+    const info=_starsFromPoint(t.clientX,t.clientY,sh);
+    if(info)_previewStars(info.stars,info.val);
+    e.preventDefault();
+  },{passive:false});
+  sh.addEventListener('touchend',e=>{
+    if(!_touchActive)return;_touchActive=false;
+    const t=e.changedTouches[0];
+    const info=_starsFromPoint(t.clientX,t.clientY,sh);
+    if(info){_commitStar(info,false);e.preventDefault();}
+  },{passive:false});
+  /* ── searchRes ── */
+  const sr=$('#searchRes');
+  sr.addEventListener('mousemove',e=>{
+    const s=e.target.closest&&e.target.closest('.s');if(!s)return;
+    const stars=s.closest('.stars');if(!stars)return;
+    const rect=s.getBoundingClientRect();const half=(e.clientX-rect.left)<rect.width/2;
+    _previewStars(stars,half?+s.dataset.i-0.5:+s.dataset.i);
+  });
+  sr.addEventListener('mouseleave',e=>{
+    const stars=e.target.classList&&e.target.classList.contains('stars')?e.target:null;
+    if(stars)_previewStars(stars,+(stars.dataset.orig||0));
+  },true);
+  let _srTouchActive=false;
+  sr.addEventListener('touchstart',e=>{
+    const s=e.target.closest&&e.target.closest('.s');_srTouchActive=!!s;
+  },{passive:true});
+  sr.addEventListener('touchmove',e=>{
+    if(!_srTouchActive)return;
+    const t=e.touches[0];
+    const info=_starsFromPoint(t.clientX,t.clientY,sr);
+    if(info)_previewStars(info.stars,info.val);
+    e.preventDefault();
+  },{passive:false});
+  sr.addEventListener('touchend',e=>{
+    if(!_srTouchActive)return;_srTouchActive=false;
+    const t=e.changedTouches[0];
+    const info=_starsFromPoint(t.clientX,t.clientY,sr);
+    if(info){_commitStar(info,true);e.preventDefault();}
+  },{passive:false});
+})();
 $('#sheet').addEventListener('click',e=>{
   if(e.target.id==='filmShareBtn'){openShareCard(_curFilmKey);$('#modal').classList.remove('show');return;}
   if(e.target.id==='rwPlus'||e.target.id==='rwMinus'){const rec=cache[_curFilmKey];if(!rec)return;rec.rw=Math.max(0,(rec.rw||0)+(e.target.id==='rwPlus'?1:-1));put(_curFilmKey,rec);const el=$('#rwN');if(el)el.textContent=rec.rw+' '+(rec.rw===1?'vez':'vezes');return;}
   if(e.target.id==='filmWlRemove'){del(_curFilmKey);$('#modal').classList.remove('show');PEOPLE=null;toast('Removido da watchlist');render();return;}
   const ftx=e.target.closest('.ftag');if(ftx&&e.target.tagName==='I'){const rec=cache[_curFilmKey];if(rec){rec.tags=(rec.tags||[]).filter(x=>x!==ftx.dataset.t);if(!rec.tags.length)delete rec.tags;put(_curFilmKey,rec);ftx.remove();}return;}
-  const s=e.target.closest('.s');if(!s)return;const k=s.dataset.key,i=+s.dataset.i;
+  const s=e.target.closest('.s');if(!s)return;
+  const k=s.dataset.key,i=+s.dataset.i;
   const rect=s.getBoundingClientRect();const half=(e.clientX-rect.left)<rect.width/2;const val=half?i-0.5:i;
-  const rec=cache[k];if(!rec)return;const wasWl=!!rec.wl;const isEdit=_filmEditMode&&!wasWl&&rec.r!=null;
-  rec.r=val;delete rec.wl;rec.s=1;if(!isEdit)rec.ts=Date.now();put(k,rec);PEOPLE=null;
-  toast((isEdit?'Nota corrigida: ':(wasWl?'Visto! ':'Avaliado: '))+rec.t+' '+star(val));_filmEditMode=false;openFilm(k);
-});
+  const rec=cache[k];if(!rec)return;const wasWl=!!rec.wl;const hadRating=rec.r!=null&&!wasWl;
+  rec.r=val;delete rec.wl;rec.s=1;if(!hadRating)rec.ts=Date.now();put(k,rec);PEOPLE=null;
+  toast((hadRating?'Nota corrigida: ':(wasWl?'Visto! ':'Avaliado: '))+rec.t+' '+star(val));openFilm(k);
+})
 $('#modal').onclick=e=>{if(e.target.id==='modal')$('#modal').classList.remove('show');};
 
 /* ---------- buscar & avaliar ---------- */
 let searchTimer=null;
-function starWidget(v,key){let h='';for(let i=1;i<=5;i++){const cls=v>=i?'full':(v>=i-0.5?'half':'');h+=`<span class="s ${cls}" data-key="${key}" data-i="${i}">${STAR_SVG}<span class="fg">${STAR_SVG}</span></span>`;}return `<div class="stars" data-key="${key}">${h}</div>`;}
+function _previewStars(el,val){el.querySelectorAll('.s').forEach((s,idx)=>{const i=idx+1;s.className='s '+(val>=i?'full':val>=i-0.5?'half':'');});}
+function starWidget(v,key){let h='';for(let i=1;i<=5;i++){const cls=v>=i?'full':(v>=i-0.5?'half':'');h+=`<span class="s ${cls}" data-key="${key}" data-i="${i}">${STAR_SVG}<span class="fg">${STAR_SVG}</span></span>`;}return `<div class="stars" data-key="${key}" data-orig="${v}">${h}</div>`;}
 async function doSearch(q){
   if(!q.trim()){$('#searchRes').innerHTML='';return;}
   if(!KEY){$('#searchRes').innerHTML='<div class="note">Configure a chave do TMDB primeiro (engrenagem).</div>';return;}
