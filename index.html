@@ -290,6 +290,16 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .film-wl{background:rgba(255,46,67,.08);border:1px solid color-mix(in srgb,var(--acc2) 40%,var(--line));border-radius:10px;padding:9px 12px;margin-top:13px;font-size:12.5px;color:var(--mut)}
 .film-wl b{color:var(--acc2)}
 .rw-ctl{display:flex;align-items:center;gap:12px}
+.film-date{color-scheme:dark}
+.daily-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.daily-row:last-child{border-bottom:none}
+.daily-row img,.daily-row .dp{width:38px;height:57px;border-radius:4px;object-fit:cover;background:var(--p2);flex:none}
+.daily-meta{flex:1;min-width:0}
+.daily-title{font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.daily-sub{font-size:12px;color:var(--mut);margin-top:2px}
+.daily-rating{font-size:13px;color:var(--gold);font-weight:700;white-space:nowrap}
+.daily-edit{font-size:11px;color:var(--acc1);border:1px solid var(--acc1);border-radius:5px;padding:2px 7px;background:transparent;cursor:pointer;white-space:nowrap}
+.daily-sec{background:var(--panel);border-radius:10px;padding:10px 12px;margin:0 0 14px;max-height:360px;overflow:hidden}
 .rw-b{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:18px;font-weight:800;cursor:pointer;line-height:1}
 .rw-n{font-size:13.5px;font-weight:700;color:var(--gold);min-width:64px}
 .film-note{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:10px;font-size:13.5px;min-height:54px;resize:vertical;font-family:inherit}
@@ -1074,7 +1084,8 @@ const _filmoCache={};
 async function directorFilmography(id){
   if(_filmoCache[id])return _filmoCache[id];
   try{const j=await tmdb('/person/'+id+'/movie_credits',{language:'pt-BR'});if(!j)return null;
-    const seen=new Map();(j.crew||[]).filter(c=>c.job==='Director'&&!c.adult).forEach(c=>{if(!seen.has(c.id))seen.set(c.id,c);});
+    // Exclui videoclipes, conteúdo adulto e itens sem votos suficientes (curtas/lives/etc.)
+    const seen=new Map();(j.crew||[]).filter(c=>c.job==='Director'&&!c.adult&&!c.video&&(c.vote_count||0)>=50).forEach(c=>{if(!seen.has(c.id))seen.set(c.id,c);});
     return(_filmoCache[id]=[...seen.values()]);
   }catch(e){return null;}
 }
@@ -2033,6 +2044,14 @@ function _heatmapHtml(year){
     +'<div class="hm-wrap"><div class="hm-labels">'+labels+'</div><div class="hm-grid">'+grid+'</div></div>'
     +'<div class="hm-legend">menos <span class="hm-c hm-l0"></span><span class="hm-c hm-l1"></span><span class="hm-c hm-l2"></span><span class="hm-c hm-l3"></span><span class="hm-c hm-l4"></span> mais</div>';
 }
+function renderDaily(){
+  const recent=films().filter(r=>r.ts&&r.r!=null).sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,30);
+  if(!recent.length)return '<div class="note">Nenhum filme registrado ainda. Avalie ou importe filmes.</div>';
+  const fmtD=ts=>{const d=new Date(ts),now=new Date();const diff=Math.floor((now-d)/864e5);if(diff===0)return 'hoje';if(diff===1)return 'ontem';if(diff<7)return diff+'d atrás';return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'});};
+  return recent.map(r=>{const k=key(r.t,r.y);const po=r.po?`<img src="${IMG}/w92${r.po}"/>`:'<div class="dp"></div>';
+    return `<div class="daily-row" data-k="${k.replace(/"/g,'&quot;')}">${po}<div class="daily-meta"><div class="daily-title">${r.ti||r.t}</div><div class="daily-sub">${r.y||''}${r.ts?' · '+fmtD(r.ts):''}${(r.rw||0)>=1?' · revisão×'+(r.rw||0):''}${(r.di||[]).length?' · '+(r.di||[])[0][1]:''}</div></div><div class="daily-rating">${r.r!=null?star(r.r):'—'}</div></div>`;
+  }).join('');
+}
 function renderStats(){
   const all=films();
   if(!all.length){$('#view').innerHTML='<div class="empty">Avalie ou importe filmes para ver suas estatísticas.</div>';return;}
@@ -2045,6 +2064,10 @@ function renderStats(){
   let html='<div class="st-hd"><div class="st-hd-big">'+fmt(st.total)+'</div><div class="st-hd-sub">filmes · '+fmt(st.totalHours)+'h · '+(st.avg!=null?st.avg.toFixed(2).replace('.',',')+'★ média':'sem nota')+'</div>'
     +(ms?'<div class="ms-bar"><i style="width:'+msPct+'%"></i></div><div class="ms-lbl">faltam <b>'+fmt(ms-st.total)+'</b> p/ o marco de '+fmt(ms)+'</div>':'<div class="ms-lbl">'+ICON_TROPHY+'Você já passou de '+fmt(prev)+' filmes</div>')
     +'</div>';
+  // daily – últimos vistos
+  let _dailyExpanded=false;
+  const dailyRows=renderDaily();
+  html+='<div class="st-sec-hd" style="display:flex;align-items:center;justify-content:space-between;margin:18px 0 8px"><span class="eyb" style="margin:0">Últimos vistos</span><button class="btn sec" id="dailyExpBtn" style="font-size:11px;padding:4px 10px">Ver todos</button></div><div class="daily-sec" id="dailyList" style="">'+dailyRows+'</div>';
   // heatmap
   const hasTs=_tsFilms().length>0;
   html+='<span class="eyb" style="margin-top:18px">Atividade</span>';
@@ -2093,6 +2116,8 @@ function renderStats(){
   shown=shown.slice().sort((a,b)=>(b.done-a.done)||(b.pct-a.pct)||(b.v-a.v)||a.n.localeCompare(b.n));
   html+='<div class="ach-grid">'+(shown.length?shown.map(a=>'<div class="ach '+(a.done?'on':'')+'"'+(a.setIdx!=null?' data-ai="'+a.setIdx+'"':'')+'><div class="ach-ic">'+(AICON[a.icon]||AICON.star)+'</div><div class="ach-bd"><div class="ach-n">'+a.n+(a.done?' '+ICON_CHECK:'')+'</div><div class="ach-d">'+a.d+'</div><div class="ach-bar"><i style="width:'+a.pct+'%"></i></div><div class="ach-p">'+fmt(Math.min(a.v,a.goal))+'/'+fmt(a.goal)+(a.setIdx!=null?' · ver filmes':'')+'</div></div></div>').join(''):'<div class="note">Nenhuma conquista neste filtro ainda.</div>')+'</div>';
   $('#view').innerHTML=html;
+  const db=$('#dailyList');if(db){db.onclick=e=>{const row=e.target.closest('.daily-row');if(row)openFilm(row.dataset.k);};}
+  const deb=$('#dailyExpBtn');if(deb)deb.onclick=()=>{const dl=$('#dailyList');if(!dl)return;const isExp=dl.style.maxHeight!=='';dl.style.maxHeight=isExp?'':'none';dl.style.overflow=isExp?'':'visible';deb.textContent=isExp?'Ver todos':'Recolher';};
   const hy=$('#hmYears');if(hy)hy.onclick=e=>{const b=e.target.closest('button');if(b){statsYear=+b.dataset.y;renderStats();}};
   const ac=$('#achCat');if(ac)ac.onclick=e=>{const b=e.target.closest('button');if(b){_achCat=b.dataset.c;renderStats();}};
   $$('.ach[data-ai]').forEach(el=>el.onclick=()=>openAchievement(+el.dataset.ai));
@@ -2109,27 +2134,35 @@ async function openFilm(k){_curFilmKey=k;const r=cache[k];if(!r)return;const t=r
   const runtime=r.rt?`${Math.floor(r.rt/60)}h ${r.rt%60}min`:'';
   const tagline=r.tg?`<div class="yr" style="margin-top:4px;font-style:italic;color:var(--dim)">"${r.tg}"</div>`:'';
   const overview=r.ov?`<div class="lbl">Sinopse</div><p style="font-size:13px;color:var(--mut);line-height:1.6;margin:0 0 4px">${r.ov}</p>`:'';
-  $('#sheet').innerHTML=`<div class="top">${poster}<div><h3>${t}</h3><div class="yr">${y}${runtime?' · <b>'+runtime+'</b>':''}${r.r!=null?` · sua nota <b>${star(r.r)}</b>`:''}</div>${tagline}${gn?`<div class="yr" style="margin-top:6px">${gn}</div>`:''}${dirs?`<div class="yr" style="margin-top:6px">Direção: <b>${dirs}</b></div>`:''}</div></div>
+  showSheet(`<div class="top">${poster}<div><h3>${t}</h3><div class="yr">${y}${runtime?' · <b>'+runtime+'</b>':''}${r.r!=null?` · sua nota <b>${star(r.r)}</b>`:''}</div>${tagline}${gn?`<div class="yr" style="margin-top:6px">${gn}</div>`:''}${dirs?`<div class="yr" style="margin-top:6px">Direção: <b>${dirs}</b></div>`:''}</div></div>
     ${overview}
     <div class="lbl">Sua nota</div>${starWidget(r.r||0,k)}<div class="rate-hint">Toque na metade esquerda da estrela para nota com ,5</div><button class="btn sec" id="filmShareBtn" style="margin-top:11px;font-size:13px">${ICON_SHARE}Compartilhar este filme</button>
     ${_filmExtrasHtml(r)}
-    ${cast?`<div class="lbl">Elenco principal</div><div class="cast">${cast}</div>`:(r.id?'<div class="note">Elenco ainda sendo baixado…</div>':'')}`;
-  _wireFilmExtras(k);
-  $('#modal').classList.add('show');}
+    ${cast?`<div class="lbl">Elenco principal</div><div class="cast">${cast}</div>`:(r.id?'<div class="note">Elenco ainda sendo baixado…</div>':'')}`);
+  _wireFilmExtras(k);}
 function _filmExtrasHtml(r){
   const isWl=!!r.wl;
   const wlSection=isWl?`<div class="film-wl">${ICON_EYE} Está na sua <b>watchlist</b>. Toque nas estrelas acima para marcar como visto.</div><button class="btn sec" id="filmWlRemove" style="font-size:13px;margin-top:8px">Tirar da watchlist</button>`:'';
   const rwN=r.rw||0;
-  const rewatchSection=isWl?'':`<div class="lbl">Revi este filme</div><div class="rw-ctl"><button class="rw-b" id="rwMinus">−</button><span class="rw-n" id="rwN">${rwN} ${rwN===1?'vez':'vezes'}</span><button class="rw-b" id="rwPlus">+</button></div>`;
+  const rewatchSection=isWl?'':`<div class="lbl">Revisões</div><div class="rw-ctl"><button class="rw-b" id="rwMinus">−</button><span class="rw-n" id="rwN">${rwN} ${rwN===1?'vez':'vezes'}</span><button class="rw-b" id="rwPlus">+</button></div>`;
+  // data de visualização
+  const tsVal=r.ts?new Date(r.ts).toISOString().slice(0,10):'';
+  const dateSection=isWl?'':`<div class="lbl">Data em que assisti</div><input type="date" id="filmDate" class="film-date" value="${tsVal}" style="background:var(--panel);border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:7px 10px;font-size:13px;width:100%;box-sizing:border-box"/>`;
+  // botão editar nota (não conta como revisão)
+  const editNoteBtn=(!isWl&&r.r!=null)?`<button class="btn sec" id="filmEditNote" style="font-size:12px;margin-top:4px">Corrigir nota (sem contar revisão)</button>`:'';
   const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const noteSection=`<div class="lbl">Anotação / mini-review</div><textarea class="film-note" id="filmNote" placeholder="o que achou? (opcional)">${esc(r.note)}</textarea>`;
   const tags=(r.tags||[]);
   const tagsSection=`<div class="lbl">Tags</div><div class="film-tags" id="filmTags">${tags.map(t=>`<span class="ftag" data-t="${(t||'').replace(/"/g,'&quot;')}">${t} <i>×</i></span>`).join('')}<input class="ftag-in" id="filmTagIn" placeholder="+ tag" autocomplete="off"/></div>`;
-  return wlSection+rewatchSection+noteSection+tagsSection;
+  return wlSection+rewatchSection+dateSection+editNoteBtn+noteSection+tagsSection;
 }
+let _filmEditMode=false;
 function _wireFilmExtras(k){
+  _filmEditMode=false;
   const nt=$('#filmNote');if(nt)nt.onblur=()=>{const rec=cache[k];if(!rec)return;const v=nt.value.trim();if(v)rec.note=v;else delete rec.note;put(k,rec);};
   const ti=$('#filmTagIn');if(ti)ti.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();const v=ti.value.trim().toLowerCase();if(v){const rec=cache[k];if(rec){rec.tags=[...new Set([...(rec.tags||[]),v])];put(k,rec);openFilm(k);}}}};
+  const fd=$('#filmDate');if(fd)fd.onchange=()=>{const rec=cache[k];if(!rec||rec.wl)return;const d=new Date(fd.value);if(!isNaN(d)){rec.ts=d.getTime();put(k,rec);toast('Data atualizada');}};
+  const en=$('#filmEditNote');if(en)en.onclick=()=>{_filmEditMode=true;en.textContent='✓ Próxima nota corrige sem revisão';en.style.borderColor='var(--acc1)';en.style.color='var(--acc1)';toast('Avalie as estrelas para corrigir a nota sem contar revisão');};
 }
 $('#sheet').addEventListener('click',e=>{
   if(e.target.id==='filmShareBtn'){openShareCard(_curFilmKey);$('#modal').classList.remove('show');return;}
@@ -2138,8 +2171,9 @@ $('#sheet').addEventListener('click',e=>{
   const ftx=e.target.closest('.ftag');if(ftx&&e.target.tagName==='I'){const rec=cache[_curFilmKey];if(rec){rec.tags=(rec.tags||[]).filter(x=>x!==ftx.dataset.t);if(!rec.tags.length)delete rec.tags;put(_curFilmKey,rec);ftx.remove();}return;}
   const s=e.target.closest('.s');if(!s)return;const k=s.dataset.key,i=+s.dataset.i;
   const rect=s.getBoundingClientRect();const half=(e.clientX-rect.left)<rect.width/2;const val=half?i-0.5:i;
-  const rec=cache[k];if(!rec)return;const wasWl=!!rec.wl;rec.r=val;delete rec.wl;rec.s=1;rec.ts=Date.now();put(k,rec);PEOPLE=null;
-  toast((wasWl?'Visto! ':'Avaliado: ')+rec.t+' '+star(val));openFilm(k);
+  const rec=cache[k];if(!rec)return;const wasWl=!!rec.wl;const isEdit=_filmEditMode&&!wasWl&&rec.r!=null;
+  rec.r=val;delete rec.wl;rec.s=1;if(!isEdit)rec.ts=Date.now();put(k,rec);PEOPLE=null;
+  toast((isEdit?'Nota corrigida: ':(wasWl?'Visto! ':'Avaliado: '))+rec.t+' '+star(val));_filmEditMode=false;openFilm(k);
 });
 $('#modal').onclick=e=>{if(e.target.id==='modal')$('#modal').classList.remove('show');};
 
