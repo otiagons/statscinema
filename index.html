@@ -318,7 +318,7 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .bio-reco-ctx b{color:var(--ink)}
 .bio-reco-ctx .season{color:var(--acc2)}
 .bio-reco-panel{display:flex;flex-direction:column}
-.bio-spin-overlay{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;border-radius:12px;background:rgba(0,0,0,.38)}
+.bio-spin-overlay{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;border-radius:12px;background:var(--bg)}
 .bio-spin-overlay .spin-ldr{width:26px;height:26px;border:2.5px solid var(--p2);border-top-color:var(--acc1);border-radius:50%;animation:recospin .7s linear infinite;margin-bottom:9px}
 .bio-spin-overlay .spin-lbl{font-size:12px;color:var(--ink);background:rgba(0,0,0,.8);padding:4px 13px;border-radius:20px}
 #bioRecoPanel{transition:opacity .4s ease}
@@ -399,11 +399,19 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .filmo-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc1))}
 .sr-poster{position:relative;flex:none}
 .sr-poster img.blur-seen{filter:blur(3.5px) brightness(.55);transition:filter .15s}
+.filmo-blur-seen .sr.seen .sr-poster img,.filmo-blur-seen .sr.seen .sr-poster .pp{filter:blur(3px) brightness(.5)}
+.filmo-blur-seen .sr.seen .si{opacity:.45}
 .sr-seen-badge{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.22);border-radius:5px;pointer-events:none}
 .sr.seen .si .st,.sr.seen .si .sy{opacity:.6}
 .see-more{display:inline-block;color:var(--acc1);font-weight:700;cursor:pointer;font-size:12.5px;margin:6px 0;user-select:none}
 .filmo-hide-row{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--mut);margin:0 0 9px;cursor:pointer;user-select:none}
 .filmo-hide-row input{accent-color:var(--acc1);width:15px;height:15px}
+.filmo-rate-btn{background:none;border:1px solid var(--line);color:var(--mut);border-radius:7px;padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;margin-top:5px;display:inline-block}
+.filmo-rate-btn:hover,.filmo-rate-btn:active{border-color:var(--acc1);color:var(--acc1)}
+.filmo-unseen-info{font-size:11.5px;color:var(--dim);margin:6px 0 4px}
+.filmo-sort-row{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 9px}
+.filmo-sort-btn{background:none;border:1px solid var(--line);color:var(--mut);border-radius:16px;padding:4px 11px;font-size:11.5px;font-weight:700;cursor:pointer}
+.filmo-sort-btn.on{border-color:var(--acc1);color:var(--acc1);background:rgba(30,201,138,.07)}
 /* ── Stats tab ── */
 .st-hd{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px 16px;margin-top:13px;text-align:center}
 .st-hd-big{font-size:38px;font-weight:800;color:var(--acc1);line-height:1}
@@ -775,6 +783,7 @@ const ICON_EXT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strok
 const ICON_EYE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="2.6"/></svg>';
 const ICON_SPARK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-3px;margin-right:5px"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 4v3M17 5.5h3"/></svg>';
 let KEY=null, cache={}, db=null, tab='bio', busy=false, PEOPLE=null;
+const _filmoCache={};
 let pSort='rt', pDec=null, rScope='all', rDec=null, rYr=null, gSort='count', expanded={};
 let fView='list', rView='list', gView='list';  // 'list' or 'country'
 let fMode='all', fLang='', fTag='';  // filtros da aba Filmes
@@ -827,7 +836,7 @@ function del(k){delete cache[k];try{db.transaction('films','readwrite').objectSt
 function clearCredits(){Object.values(cache).forEach(r=>{delete r.ca;delete r.di;delete r.cc;delete r.id;delete r.po;delete r.gids;delete r.s;delete r.pc;delete r.lang;delete r.rt;put(key(r.t,r.y),r);});}
 // allRecords() = tudo no cache (inclui watchlist). films() = só assistidos. watchlist() = "quero ver".
 function allRecords(){return Object.values(cache);}
-function films(){return Object.values(cache).filter(r=>!r.wl);}
+function films(){return Object.values(cache).filter(r=>!r.wl&&!r._stub);}
 function watchlist(){return Object.values(cache).filter(r=>r.wl);}
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
 
@@ -1294,7 +1303,8 @@ function _filmoRow(m){
   const badge=seen?`<div class="sr-seen-badge" title="Voce ja viu">${SEEN_BADGE_SVG}</div>`:'';
   const ratingTxt=myR!=null?' · sua nota '+star(myR):(m.vote_average?' · '+m.vote_average.toFixed(1)+'★ TMDB':'');
   const wlBtn=seen?'':`<button class="wl-btn${inWl?' on':''}" data-t="${(m.title||'').replace(/"/g,'&quot;')}" data-y="${y}" data-id="${m.id}" data-po="${m.poster_path||''}">${inWl?'✓ ver depois':'+ ver depois'}</button>`;
-  return `<div class="sr${seen?' seen':''}"><div class="sr-poster">${po}${badge}</div><div class="si"><div class="st">${_titlePair(m.original_title||m.title,m.original_title&&m.original_title!==m.title?m.title:null)}</div><div class="sy">${y||'—'}${m.vote_count?' · '+fmt(m.vote_count)+' votos':''}${ratingTxt}</div></div>${wlBtn}</div>`;
+  const rateBtn=seen?'':`<button class="filmo-rate-btn" data-filmoopen="${dk}" data-tmdbid="${m.id}" data-ptitle="${(m.title||'').replace(/"/g,'&quot;')}" data-ppo="${m.poster_path||''}">★ Avaliar</button>`;
+  return `<div class="sr${seen?' seen':''}"><div class="sr-poster">${po}${badge}</div><div class="si"><div class="st">${_titlePair(m.original_title||m.title,m.original_title&&m.original_title!==m.title?m.title:null)}</div><div class="sy">${y||'—'}${m.vote_count?' · '+fmt(m.vote_count)+' votos':''}${ratingTxt}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${wlBtn}${rateBtn}</div></div></div>`;
 }
 const _filmoState={};
 // elId: id do container; stKey: chave de estado (unica por pessoa+papel); full: lista completa do TMDB; labelText: titulo da secao; kind: 'dir'|'actor'; id: tmdb person id
@@ -1308,22 +1318,25 @@ function _renderFilmoEl(elId,stKey,full,labelText,kind,id){
   const total=valid.length,pct=total?Math.round(seenCount/total*100):0;
   let listHtml,ctrlHtml;
   if(st.mode==='top'){
-    const unseen=valid.filter(m=>!_localRecFor(m)).sort((a,b)=>(b.vote_count||0)-(a.vote_count||0)).slice(0,8);
-    listHtml=unseen.length?`<div class="note" style="margin:8px 0 4px">Ainda não viu (mais populares):</div>${unseen.map(_filmoRow).join('')}`:'<div class="note" style="margin:6px 0 0">'+ICON_CHECK+' Você viu toda a filmografia principal'+(kind==='dir'?' dele':'')+'.</div>';
-    ctrlHtml=`<button class="see-more" data-filmo-expand="${stKey}">Ver filmografia completa (${fmt(total)}) ›</button>`;
+    // Default: filmes vistos (por popularidade), depois contador de não vistos
+    const seenArr=valid.filter(m=>!!_localRecFor(m)).sort((a,b)=>(b.vote_count||0)-(a.vote_count||0)).slice(0,8);
+    const unseenCount=valid.filter(m=>!_localRecFor(m)).length;
+    listHtml=seenArr.length?seenArr.map(_filmoRow).join(''):'<div class="note" style="margin:6px 0 0">Nenhum filme desta filmografia na sua lista ainda.</div>';
+    const unseenNote=unseenCount?`<div class="filmo-unseen-info">+ ${unseenCount} não ${unseenCount===1?'visto':'vistos'}</div>`:'';
+    ctrlHtml=unseenNote+`<button class="see-more" data-filmo-expand="${stKey}">Ver filmografia completa (${fmt(total)}) ›</button>`;
   }else{
     let arr=valid.slice();
-    if(st.hideSeen)arr=arr.filter(m=>!_localRecFor(m));
+    // hideSeen=true: blur via CSS class (não remove da lista)
     arr=_filmoSortArr(arr,st.sort);
-    const sortOpts=[['pop','Popularidade'],['year','Ano'],['rating','Nota do site'],['myrating','Minha nota']];
-    ctrlHtml=`<div class="controls" style="margin:8px 0 9px"><div class="seg" data-filmo-sort="${stKey}">${sortOpts.map(([s,l])=>`<button data-s="${s}" class="${st.sort===s?'on':''}">${l}</button>`).join('')}</div></div>`
-      +`<label class="filmo-hide-row"><input type="checkbox" data-filmo-hide="${stKey}" ${st.hideSeen?'checked':''}/> Ocultar filmes já vistos</label>`
-      +`<button class="see-more" data-filmo-collapse="${stKey}">Ver só os recomendados ‹</button>`;
+    const sortOpts=[['pop','Popular'],['rating','Nota'],['year','Ano']];
+    ctrlHtml=`<div class="filmo-sort-row">${sortOpts.map(([s,l])=>`<button class="filmo-sort-btn${st.sort===s?' on':''}" data-filmo-sort-key="${stKey}" data-s="${s}">${l}</button>`).join('')}</div>`
+      +`<label class="filmo-hide-row"><input type="checkbox" data-filmo-hide="${stKey}" ${st.hideSeen?'checked':''}/> Embaçar filmes já vistos</label>`
+      +`<button class="see-more" data-filmo-collapse="${stKey}">‹ Voltar ao resumo</button>`;
     listHtml=arr.length?arr.map(_filmoRow).join(''):'<div class="note" style="margin:6px 0 0">Nenhum filme com esse filtro.</div>';
   }
   el.innerHTML=`<div class="lbl">${labelText}</div>`
     +`<div class="filmo-prog"><div class="filmo-bar"><i style="width:${pct}%"></i></div><span>${seenCount} de ${total} vistos · ${pct}%</span></div>`
-    +ctrlHtml+listHtml;
+    +ctrlHtml+`<div class="${st.hideSeen?'filmo-blur-seen':''}">${listHtml}</div>`;
   _wlFilmoBtn(el);
 }
 function _filmoRefresh(stKey){
@@ -1331,6 +1344,17 @@ function _filmoRefresh(stKey){
   const full=st.kind==='dir'?_filmoCache[st.id]:_filmoCache['a_'+st.id];
   if(!full)return;
   _renderFilmoEl(st.elId,stKey,full,st.label,st.kind,st.id);
+}
+async function directorFilmography(id){
+  if(_filmoCache[id])return _filmoCache[id];
+  try{
+    const j=await tmdb('/person/'+id+'/movie_credits',{language:'pt-BR'});
+    if(!j)return null;
+    const seen=new Map();
+    (j.crew||[]).filter(c=>c.job==='Director'&&!c.adult&&!c.video&&(c.vote_count||0)>=10)
+      .forEach(c=>{if(!seen.has(c.id))seen.set(c.id,c);});
+    return(_filmoCache[id]=[...seen.values()].sort((a,b)=>(b.vote_count||0)-(a.vote_count||0)));
+  }catch(e){return null;}
 }
 async function fillDirFilmography(p){
   const list=await directorFilmography(p.id);
@@ -2064,7 +2088,7 @@ function _wireRecoCardClicks(panel){
       if(!m)return;
       const yr=(m.release_date||'').slice(0,4);
       const k=key(m.title,yr);
-      if(!cache[k])cache[k]={t:m.title,y:+yr||0,id:m.id,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null,ti:m.title,ot:m.original_title||m.title,ye:yr,src:'reco'};
+      if(!cache[k])cache[k]={t:m.title,y:+yr||0,id:m.id,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null,ti:m.title,ot:m.original_title||m.title,ye:yr,src:'reco',_stub:1};
       openFilm(k);
     };
   });
@@ -2124,21 +2148,12 @@ async function _runBioReco(vibe){
   const spiralEl=$('#spiral'),recoPanel=$('#bioRecoPanel');
   if(spiralEl){spiralEl.style.cssText='';spiralEl.style.opacity='1';spiralEl.style.display='';}
   if(recoPanel)recoPanel.style.display='none';
-  // Fase 1: Buscando — espiral girando rápido com itens placeholder
+  // Fase 1: espiral girando com placeholders durante a busca
   const savedSpeed=bio.speed??2;
   const loadItems=Array(5).fill(null).map(()=>({kind:'_',ref:'',label:'· · ·',sub:''}));
-  bio.speed=3;
-  renderSpiral(loadItems,bio.cat||'films');
-  bio.speed=savedSpeed;
-  // Overlay 'Buscando…'
-  sb.style.position='relative';
-  let ov=sb.querySelector('.bio-spin-overlay');
-  if(!ov){ov=document.createElement('div');ov.className='bio-spin-overlay';sb.appendChild(ov);}
-  ov.innerHTML='<div class="spin-ldr"></div><div class="spin-lbl">Buscando…</div>';
-  ov.style.display='flex';
+  bio.speed=3;renderSpiral(loadItems,bio.cat||'films');bio.speed=savedSpeed;
   // Fase 2: busca
   let movies=[];try{movies=await _fetchRecos(vibe);}catch(e){}
-  ov.style.display='none';
   if(!movies.length){
     stopSpiralAnim();
     if(spiralEl)spiralEl.innerHTML='<div class="reco-empty">Nenhum título encontrado. Tente outra vibe!</div>';
@@ -2763,7 +2778,7 @@ function _commitStar(info){
     put(k,rec);PEOPLE=null;toast('Nota apagada: '+rec.t);openFilm(k);return;
   }
   const wasWl=!!rec.wl;const hadRating=rec.r!=null&&!wasWl;
-  rec.r=val;delete rec.wl;rec.s=1;if(!hadRating&&!rec.ts)rec.ts=Date.now();
+  rec.r=val;delete rec.wl;delete rec._stub;rec.s=1;if(!hadRating&&!rec.ts)rec.ts=Date.now();
   put(k,rec);PEOPLE=null;
   toast((hadRating?'Nota corrigida: ':(wasWl?'Visto! ':'Avaliado: '))+rec.t+' '+star(val));
   openFilm(k);
@@ -2798,6 +2813,10 @@ $('#sheet').addEventListener('click',e=>{
   if(fcol){const stKey=fcol.dataset.filmoCollapse;const st=_filmoState[stKey];if(st){st.mode='top';_filmoRefresh(stKey);}return;}
   const fsort=e.target.closest('[data-filmo-sort] button');
   if(fsort){const stKey=fsort.closest('[data-filmo-sort]').dataset.filmoSort;const st=_filmoState[stKey];if(st){st.sort=fsort.dataset.s;_filmoRefresh(stKey);}return;}
+  const fsortBtn=e.target.closest('.filmo-sort-btn');
+  if(fsortBtn){const stKey=fsortBtn.dataset.filmoSortKey;const st=_filmoState[stKey];if(st){st.sort=fsortBtn.dataset.s;_filmoRefresh(stKey);}return;}
+  const frateBtn=e.target.closest('.filmo-rate-btn');
+  if(frateBtn){const dk2=frateBtn.dataset.filmoopen;const tmdbid=+frateBtn.dataset.tmdbid;const ptitle=frateBtn.dataset.ptitle||'';const ppo=frateBtn.dataset.ppo||'';if(!cache[dk2]&&tmdbid){const parts=dk2.split('|');cache[dk2]={t:ptitle||parts[0],y:+(parts[1]||0),id:tmdbid,po:ppo||null,src:'filmo',_stub:1};}openFilm(dk2);return;}
   if(e.target.dataset&&e.target.dataset.pid){
     const _pid=+e.target.dataset.pid,_pname=e.target.dataset.pname||'',_ppic=e.target.dataset.ppic||'';
     const _PP=people();const _pf=[..._PP.D,..._PP.A].find(p=>p.id===_pid);
@@ -2806,7 +2825,7 @@ $('#sheet').addEventListener('click',e=>{
   }
   if(e.target.tagName==='IMG'&&e.target.dataset.k){
     const _fk=e.target.dataset.k;
-    if(!cache[_fk]&&e.target.dataset.tmdbid){cache[_fk]={t:e.target.dataset.ptitle||_fk.split('|')[0],y:+((_fk.split('|')[1])||0),id:+e.target.dataset.tmdbid,po:e.target.dataset.ppo||null,src:'filmo'};}
+    if(!cache[_fk]&&e.target.dataset.tmdbid){cache[_fk]={t:e.target.dataset.ptitle||_fk.split('|')[0],y:+((_fk.split('|')[1])||0),id:+e.target.dataset.tmdbid,po:e.target.dataset.ppo||null,src:'filmo',_stub:1};}
     openFilm(_fk);return;
   }
   const ftx=e.target.closest('.ftag');if(ftx&&e.target.tagName==='I'){const rec=cache[_curFilmKey];if(rec){rec.tags=(rec.tags||[]).filter(x=>x!==ftx.dataset.t);if(!rec.tags.length)delete rec.tags;put(_curFilmKey,rec);ftx.remove();}return;}
@@ -2891,7 +2910,7 @@ $('#searchRes').addEventListener('click',async e=>{
     doSearch($('#searchIn').value);return;}
   const row=e.target.closest('.sr-row');if(!row)return;
   const k=row.dataset.k;const m=window._sres&&window._sres[k];if(!m)return;
-  if(!cache[k]){cache[k]={t:m.t,y:m.y,id:m.id,po:m.po,gids:m.gids,lang:m.lang,ti:m.t,ot:m.ot||m.t,ye:String(m.y),src:'user'};}
+  if(!cache[k]){cache[k]={t:m.t,y:m.y,id:m.id,po:m.po,gids:m.gids,lang:m.lang,ti:m.t,ot:m.ot||m.t,ye:String(m.y),src:'user',_stub:1};}
   await openFilm(k);
 });
 $('#search').onclick=()=>{$('#searchOver').classList.add('show');setTimeout(()=>$('#searchIn').focus(),100);};
@@ -3084,6 +3103,8 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopSpiralA
   }catch(e){console.warn('cloud boot:',e);}
   _cloudLoading=false;
   if(!Object.keys(cache).length){EMBED.forEach(f=>{const r={t:f[0],y:f[1],r:f[2]};cache[key(f[0],f[1])]=r;put(key(f[0],f[1]),r);});}
+  // Cleanup: marca como stub registros incorretamente adicionados (sem nota, sem data, não do Letterboxd)
+  {let _sf=0;Object.keys(cache).forEach(k=>{const r=cache[k];if(!r.wl&&!r.ts&&r.r==null&&r.src!=='lb'&&!r._stub){r._stub=1;try{db.transaction('films','readwrite').objectStore('films').put(r,k);}catch(e){}PEOPLE=null;_sf++;}});if(_sf)console.log('Stubs corrigidos:',_sf);}
   applyAccent();KEY=getKey();render();_checkMilestone();
   sync();
   _applyIconVer();
