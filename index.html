@@ -183,6 +183,7 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .favslot img{width:100%;height:100%;object-fit:cover}.favslot .ph2{font-size:9px;padding:4px;text-align:center;color:var(--dim);line-height:1.2}
 .bio-grid{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
 .spiralbox{flex:1 1 300px;min-width:270px;isolation:isolate}
+.spiral-hdr{display:flex;justify-content:flex-end;margin-bottom:4px}
 #spiral{position:relative;width:100%;overflow:hidden;background:var(--bg);border-radius:12px}
 .tag{position:absolute;transform:translate(-50%,-50%);background:rgba(0,0,0,0.70);border-radius:20px;padding:3px 10px;font-weight:800;font-size:12px;white-space:nowrap;cursor:pointer;max-width:46%;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 7px currentColor;transition:transform .12s,opacity .08s;letter-spacing:.01em}
 .tag:hover,.tag:active{transform:translate(-50%,-50%) scale(1.18);z-index:50!important}
@@ -315,7 +316,7 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .daily-card-sub{font-size:10px;color:var(--mut);margin-top:2px}
 .daily-card-rating{font-size:11px;color:var(--gold);font-weight:700;margin-top:2px}
 .daily-card-del{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.72);border:none;border-radius:4px;color:#fff;width:20px;height:20px;font-size:11px;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1}
-.daily-card:active .daily-card-del{display:flex}
+.daily-card:active .daily-card-del,.daily-card:hover .daily-card-del,.daily-card.del-show .daily-card-del{display:flex}
 .sheet-share{position:sticky;top:-1px;float:right;background:var(--panel);border:1px solid var(--line);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--mut);z-index:5;margin:0 0 6px 4px}
 .sheet-share:hover{color:var(--acc1)}
 .sheet-share svg{width:14px;height:14px}
@@ -1013,7 +1014,14 @@ function renderRanking(){
   const rs=$('#rSort');if(rs)rs.onclick=e=>{const b=e.target.closest('button');if(b){rankSort=b.dataset.s;expanded={};renderRanking();}};
   const rd=$('#rDec');if(rd)rd.onclick=e=>{const b=e.target.closest('button');if(b){rDec=+b.dataset.d;renderRanking();}};
   const ry=$('#rYr');if(ry)ry.onchange=e=>{rYr=+e.target.value;renderRanking();};
-  $$('.rw').forEach(el=>el.onclick=()=>{const rk=el.dataset.r;expanded[tab+rk]=!expanded[tab+rk];el.classList.toggle('open');const ex=$(`.exp[data-e="${rk}"]`);if(ex)ex.classList.toggle('show');});
+  const _rp=[...top,...rest];
+  $$('.pc').forEach((el,i)=>el.onclick=()=>openPerson(top[i]));
+  $$('.rw').forEach((el,i)=>{
+    el.onclick=e=>{
+      if(e.target.closest('.av,.nm')){openPerson(rest[i]);return;}
+      const rk=el.dataset.r;expanded[tab+rk]=!expanded[tab+rk];el.classList.toggle('open');const ex=$(`.exp[data-e="${rk}"]`);if(ex)ex.classList.toggle('show');
+    };
+  });
   const rcp=$('#rCPais');if(rcp)rcp.onclick=()=>{rView='country';renderRanking();};
 }
 
@@ -1344,8 +1352,9 @@ function renderBio(){
   $('#view').innerHTML=`<div class="bio-id"><div class="bia"><h2>${bio.name||'Seu perfil'}</h2><div class="bio-site">${site}</div></div><button class="icon-btn" id="bioEditBtn"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="#1ec98a" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="#ff2e43" stroke-width="1.6"/></svg></button><button class="icon-btn" id="shareBtn" title="Compartilhar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button></div>
     <span class="eyb">Top 5 favoritos</span><div class="favrow">${favHtml}</div>
     ${statsBioHTML()}
-    <div class="bio-grid"><div class="spiralbox"><div id="spiral"></div></div><div class="biolist">${listHtml}</div></div>
-    <div class="note">Categoria altera o ranking · toque nos itens para explorar · use o botão de compartilhar no topo para Stories.</div>`;
+    <div class="seg" id="bioCat" style="margin:14px 0 10px">${cats.map(([s,l])=>`<button data-s="${s}" class="${cat===s?'on':''}">${l}</button>`).join('')}</div>
+    <div class="bio-grid"><div class="spiralbox"><div class="spiral-hdr"><button class="anim-toggle ${(bio.speed??2)>0?'on':''}" id="animToggle" title="Velocidade">${ANIM_ICONS[bio.speed??2]} ${ANIM_LBL[bio.speed??2]}</button></div><div id="spiral"></div></div><div class="biolist">${listHtml}</div></div>
+    <div class="note">Toque nos itens para explorar · compartilhar no topo para Stories.</div>`;
   $('#bioCat').onclick=e=>{const b=e.target.closest('button');if(b){bio.cat=b.dataset.s;saveBio();renderBio();}};
   $('#animToggle').onclick=()=>{const cur=bio.speed??2;bio.speed=(cur+1)%4;bio.animate=bio.speed>0;saveBio();renderBio();};
   $('#bioEditBtn').onclick=openBioEdit;
@@ -1368,9 +1377,8 @@ function openFavPicker(i){curFav=i;$('#favIn').value='';renderFavRes('');$('#fav
 function renderFavRes(q){const nq=norm(q);let list=films();if(nq)list=list.filter(r=>norm(r.t).includes(nq));
   list=list.sort((a,b)=>(b.r||0)-(a.r||0)).slice(0,40);
   $('#favRes').innerHTML=list.map(r=>{const k=key(r.t,r.y);const po=r.po?`<img src="${IMG}/w92${r.po}"/>`:'<div class="pp"></div>';
-    return `<div class="sr" data-k="${k.replace(/"/g,'&quot;')}">${po}<div class="si"><div class="st">${r.t}</div><div class="sy">${r.y}${r.r!=null?' · '+star(r.r):''}</div></div></div>
-    <div class="controls" style="margin-top:12px"><div class="seg" id="bioCat">${cats.map(([s,l])=>`<button data-s="${s}" class="${cat===s?'on':''}">${l}</button>`).join('')}</div><button class="anim-toggle ${(bio.speed??2)>0?'on':''}" id="animToggle" title="Velocidade do espiral">${ANIM_ICONS[bio.speed??2]} ${ANIM_LBL[bio.speed??2]}</button></div>
-`;}).join('')||'<div class="note">Nenhum filme encontrado.</div>';
+    return `<div class="sr" data-k="${k.replace(/"/g,'&quot;')}">${po}<div class="si"><div class="st">${r.t}</div><div class="sy">${r.y}${r.r!=null?' · '+star(r.r):''}</div></div></div>`;
+  }).join('')||'<div class="note">Nenhum filme encontrado.</div>';
   $$('#favRes .sr').forEach(el=>el.onclick=()=>{bio.favs=bio.favs||[];bio.favs[curFav]=el.dataset.k;saveBio();$('#favOver').classList.remove('show');if($('#bioEdit').classList.contains('show'))bioFavSlots($('#bioFavs'));renderBio();});}
 $('#favClose').onclick=()=>$('#favOver').classList.remove('show');
 $('#shareClose').onclick=()=>$('#shareOver').classList.remove('show');
@@ -2151,7 +2159,7 @@ function renderDaily(){
   if(!recent.length)return '<div class="note">Nenhum filme registrado ainda. Avalie ou importe filmes.</div>';
   const fmtD=ts=>{const d=new Date(ts),now=new Date();const diff=Math.floor((now-d)/864e5);if(diff===0)return 'hoje';if(diff===1)return 'ontem';if(diff<7)return diff+'d';return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});};
   const cards=recent.map(r=>{const k=key(r.t,r.y);const po=r.po?`<img src="${IMG}/w185${r.po}" loading="lazy"/>`:'<div class="dp"></div>';
-    return `<div class="daily-card" data-k="${k.replace(/"/g,'&quot;')}">${po}<div class="daily-card-info"><div class="daily-card-title">${r.ot||r.ti||r.t}</div><div class="daily-card-sub">${r.ts?fmtD(r.ts):''}${(r.rw||0)>=1?' ↺':''}</div><div class="daily-card-rating">${r.r!=null?star(r.r):''}</div></div><button class="daily-card-del" data-del="${k.replace(/"/g,'&quot;')}" title="Remover">✕</button></div>`;
+    return `<div class="daily-card" data-k="${k.replace(/"/g,'&quot;')}">${po}<div class="daily-card-info"><div class="daily-card-title">${r.ot||r.ti||r.t}</div><div class="daily-card-sub">${r.ts?fmtD(r.ts):''}${(r.rw||0)>=1?' ↺':''}</div><div class="daily-card-rating">${r.r!=null?star(r.r):''}</div></div><button class="daily-card-del" data-del="${k.replace(/"/g,'&quot;')}" title="Remover">${ICON_TRASH}</button></div>`;
   }).join('');
   return `<div class="daily-hscroll" id="dailyList">${cards}</div>`;
 }
@@ -2219,11 +2227,18 @@ function renderStats(){
   shown=shown.slice().sort((a,b)=>(b.done-a.done)||(b.pct-a.pct)||(b.v-a.v)||a.n.localeCompare(b.n));
   html+='<div class="ach-grid">'+(shown.length?shown.map(a=>'<div class="ach '+(a.done?'on':'')+'"'+(a.setIdx!=null?' data-ai="'+a.setIdx+'"':'')+'><div class="ach-ic">'+(AICON[a.icon]||AICON.star)+'</div><div class="ach-bd"><div class="ach-n">'+a.n+(a.done?' '+ICON_CHECK:'')+'</div><div class="ach-d">'+a.d+'</div><div class="ach-bar"><i style="width:'+a.pct+'%"></i></div><div class="ach-p">'+fmt(Math.min(a.v,a.goal))+'/'+fmt(a.goal)+(a.setIdx!=null?' · ver filmes':'')+'</div></div></div>').join(''):'<div class="note">Nenhuma conquista neste filtro ainda.</div>')+'</div>';
   $('#view').innerHTML=html;
-    const db=$('#dailyList');if(db){db.onclick=e=>{
-    const del=e.target.closest('.daily-card-del');
-    if(del){e.stopPropagation();const k=del.dataset.del;const rec=cache[k];if(rec){delete rec.ts;put(k,rec);toast('Removido do histórico');renderStats();}return;}
-    const card=e.target.closest('.daily-card');if(card)openFilm(card.dataset.k);
-  };}
+    const db=$('#dailyList');if(db){
+    let _dlp=null;
+    db.addEventListener('touchstart',e=>{const c=e.target.closest('.daily-card');if(!c||e.target.closest('.daily-card-del'))return;_dlp=setTimeout(()=>{$$('.daily-card.del-show').forEach(x=>x.classList.remove('del-show'));c.classList.add('del-show');},600);},{passive:true});
+    db.addEventListener('touchend',()=>clearTimeout(_dlp),{passive:true});
+    db.addEventListener('touchmove',()=>clearTimeout(_dlp),{passive:true});
+    db.onclick=e=>{
+      const del=e.target.closest('.daily-card-del');
+      if(del){e.stopPropagation();const k=del.dataset.del;const rec=cache[k];if(rec){delete rec.ts;put(k,rec);toast('Removido do histórico');renderStats();}return;}
+      const card=e.target.closest('.daily-card');
+      if(card){$$('.daily-card.del-show').forEach(x=>{if(x!==card)x.classList.remove('del-show');});openFilm(card.dataset.k);}
+    };
+  }
   // dailyExpBtn removedif(!dl)return;const isExp=dl.style.maxHeight!=='';dl.style.maxHeight=isExp?'':'none';dl.style.overflow=isExp?'':'visible';deb.textContent=isExp?'Ver todos':'Recolher';};
   const hy=$('#hmYears');if(hy)hy.onclick=e=>{const b=e.target.closest('button');if(b){statsYear=+b.dataset.y;renderStats();}};
   const ac=$('#achCat');if(ac)ac.onclick=e=>{const b=e.target.closest('button');if(b){_achCat=b.dataset.c;renderStats();}};
@@ -2243,7 +2258,7 @@ async function openFilm(k){_curFilmKey=k;const r=cache[k];if(!r)return;const t=r
   const overview=r.ov?`<div class="lbl">Sinopse</div><p style="font-size:13px;color:var(--mut);line-height:1.6;margin:0 0 4px">${r.ov}</p>`:'';
   showSheet(`<div class="top">${poster}<div><h3>${_titleHtml(r)}</h3><div class="yr">${y}${runtime?' · <b>'+runtime+'</b>':''}${r.r!=null?` · sua nota <b>${star(r.r)}</b>`:''}</div>${tagline}${gn?`<div class="yr" style="margin-top:6px">${gn}</div>`:''}${dirs?`<div class="yr" style="margin-top:6px">Direção: <b>${dirs}</b></div>`:''}</div></div>
     ${overview}
-    <div class="lbl">Sua nota</div><div class="rating-row">${starWidget(r.r||0,k)}${!r.wl?`<div class="rw-ctl"><button class="rw-b" id="rwMinus">−</button><span class="rw-n" id="rwN">${r.rw||0} ${(r.rw||0)===1?'vez':'vezes'}</span><button class="rw-b" id="rwPlus">+</button></div>`:''}</div>${!r.wl?`<div class="date-share-row"><input type="date" id="filmDate" class="film-date-mini" value="${r.ts?new Date(r.ts).toISOString().slice(0,10):''}" title="Data que assisti"/></div>`:''}<div class="rate-hint">Deslize sobre as estrelas · metade esquerda = ,5 · arraste antes da 1ª estrela para apagar nota</div>
+    <div class="lbl">Sua nota</div><div class="rating-row">${starWidget(r.r||0,k)}${!r.wl?`<div class="rw-ctl"><button class="rw-b" id="rwMinus">−</button><span class="rw-n" id="rwN">${r.rw||0} ${(r.rw||0)===1?'vez':'vezes'}</span><button class="rw-b" id="rwPlus">+</button></div>`:''}</div>${!r.wl?`<div class="date-share-row"><input type="date" id="filmDate" class="film-date-mini" value="${r.ts?new Date(r.ts).toISOString().slice(0,10):''}" title="Data que assisti"/><button class="rw-b" id="filmDateClear" title="Limpar data" style="padding:0 8px;font-size:16px">×</button></div>`:''}<div class="rate-hint">Deslize sobre as estrelas · metade esquerda = ,5 · arraste antes da 1ª estrela para apagar nota</div>
     ${_filmExtrasHtml(r)}
     ${cast?`<div class="lbl">Elenco principal</div><div class="cast">${cast}</div>`:(r.id?'<div class="note">Elenco ainda sendo baixado…</div>':'')}`,k);
   _wireFilmExtras(k);}
@@ -2261,7 +2276,8 @@ function _filmExtrasHtml(r){
 function _wireFilmExtras(k){
   const nt=$('#filmNote');if(nt)nt.onblur=()=>{const rec=cache[k];if(!rec)return;const v=nt.value.trim();if(v)rec.note=v;else delete rec.note;put(k,rec);};
   const ti=$('#filmTagIn');if(ti)ti.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();const v=ti.value.trim().toLowerCase();if(v){const rec=cache[k];if(rec){rec.tags=[...new Set([...(rec.tags||[]),v])];put(k,rec);openFilm(k);}}}};
-  const fd=$('#filmDate');if(fd)fd.onchange=()=>{const rec=cache[k];if(!rec||rec.wl)return;const v=fd.value;if(!v){delete rec.ts;put(k,rec);toast('Data removida');render();return;}const d=new Date(v+'T12:00:00');if(!isNaN(d)){rec.ts=d.getTime();put(k,rec);toast('Data atualizada');render();}};
+  const fd=$('#filmDate');if(fd){const _applyDate=()=>{const rec=cache[k];if(!rec||rec.wl)return;const v=fd.value;if(!v){delete rec.ts;put(k,rec);toast('Data removida');render();return;}const d=new Date(v+'T12:00:00');if(!isNaN(d)){rec.ts=d.getTime();put(k,rec);toast('Data atualizada');render();}};fd.onchange=_applyDate;fd.oninput=_applyDate;}
+  const fdc=$('#filmDateClear');if(fdc)fdc.onclick=()=>{const fd2=$('#filmDate');if(fd2)fd2.value='';const rec=cache[k];if(rec&&!rec.wl){delete rec.ts;put(k,rec);toast('Data removida');render();}};
 }
 /* ── star helpers (module-level) ── */
 function _starsFromPoint(x,y,container){
