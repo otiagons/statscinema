@@ -309,6 +309,8 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .reco-vibe .ricon svg{width:15px;height:15px}
 .reco-vibe.on .ricon svg,.reco-vibe:active .ricon svg{color:var(--acc1)}
 .reco-empty{color:var(--dim);text-align:center;padding:28px;font-size:13px;line-height:1.5}
+.reco-fallnote{font-size:12px;color:var(--mut);background:rgba(30,201,138,.06);border:1px solid color-mix(in srgb,var(--acc1) 30%,var(--line));border-radius:9px;padding:8px 11px;margin:0 0 11px;line-height:1.45}
+.reco-fallnote b{color:var(--acc1)}
 /* Bio Reco inline */
 .bio-reco-warn{background:rgba(255,46,67,.08);border:1px solid color-mix(in srgb,var(--acc2) 40%,var(--line));border-radius:10px;padding:9px 11px;font-size:12px;color:var(--mut);margin:0 0 10px;line-height:1.5}
 .bio-reco-warn button{background:none;border:none;color:var(--acc1);font-weight:700;cursor:pointer;padding:0;font-size:12px;text-decoration:underline}
@@ -1817,26 +1819,79 @@ async function _fetchRecos(vibe){
     }
   }
   const pool=cands.length>=3?cands:candsAll; // fallback se nowIds filtrou demais
-  // Sempre tenta enriquecer com nota IMDb real (chave própria se configurada, senão chave padrão)
+  // Enriquecimento com nota IMDb real (chave própria se configurada, senão chave padrão)
   const MIN={terror:6.5,noir:7.0,arte:7.2,queer:6.8,scifi:7.0,brasil:6.5,surpresa:7.0};
   const minR=MIN[vibe]||6.8;
-  const enriched=[]; let checked=0;
-  for(const mv of pool){
-    if(checked>=22||enriched.filter(x=>x._imdb!=null).length>=8)break;
+  const enriched=await _enrichImdb(pool,{minR,minVotes:800,want:8,maxCheck:22});
+  // Só exibimos títulos COM nota IMDb real — nunca a nota do TMDB.
+  const withImdb=enriched.filter(m=>m._imdb!=null).sort((a,b)=>b._imdb-a._imdb);
+  if(withImdb.length)return withImdb.slice(0,5);
+  // Perfil não rendeu título novo com nota IMDb → alternativa paralela (populares da vibe / em alta hoje)
+  return await _fetchPopularReco(vibe);
+}
+
+// Anexa nota IMDb real (via OMDb) a uma lista de filmes do TMDB, preenchendo _imdb/_imdbVotes/_imdbID.
+// opts: {minR, minVotes} aplicam corte de qualidade (omitidos = sem corte, usado no fallback popular);
+//       {want} = quantos títulos COM nota IMDb buscar; {maxCheck} = teto de chamadas OMDb.
+async function _enrichImdb(movies,opts){
+  opts=opts||{};
+  const want=opts.want||8,maxCheck=opts.maxCheck||22;
+  const out=[]; let checked=0,got=0;
+  for(const mv of movies){
+    if(got>=want||checked>=maxCheck)break;
     checked++;
     const yr=(mv.release_date||'').slice(0,4);
     const od=await _omdbByTmdbId(mv.id,mv.title,mv.original_title,yr);
     const rating=od?parseFloat(od.imdbRating):NaN;
-    if(!isNaN(rating)&&rating<minR)continue; // nota abaixo do corte
     const votes=od?parseInt((od.imdbVotes||'0').replace(/,/g,''),10):0;
-    if(!isNaN(rating)&&votes<800)continue;  // nota alta demais com votos demais baixos
+    if(opts.minR!=null&&!isNaN(rating)&&rating<opts.minR)continue;   // nota abaixo do corte
+    if(opts.minVotes!=null&&!isNaN(rating)&&votes<opts.minVotes)continue; // votos de menos
     mv._imdb=isNaN(rating)?null:rating;
     mv._imdbVotes=votes||null;
     mv._imdbID=od?od.imdbID||null:null;
-    enriched.push(mv);
+    out.push(mv);
+    if(mv._imdb!=null)got++;
   }
-  enriched.sort((a,b)=>(b._imdb||0)-(a._imdb||0));
-  return enriched.length?enriched.slice(0,5):pool.slice(0,5); // fallback sem filtro OMDb
+  return out;
+}
+
+// Alternativa paralela: quando o perfil não rende títulos novos, busca populares da vibe
+// escolhida (filtros frouxos) ou, se ainda assim faltar, os filmes em alta hoje (/trending/day).
+// Todos são enriquecidos com nota IMDb real e marcados com _fallbackKind ('vibe' | 'today').
+async function _fetchPopularReco(vibe){
+  const cfg=VIBE_CFG[vibe];
+  const ctx=_recoContext();
+  const seenIds=new Set(films().filter(r=>r.id).map(r=>r.id));
+  const seenTitles=_watchedTitleSet();
+  const rejectedIds=_getRejected();
+  const skip=mv=>!mv||seenIds.has(mv.id)||rejectedIds.has(mv.id)||seenTitles.has(norm(mv.title||''))||seenTitles.has(norm(mv.original_title||''));
+  let genreIds=cfg&&cfg.genres;
+  if(!genreIds)genreIds=[...new Set([..._dayGenres(ctx),..._topGenreIds(3)])].slice(0,3);
+  // 1) Populares da vibe — sem corte de runtime/data, vote_count baixo
+  let kind='vibe';
+  const chosen=[]; const seenLocal=new Set();
+  const push=mv=>{if(!skip(mv)&&!seenLocal.has(mv.id)){seenLocal.add(mv.id);chosen.push(mv);}};
+  if(genreIds&&genreIds.length){
+    for(let page=1;page<=3&&chosen.length<24;page++){
+      const p={with_genres:genreIds.join(','),sort_by:'popularity.desc',page,language:'pt-BR','vote_count.gte':80};
+      if(cfg&&cfg.lang)p['with_original_language']=cfg.lang;
+      if(vibe!=='brasil')p['without_genres']='10751,16';
+      const j=await tmdb('/discover/movie',p); if(!j||!j.results)break;
+      j.results.forEach(push);
+    }
+  }
+  // 2) Em alta hoje — se a vibe rendeu pouco
+  if(chosen.length<3){
+    kind='today';
+    const tj=await tmdb('/trending/movie/day',{language:'pt-BR'});
+    ((tj&&tj.results)||[]).forEach(push);
+  }
+  if(!chosen.length)return [];
+  const enriched=await _enrichImdb(chosen,{want:8,maxCheck:20});
+  const withImdb=enriched.filter(m=>m._imdb!=null).sort((a,b)=>b._imdb-a._imdb);
+  const final=(withImdb.length?withImdb:enriched).slice(0,5);
+  final.forEach(m=>{m._fallbackKind=kind;});
+  return final;
 }
 
 // ── cache de sessão (memória) + cache persistente (localStorage) p/ não repetir chamadas entre sessões ──
@@ -1933,6 +1988,12 @@ function _recoCard(o){
 }
 const ICON_PLAY='<svg viewBox="0 0 24 24" fill="currentColor" style="width:11px;height:11px;vertical-align:-1px;margin-right:4px"><path d="M8 5v14l11-7z"/></svg>';
 const ICON_RECO_REJECT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+// Aviso curto quando a recomendação veio da alternativa paralela (populares), não do perfil.
+function _recoFallNote(kind){
+  if(kind==='today')return '<div class="reco-fallnote">Sem títulos novos pelo seu perfil agora — mostrando o que está <b>em alta hoje</b>.</div>';
+  if(kind==='vibe')return '<div class="reco-fallnote">Sem títulos novos pelo seu perfil agora — mostrando <b>populares da vibe</b>.</div>';
+  return '';
+}
 
 // ── rodar com IA ──
 // ── rodar via TMDB + OMDb (heurística) ──
@@ -1944,16 +2005,18 @@ async function _runRecoHeuristic(vibe){
   res.innerHTML='<div class="reco-spin"><div class="reco-loader"></div>'+(hasOmdb?'Filtrando com nota IMDb real…':'Buscando via TMDB…')+'</div>';
   const movies=await _fetchRecos(vibe);
   if(!movies.length){res.innerHTML='<div class="reco-empty">Não encontrei títulos novos. Tente outra vibe!</div>';return;}
+  const fbKind=(movies[0]&&movies[0]._fallbackKind)||null;
   const cards=[];
   for(let i=0;i<movies.length;i++){const m=movies[i];
     const yr=(m.release_date||'').slice(0,4);
     const gen=(m.genre_ids||[]).slice(0,3).map(id=>GENRES[id]).filter(Boolean).join(' · ');
     const ov=(m.overview||'').slice(0,110)+(m.overview&&m.overview.length>110?'…':'');
     let providers=null;try{const pv=await watchProviders(m.id);if(pv&&pv.names&&pv.names.length)providers=pv.names;}catch(e){}
+    // Nota exibida sempre do IMDb; nunca a do TMDB.
     cards.push(_recoCard({poster:m.poster_path,title:m.title,year:yr,sub:gen,why:ov||'',main:i===0,
-      imdbRating:m._imdb||null,score:(!m._imdb&&m.vote_average)?m.vote_average.toFixed(1):null,tag:cfg.note,providers}));
+      imdbRating:m._imdb||null,score:null,tag:m._fallbackKind==='today'?'Em alta hoje':cfg.note,providers}));
   }
-  res.innerHTML=cards.join('');
+  res.innerHTML=_recoFallNote(fbKind)+cards.join('');
   // Update spiral with recommendation results
   _spiralRecoItems=movies.map(m=>({kind:'film',ref:key(m.title,(m.release_date||'').slice(0,4)),label:m.original_title||m.title,sub:(m.release_date||'').slice(0,4)}));
   const _sp=$('#spiral');if(_sp)renderSpiral(_spiralRecoItems,bio.cat||'films');
@@ -2094,23 +2157,24 @@ async function _runBioReco(vibe){
   stopSpiralAnim();
   // Fase 6: construir cards (providers em paralelo)
   const cfg=VIBE_CFG[vibe];
+  const fbKind=(movies[0]&&movies[0]._fallbackKind)||null;
   const cardPromises=movies.map(async(m,i)=>{
     const yr=(m.release_date||'').slice(0,4);
     const gen=(m.genre_ids||[]).slice(0,3).map(id=>GENRES[id]).filter(Boolean).join(' · ');
     const ov2=(m.overview||'').slice(0,120)+(m.overview&&m.overview.length>120?'…':'');
     let providers=null;
     try{const pv=await watchProviders(m.id);if(pv&&pv.names&&pv.names.length)providers=pv.names;}catch(e){}
-    // Usar sempre nota IMDb; nunca fallback TMDB
+    // Nota exibida sempre do IMDb; nunca fallback para a nota do TMDB.
     let imdbRating=m._imdb||null;
-    if(imdbRating==null){try{const od=await _omdbByTmdbId(m.id,m.title,m.original_title,yr);if(od){const rv=parseFloat(od.imdbRating);if(!isNaN(rv))imdbRating=rv;}}catch(e){}}
+    if(imdbRating==null){try{const od=await _omdbByTmdbId(m.id,m.title,m.original_title,yr);if(od){const rv=parseFloat(od.imdbRating);if(!isNaN(rv)){imdbRating=rv;m._imdb=rv;}}}catch(e){}}
     const titlePt=(m.original_title&&m.original_title!==m.title)?m.title:null;
     return _recoCard({poster:m.poster_path,title:m.original_title||m.title,titlePt,year:yr,sub:gen,why:ov2||'',main:i===0,
-      imdbRating,score:imdbRating==null&&m.vote_average?m.vote_average.toFixed(1):null,tmdbId:m.id,
-      ckey:key(m.title,yr),tag:cfg.note,providers});
+      imdbRating,score:null,tmdbId:m.id,
+      ckey:key(m.title,yr),tag:m._fallbackKind==='today'?'Em alta hoje':cfg.note,providers});
   });
   const cards=await Promise.all(cardPromises);
-  // Sem aviso visivel quando nao ha nota IMDb: cai silenciosamente para a nota do TMDB (score) nos cards.
-  _bioRecoHTML=cards.join('');
+  // Cards exibem só a nota real do IMDb; quando indisponível, não mostram nota (nunca a do TMDB).
+  _bioRecoHTML=_recoFallNote(fbKind)+cards.join('');
   // Fase 7: exibir resultados
   sb.classList.add('bio-results-mode');
   if(spiralEl)spiralEl.style.display='none';
