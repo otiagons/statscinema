@@ -296,6 +296,7 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .sr-row{cursor:pointer}
 .sr-row:active{background:rgba(255,255,255,.04)}
 .sr-badge{font-size:11.5px;font-weight:600;margin-top:4px;display:flex;align-items:center;gap:4px}
+.sr-imdb{color:var(--acc1);font-weight:700;font-size:11px}
 .sr-badge svg{flex:none}
 .sr-visto{color:var(--acc1)}
 .sr-wl{color:var(--mut)}
@@ -1596,6 +1597,16 @@ function _tasteDigest(){
 
 
 
+let _nowPlayingCache=null,_nowPlayingTs=0;
+async function _getNowPlayingIds(){
+  const TTL=8*60*1000;
+  if(_nowPlayingCache&&Date.now()-_nowPlayingTs<TTL)return _nowPlayingCache;
+  try{
+    const ids=new Set();
+    for(let pg=1;pg<=2;pg++){const jj=await tmdb('/movie/now_playing',{language:'pt-BR',page:pg});((jj&&jj.results)||[]).forEach(m=>ids.add(m.id));}
+    _nowPlayingCache=ids;_nowPlayingTs=Date.now();return ids;
+  }catch(e){return _nowPlayingCache||new Set();}
+}
 // ── busca em massa no TMDB (heurística, sem IA) ──
 async function _fetchRecos(vibe){
   const cfg=VIBE_CFG[vibe]; if(!cfg)return[];
@@ -1605,6 +1616,7 @@ async function _fetchRecos(vibe){
   const seenIds=new Set(films().filter(r=>r.id).map(r=>r.id));
   const seenTitles=_watchedTitleSet();
   const rejectedIds=_getRejected();
+  const nowIds=await _getNowPlayingIds();
   // TMDB: candidatos com filtro frouxo (sem nota — OMDb faz o controle de qualidade)
   const cands=[];
   for(let page=1;page<=5&&cands.length<28;page++){
@@ -1616,7 +1628,7 @@ async function _fetchRecos(vibe){
     if(ctx.m<=2&&genreIds.indexOf(18)>=0)p['primary_release_date.gte']='2019-01-01';
     const j=await tmdb('/discover/movie',p); if(!j||!j.results)break;
     for(const mv of j.results){
-      if(seenIds.has(mv.id)||rejectedIds.has(mv.id))continue;
+      if(seenIds.has(mv.id)||rejectedIds.has(mv.id)||nowIds.has(mv.id))continue;
       if(seenTitles.has(norm(mv.title||''))||seenTitles.has(norm(mv.original_title||'')))continue;
       cands.push(mv);
     }
@@ -2476,26 +2488,72 @@ async function doSearch(q){
   if(!q.trim()){$('#searchRes').innerHTML='';return;}
   if(!KEY){$('#searchRes').innerHTML='<div class="note">Configure a chave do TMDB primeiro (engrenagem).</div>';return;}
   const j=await tmdb('/search/movie',{query:q}); const res=((j&&j.results)||[]).slice(0,14);
-  if(!res.length){$('#searchRes').innerHTML='<div class="note">Nada encontrado.</div>';return;}
+  if(!res.length){
+    $('#searchRes').innerHTML='<div class="note">Nenhum resultado para essa busca.</div>';
+    _showPopularSuggestions(q.trim()); return;
+  }
   window._sres={};
-  $('#searchRes').innerHTML=res.map(m=>{const y=(m.release_date||'').slice(0,4)||'?';const k=key(m.title,y);window._sres[k]={id:m.id,t:m.title,y:+y||0,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null};
+  $('#searchRes').innerHTML=res.map(m=>{
+    const y=(m.release_date||'').slice(0,4)||'?';
+    const k=key(m.title,y);
+    window._sres[k]={id:m.id,t:m.title,ot:m.original_title||m.title,y:+y||0,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null};
     const ex=cache[k];const cur=ex?ex.r:null;const onWl=ex&&!!ex.wl;const isRated=cur!=null;
-    const po=m.poster_path?`<img src="${IMG}/w92${m.poster_path}"/>`:'<div class="pp"></div>';
-    const badge=isRated?`<span class="sr-badge sr-visto">${ICON_CHECK} Visto · ${star(cur)}</span>`:onWl?`<span class="sr-badge sr-wl">${ICON_EYE} Na watchlist</span>`:'';
+    const po=m.poster_path?`<img src="${IMG}/w92${m.poster_path}"/>`:"<div class=\"pp\"></div>";
+    const badge=isRated?`<span class="sr-badge sr-visto">${ICON_CHECK} Visto · ${star(cur)}</span>`:onWl?`<span class="sr-badge sr-wl">${ICON_EYE} Na watchlist</span>`:"";
     const wlBtn=!isRated?`<button class="wl-btn${onWl?' on':''}" data-wl="${k.replace(/"/g,'&quot;')}">${onWl?'✓ Quero ver':'+ Quero ver'}</button>`:'';
-    return `<div class="sr sr-row" data-k="${k.replace(/"/g,'&quot;')}">${po}<div class="si"><div class="st">${_titlePair(m.original_title||m.title,m.original_title&&m.original_title!==m.title?m.title:null)}</div><div class="sy">${y}</div>${badge}${wlBtn?`<div style="margin-top:5px">${wlBtn}</div>`:''}</div></div>`;}).join('');
+    const ek=k.replace(/"/g,'&quot;');
+    return `<div class="sr sr-row" data-k="${ek}">${po}<div class="si"><div class="st">${_titlePair(m.original_title||m.title,m.original_title&&m.original_title!==m.title?m.title:null)}</div><div class="sy">${y}<span class="sr-imdb" data-srimdb="${ek}"></span></div>${badge}${wlBtn?`<div style="margin-top:5px">${wlBtn}</div>`:""}</div></div>`;
+  }).join('');
+  _fetchSearchImdb(res.slice(0,10));
+}
+async function _fetchSearchImdb(results){
+  await Promise.all(results.map(async m=>{
+    const yr=(m.release_date||'').slice(0,4);
+    const k=key(m.title,yr);
+    try{
+      const od=await omdbFetch(m.original_title||m.title,yr,m.title);
+      if(!od)return;
+      const r=parseFloat(od.imdbRating);
+      if(isNaN(r))return;
+      const el=document.querySelector(`.sr-imdb[data-srimdb="${k.replace(/"/g,'&quot;')}"]`);
+      if(el)el.textContent=' · IMDb '+r.toFixed(1);
+    }catch(e){}
+  }));
+}
+async function _showPopularSuggestions(failedQuery){
+  const nowIds=await _getNowPlayingIds();
+  const seenIds=new Set(films().filter(r=>r.id).map(r=>r.id));
+  const seenT=_watchedTitleSet();
+  const j=await tmdb('/movie/popular',{language:'pt-BR',page:1});
+  const si=$('#searchIn');if(si&&si.value.trim()!==failedQuery)return; // query changed
+  const pop=((j&&j.results)||[]).filter(m=>!nowIds.has(m.id)&&!seenIds.has(m.id)&&!seenT.has(norm(m.title||""))&&!seenT.has(norm(m.original_title||""))).slice(0,8);
+  if(!pop.length)return;
+  window._sres=window._sres||{};
+  const rows=pop.map(m=>{
+    const y=(m.release_date||'').slice(0,4)||'?';
+    const k=key(m.title,y);
+    window._sres[k]={id:m.id,t:m.title,ot:m.original_title||m.title,y:+y||0,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null};
+    const ex=cache[k];const cur=ex?ex.r:null;const onWl=ex&&!!ex.wl;const isRated=cur!=null;
+    const po=m.poster_path?`<img src="${IMG}/w92${m.poster_path}"/>`:"<div class=\"pp\"></div>";
+    const badge=isRated?`<span class="sr-badge sr-visto">${ICON_CHECK} Visto · ${star(cur)}</span>`:onWl?`<span class="sr-badge sr-wl">${ICON_EYE} Na watchlist</span>`:"";
+    const wlBtn=!isRated?`<button class="wl-btn${onWl?' on':''}" data-wl="${k.replace(/"/g,'&quot;')}">+ Quero ver</button>`:'';
+    const ek=k.replace(/"/g,'&quot;');
+    return `<div class="sr sr-row" data-k="${ek}">${po}<div class="si"><div class="st">${_titlePair(m.original_title||m.title,m.original_title&&m.original_title!==m.title?m.title:null)}</div><div class="sy">${y}<span class="sr-imdb" data-srimdb="${ek}"></span></div>${badge}${wlBtn?`<div style="margin-top:5px">${wlBtn}</div>`:""}</div></div>`;
+  }).join("");
+  const sr=$('#searchRes');if(sr)sr.innerHTML+='<div class="eyb" style="margin:14px 0 8px">Populares fora dos cartazes</div>'+rows;
+  _fetchSearchImdb(pop);
 }
 $('#searchRes').addEventListener('click',async e=>{
   const wb=e.target.closest('.wl-btn');
   if(wb){e.stopPropagation();const k=wb.dataset.wl;const m=window._sres[k];if(!m)return;let rec=cache[k];
     if(rec&&rec.wl){delete rec.wl;cache[k]=rec;put(k,rec);toast('Tirado da watchlist');}
     else if(rec&&rec.r!=null){toast('Esse você já assistiu');}
-    else{rec=rec||{t:m.t,y:m.y};rec.wl=1;rec.r=null;rec.id=m.id;rec.po=m.po;rec.gids=m.gids;rec.lang=m.lang;rec.ti=m.t;rec.ye=String(m.y);rec.src='user';cache[k]=rec;put(k,rec);PEOPLE=null;toast('Quero ver: '+m.t);
+    else{rec=rec||{t:m.t,y:m.y};rec.wl=1;rec.r=null;rec.id=m.id;rec.po=m.po;rec.gids=m.gids;rec.lang=m.lang;rec.ti=m.t;rec.ot=m.ot||m.t;rec.ye=String(m.y);rec.src='user';cache[k]=rec;put(k,rec);PEOPLE=null;toast('Quero ver: '+m.t);
       if(rec.id&&!rec.cc){credits(rec.id).then(c=>{if(c){rec.ca=c.ca;rec.di=c.di;rec.co=c.co;if(c.rt)rec.rt=c.rt;rec.lang=c.lang;}rec.cc=1;put(k,rec);PEOPLE=null;});}}
     doSearch($('#searchIn').value);return;}
   const row=e.target.closest('.sr-row');if(!row)return;
   const k=row.dataset.k;const m=window._sres&&window._sres[k];if(!m)return;
-  if(!cache[k]){cache[k]={t:m.t,y:m.y,id:m.id,po:m.po,gids:m.gids,lang:m.lang,ti:m.t,ye:String(m.y),src:'user'};}
+  if(!cache[k]){cache[k]={t:m.t,y:m.y,id:m.id,po:m.po,gids:m.gids,lang:m.lang,ti:m.t,ot:m.ot||m.t,ye:String(m.y),src:'user'};}
   await openFilm(k);
 });
 $('#search').onclick=()=>{$('#searchOver').classList.add('show');setTimeout(()=>$('#searchIn').focus(),100);};
