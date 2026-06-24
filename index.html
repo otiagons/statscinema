@@ -66,7 +66,7 @@
 <link id="lnkManifest" rel="manifest" href="manifest.webmanifest"/>
 <link id="lnkIcon192" rel="icon" type="image/png" sizes="192x192" href="icon-192.png"/>
 <link id="lnkIcon512" rel="icon" type="image/png" sizes="512x512" href="icon-512.png"/>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23000'/><path d='M 4 16 A 12 7.5 0 0 1 28 16' stroke='%231ec98a' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M 28 16 A 12 7.5 0 0 1 4 16' stroke='%23ff2e43' stroke-width='3' fill='none' stroke-linecap='round'/><circle cx='16' cy='16' r='2.3' fill='%23f4f0e6'/></svg>"/>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231ec98a'/><path d='M 4 16 A 12 7.5 0 0 1 28 16' stroke='%23000000' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M 28 16 A 12 7.5 0 0 0 4 16' stroke='%23ff2e43' stroke-width='2.5' fill='none' stroke-linecap='round'/><circle cx='16' cy='16' r='2.3' fill='%23000000'/></svg>"/>
 <title>CineStats</title>
 <style>
 :root{--bg:#000000;--panel:#0c0c0e;--p2:#141418;--line:#26262b;--ink:#f4f0e6;--mut:#9a958c;--dim:#5f5b54;
@@ -148,6 +148,7 @@ select{background:var(--panel);color:var(--ink);border:1px solid var(--line);bor
 .sheet .top{display:flex;gap:13px}.sheet .top img{width:92px;border-radius:8px;flex:none;background:var(--p2)}
 .sheet h3{margin:0 0 3px;font-size:18px}.sheet .yr{color:var(--mut);font-size:13px}.sheet .yr b{color:var(--gold)}
 .sheet-close{position:sticky;top:-1px;float:right;background:var(--panel);border:1px solid var(--line);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;color:var(--mut);z-index:5;margin:0 0 6px 8px}
+.sheet-back{position:sticky;top:-1px;float:left;background:var(--panel);border:1px solid var(--line);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--mut);z-index:5;margin:0 8px 6px 0;line-height:1}
 .sheet .lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:16px 0 8px}
 .cast{display:flex;gap:9px;overflow-x:auto;padding-bottom:4px}
 .cast .c{width:64px;flex:none;text-align:center}
@@ -1116,7 +1117,8 @@ function flagImgLarge(c,w){
   if(!iso)return'<div class="cflag-ph"></div>';
   return'<img class="flag cflag-img" src="https://flagcdn.com/w160/'+iso.toLowerCase()+'.png" width="'+w+'" data-iso="'+iso+'" loading="lazy" onerror="flagErr(this)" alt="'+displayCountry(c)+'"/>';
 }
-const BIO_SEED={};// preenchido por "Salvar HTML" — restaura bio em qualquer aparelho
+const BIO_SEED={};
+let _sheetHistory=[];// preenchido por "Salvar HTML" — restaura bio em qualquer aparelho
 let bio=(()=>{try{const s=localStorage.getItem('cs_bio');return s?JSON.parse(s):(Object.keys(BIO_SEED).length?BIO_SEED:{});}catch(e){return Object.keys(BIO_SEED).length?BIO_SEED:{};}})();
 function saveBio(){try{localStorage.setItem('cs_bio',JSON.stringify(bio));}catch(e){}cloudSave();}
 let curFav=0;
@@ -1128,12 +1130,23 @@ function entities(cat){
   const P=people();let arr=cat==='dir'?P.D:cat==='actor'?P.A.filter(p=>p.g===2):P.A.filter(p=>p.g===1);
   return arr.filter(p=>p.f.length>=m).sort((a,b)=>b.f.length-a.f.length||a.n.localeCompare(b.n)).slice(0,20).map(p=>({kind:'person',ref:p.id,label:p.n,sub:p.f.length+'f',_p:p}));
 }
+function _wireSheetNav(){
+  const sc=$('#sheetClose');if(sc)sc.onclick=()=>{_sheetHistory=[];$('#modal').classList.remove('show');};
+  const sb=$('#sheetBack');if(sb)sb.onclick=_sheetGoBack;
+  const ss=$('#sheetShareBtn');if(ss)ss.onclick=()=>{openShareCard(ss.dataset.sk);$('#modal').classList.remove('show');};
+}
+function _sheetGoBack(){
+  const prev=_sheetHistory.pop();if(!prev){_sheetHistory=[];$('#modal').classList.remove('show');return;}
+  $('#sheet').innerHTML=prev;_wireSheetNav();
+}
 function showSheet(html,shareKey){
-  const shareBtn=shareKey?`<button class="sheet-share" id="sheetShareBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>`:'';
-  $('#sheet').innerHTML='<button class="sheet-close" id="sheetClose">✕</button>'+shareBtn+html;
+  const already=$('#modal').classList.contains('show')&&$('#sheet').innerHTML;
+  if(already)_sheetHistory.push($('#sheet').innerHTML);
+  const backBtn=_sheetHistory.length>0?'<button class="sheet-back" id="sheetBack">&#8592;</button>':'';
+  const shareBtn=shareKey?`<button class="sheet-share" id="sheetShareBtn" data-sk="${shareKey}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>`:'';
+  $('#sheet').innerHTML=backBtn+'<button class="sheet-close" id="sheetClose">✕</button>'+shareBtn+html;
   $('#modal').classList.add('show');
-  $('#sheetClose').onclick=()=>$('#modal').classList.remove('show');
-  if(shareKey){const sb=$('#sheetShareBtn');if(sb)sb.onclick=()=>{openShareCard(shareKey);$('#modal').classList.remove('show');}}
+  _wireSheetNav();
 }
 async function openPerson(p){const {mini,bf}=personDetail({fl:p.f});
   const ph=p.pic?`<img style="width:92px;border-radius:8px" src="${IMG}/w185${p.pic}"/>`:`<div style="width:92px;height:138px;border-radius:8px;background:var(--p2);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--dim);font-size:30px">${initials(p.n)}</div>`;
@@ -1618,8 +1631,8 @@ async function _fetchRecos(vibe){
   const rejectedIds=_getRejected();
   const nowIds=await _getNowPlayingIds();
   // TMDB: candidatos com filtro frouxo (sem nota — OMDb faz o controle de qualidade)
-  const cands=[];
-  for(let page=1;page<=5&&cands.length<28;page++){
+  const cands=[]; const candsAll=[]; // candsAll inclui cartaz (fallback)
+  for(let page=1;page<=5&&candsAll.length<28;page++){
     const p={with_genres:genreIds.join(','),sort_by:'popularity.desc',page,language:'pt-BR','vote_count.gte':300,'without_genres':'10751,16'};
     if(cfg.lang)p['with_original_language']=cfg.lang;
     if(vibe==='brasil')delete p['without_genres'];
@@ -1628,17 +1641,19 @@ async function _fetchRecos(vibe){
     if(ctx.m<=2&&genreIds.indexOf(18)>=0)p['primary_release_date.gte']='2019-01-01';
     const j=await tmdb('/discover/movie',p); if(!j||!j.results)break;
     for(const mv of j.results){
-      if(seenIds.has(mv.id)||rejectedIds.has(mv.id)||nowIds.has(mv.id))continue;
+      if(seenIds.has(mv.id)||rejectedIds.has(mv.id))continue;
       if(seenTitles.has(norm(mv.title||''))||seenTitles.has(norm(mv.original_title||'')))continue;
-      cands.push(mv);
+      candsAll.push(mv);
+      if(!nowIds.has(mv.id))cands.push(mv);
     }
   }
-  if(!getOmdbKey())return cands.slice(0,5); // sem OMDb: retorna por popularidade
+  const pool=cands.length>=3?cands:candsAll; // fallback se nowIds filtrou demais
+  if(!getOmdbKey())return pool.slice(0,5); // sem OMDb: retorna por popularidade
   // Com OMDb: enriquecer com nota IMDb real e filtrar
   const MIN={terror:6.5,noir:7.0,arte:7.2,queer:6.8,scifi:7.0,brasil:6.5,surpresa:7.0};
   const minR=MIN[vibe]||6.8;
   const enriched=[]; let checked=0;
-  for(const mv of cands){
+  for(const mv of pool){
     if(checked>=22||enriched.filter(x=>x._imdb!=null).length>=8)break;
     checked++;
     const yr=(mv.release_date||'').slice(0,4);
@@ -1653,7 +1668,7 @@ async function _fetchRecos(vibe){
     enriched.push(mv);
   }
   enriched.sort((a,b)=>(b._imdb||0)-(a._imdb||0));
-  return enriched.slice(0,5);
+  return enriched.length?enriched.slice(0,5):pool.slice(0,5); // fallback sem filtro OMDb
 }
 
 // ── cache de sessão para OMDb (evita repetir chamadas) ──
@@ -1674,6 +1689,21 @@ async function omdbFetch(title,year,titleFallback){
   return(_omdbCache[ck]=res);
 }
 
+// IMDb por ID TMDB (evita problema de idioma no título)
+async function _omdbByTmdbId(tmdbId,ptTitle,origTitle,year){
+  const od=await omdbFetch(origTitle||ptTitle,year,ptTitle);
+  if(od)return od;
+  try{
+    const eid=await tmdb('/movie/'+tmdbId+'/external_ids',{});
+    const imdbId=eid&&eid.imdb_id;if(!imdbId)return null;
+    const ck='i:'+imdbId;if(_omdbCache[ck]!==undefined)return _omdbCache[ck];
+    const apikey=getOmdbKey()||'2e29b4de';
+    const r=await fetch('https://www.omdbapi.com/?i='+imdbId+'&r=json&apikey='+apikey);
+    if(!r.ok)return(_omdbCache[ck]=null);
+    const jj=await r.json();
+    return(_omdbCache[ck]=jj.Response==='True'?jj:null);
+  }catch(e){return null;}
+}
 // ── card unificado ──
 function _recoCard(o){
   const _rk=((o.title||'')+'|'+(o.year||'')).replace(/"/g,'&quot;');
@@ -1689,7 +1719,7 @@ function _recoCard(o){
   const provHtml=(o.providers&&o.providers.length)?'<div class="reco-prov">'+ICON_PLAY+'Streaming BR: <b>'+o.providers.join(' · ')+'</b></div>':'';
   const _rejectBtn=o.tmdbId?'<button class="reco-reject" data-reject="'+o.tmdbId+'" title="Não mostrar mais">'+ICON_RECO_REJECT+'</button>':'';
   return '<div class="reco-card" data-cardid="'+(o.tmdbId||'')+'">'+po+'<div class="reco-info">'
-    +'<div class="reco-title-row"><div class="reco-title">'+o.title+(o.year?' ('+o.year+')':'')+'</div>'+_rejectBtn+'</div>'
+    +'<div class="reco-title-row"><div class="reco-title">'+(o.titlePt?_titlePair(o.title,o.titlePt):o.title)+(o.year?' ('+o.year+')':'')+'</div>'+_rejectBtn+'</div>'
     +(meta?'<div class="reco-meta">'+meta+'</div>':'')
     +(o.why?'<div class="reco-why'+(o.main?' reco-why-main':'')+'">'+o.why+'</div>':'')
     +scoreHtml+provHtml
@@ -1842,9 +1872,10 @@ async function _runBioReco(vibe){
     try{const pv=await watchProviders(m.id);if(pv&&pv.names&&pv.names.length)providers=pv.names;}catch(e){}
     // Usar sempre nota IMDb; nunca fallback TMDB
     let imdbRating=m._imdb||null;
-    if(imdbRating==null){try{const od=await omdbFetch(m.original_title||m.title,yr,m.title);if(od){const rv=parseFloat(od.imdbRating);if(!isNaN(rv))imdbRating=rv;}}catch(e){}}
-    return _recoCard({poster:m.poster_path,title:m.title,year:yr,sub:gen,why:ov2||'',main:i===0,
-      imdbRating,score:null,tmdbId:m.id,
+    if(imdbRating==null){try{const od=await _omdbByTmdbId(m.id,m.title,m.original_title,yr);if(od){const rv=parseFloat(od.imdbRating);if(!isNaN(rv))imdbRating=rv;}}catch(e){}}
+    const titlePt=(m.original_title&&m.original_title!==m.title)?m.title:null;
+    return _recoCard({poster:m.poster_path,title:m.original_title||m.title,titlePt,year:yr,sub:gen,why:ov2||'',main:i===0,
+      imdbRating,score:imdbRating==null&&m.vote_average?m.vote_average.toFixed(1):null,tmdbId:m.id,
       tag:cfg.note,providers});
   });
   const cards=await Promise.all(cardPromises);
@@ -2478,7 +2509,7 @@ $('#sheet').addEventListener('click',e=>{
   rec.r=val;delete rec.wl;rec.s=1;if(!hadRating&&!rec.ts)rec.ts=Date.now();put(k,rec);PEOPLE=null;
   toast((hadRating?'Nota corrigida: ':(wasWl?'Visto! ':'Avaliado: '))+rec.t+' '+star(val));openFilm(k);
 })
-$('#modal').onclick=e=>{if(e.target.id==='modal'){$('#modal').classList.remove('show');const si=$('#searchIn');if(si&&si.value.trim()&&$('#searchOver').classList.contains('show'))doSearch(si.value);}};
+$('#modal').onclick=e=>{if(e.target.id==='modal'){_sheetHistory=[];$('#modal').classList.remove('show');const si=$('#searchIn');if(si&&si.value.trim()&&$('#searchOver').classList.contains('show'))doSearch(si.value);}};
 
 /* ---------- buscar & avaliar ---------- */
 let searchTimer=null;
@@ -2731,7 +2762,8 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopSpiralA
   applyAccent();KEY=getKey();render();_checkMilestone();
   sync();
   _applyIconVer();
-  setTimeout(()=>_setAppIcon(bio.icon||'dark'),200);
+  if(!bio.icon||bio.icon==='dark'){bio.icon='green';saveBio();} // migração: default era dark, agora é green
+  setTimeout(()=>_setAppIcon(bio.icon),200);
 })();
 </script>
 </body></html>
