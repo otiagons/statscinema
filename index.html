@@ -1,5 +1,18 @@
 <!DOCTYPE html><!--
   CineStats — Changelog
+  v4.3 [2026-06-24]: Conquistas: removidos os papéis de atores/atrizes (Mifune, Ullmann, von Sydow,
+                  Mastroianni, Huppert, Hara, Deneuve) e os marcos de Panorama "Maratona de
+                  Outubro", "Maratonista" e "Era do silêncio". Recomendações: removido o aviso
+                  visível de "notas IMDb indisponíveis" — agora cai silenciosamente para a nota do
+                  TMDB sem mostrar erro. Aba Filmes: "Quero ver" e "Revistos" saíram dos chips
+                  genéricos e ganharam uma linha de destaque própria, com contador e botão maior.
+  v4.2 [2026-06-24]: Ficha de pessoa/filme: biografia e sinopse truncadas ganham botão "ver mais"
+                  (sem cortar texto silenciosamente). Filmografia de diretores/atores/atrizes agora
+                  tem opção "Ver filmografia completa", incluindo os filmes já vistos (antes só
+                  mostrava os não vistos). Filmes já vistos na filmografia recebem desfoque no
+                  poster + selo em espiral (cores do tema) indicando que já foram assistidos.
+                  Checkbox para ocultar filmes já vistos na lista completa. Ordenação da
+                  filmografia por popularidade, ano de lançamento, nota do TMDB ou nota pessoal.
   v4.1 [2026-06]: Ajustes. Emojis trocados por ícones SVG no estilo do app. Ranking de produtoras
                   removido. Filtro/busca por TAGS (nome · quantidade) na aba Filmes. Conquistas
                   reformuladas para o cinema: movimentos (Nouvelle Vague, Surrealismo, Neorrealismo,
@@ -80,11 +93,13 @@ header{background:var(--panel);border:1px solid var(--line);border-radius:16px;p
 .logo svg{width:27px;height:27px;flex:none}
 .logo h1{font-size:20px;margin:0;font-weight:800;letter-spacing:-.01em}
 .logo h1 b{color:var(--acc2)}
-.icon-opts{display:flex;gap:8px;margin-top:8px}
-.icon-opt{width:40px;height:40px;border-radius:10px;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;transition:border-color .15s}
-.icon-opt.on{border-color:var(--ink)}
+.icon-opts{display:flex;gap:8px;margin-top:0;flex-wrap:wrap}
+.icon-opt{width:40px;height:40px;border-radius:10px;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;transition:border-color .15s,background-color .15s}
+.icon-opt.on{border-color:var(--acc1)}
 .icon-opt svg{width:22px;height:22px}
 .set-row{margin:10px 0 4px;font-size:13px;color:var(--mut)}
+.set-opt{background:var(--panel);border:1px solid var(--line);border-radius:13px;margin-top:9px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.set-opt .set-opt-lbl{font-weight:700;font-size:14px;color:var(--ink)}
 .icon-btn{background:var(--panel);border:1px solid var(--line);color:var(--mut);border-radius:9px;width:38px;height:38px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .icon-btn svg{width:18px;height:18px}
 .tabs{position:sticky;top:0;z-index:15;background:rgba(16,17,21,.95);backdrop-filter:blur(8px);display:flex;gap:2px;margin:6px -13px 0;padding:0 13px;border-bottom:1px solid var(--line);overflow-x:auto}
@@ -103,6 +118,12 @@ header{background:var(--panel);border:1px solid var(--line);border-radius:16px;p
 select{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px;font-size:12px;font-weight:600;min-height:34px}
 .chips{display:flex;gap:5px;flex-wrap:wrap}.chip{border:1px solid var(--line);background:var(--panel);color:var(--mut);border-radius:18px;padding:5px 11px;font-size:11.5px;font-weight:600;cursor:pointer;min-height:30px}
 .chip.on{border-color:var(--cyan);color:var(--cyan);background:rgba(91,200,194,.1)}
+.feat-row{display:flex;gap:9px;margin:0 0 12px}
+.feat-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:13px;padding:11px 8px;font-size:13px;font-weight:700;cursor:pointer;min-height:44px}
+.feat-btn svg{width:16px;height:16px;flex:none}
+.feat-btn .feat-n{font-weight:800;opacity:.85}
+.feat-btn.on{border-color:transparent;color:#0b0f0d;background:linear-gradient(135deg,var(--acc1),var(--acc2))}
+.feat-btn.on .feat-n{color:#0b0f0d}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 @media(min-width:480px){.grid{grid-template-columns:repeat(4,1fr)}}
 .po{aspect-ratio:2/3;border-radius:7px;overflow:hidden;background:var(--p2);position:relative;cursor:pointer}
@@ -170,12 +191,19 @@ select{background:var(--panel);color:var(--ink);border:1px solid var(--line);bor
 .box h2{font-size:21px;margin:0 0 8px}.box p{color:var(--mut);font-size:13.5px;line-height:1.55}
 input.tin{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:13px;font-size:15px;margin:12px 0 4px}
 .err{color:#ff7a7a;font-size:12.5px;min-height:16px;margin:4px 2px}
-.btn{width:100%;background:var(--gold);color:#1a1406;border:0;border-radius:10px;padding:14px;font-size:15px;font-weight:800;cursor:pointer}
-.btn.sec{background:var(--panel);color:var(--ink);border:1px solid var(--line);margin-top:9px;font-weight:700}
-.btn.danger{background:var(--panel);color:#ff8888;border:1px solid var(--line);margin-top:9px;font-weight:700}
+.btn{width:100%;background:var(--gold);color:#1a1406;border:0;border-radius:13px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;transition:filter .15s}
+.btn:active{filter:brightness(.92)}
+.btn.sec{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:13px;margin-top:9px;font-weight:700;transition:border-color .15s,background-color .15s}
+.btn.sec:active,.btn.sec:hover{border-color:var(--acc1)}
+.btn.danger{background:var(--panel);color:#ff8888;border:1px solid var(--line);border-radius:13px;margin-top:9px;font-weight:700;transition:border-color .15s,background-color .15s}
+.btn.danger:active,.btn.danger:hover{border-color:#ff8888}
 details{margin-top:14px;color:var(--mut);font-size:13px}details summary{cursor:pointer;color:var(--cyan);font-weight:600}
 details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .eyb{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:16px 0 9px;display:block}
+.eyb-row{display:flex;align-items:baseline;justify-content:space-between;margin:16px 0 9px}
+.eyb-row .eyb{margin:0}
+.eyb-more{background:none;border:none;color:var(--acc1);font-size:11px;font-weight:700;cursor:pointer;padding:0;letter-spacing:.02em}
+.full-search{width:100%;margin-bottom:10px}
 .bio-id{display:flex;align-items:flex-start;gap:10px;margin-top:14px}
 .bio-id .bia{flex:1;min-width:0}.bio-id h2{margin:0;font-size:22px;word-break:break-word}
 .bio-site a{color:var(--cyan);font-size:13px;text-decoration:none;font-weight:600}
@@ -282,7 +310,9 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .reco-vibe.on .ricon svg,.reco-vibe:active .ricon svg{color:var(--acc1)}
 .reco-empty{color:var(--dim);text-align:center;padding:28px;font-size:13px;line-height:1.5}
 /* Bio Reco inline */
-.bio-reco-ctx{font-size:12px;color:var(--mut);line-height:1.5;margin:0 0 10px;padding:8px 11px;background:var(--panel);border:1px solid var(--line);border-radius:9px}
+.bio-reco-warn{background:rgba(255,46,67,.08);border:1px solid color-mix(in srgb,var(--acc2) 40%,var(--line));border-radius:10px;padding:9px 11px;font-size:12px;color:var(--mut);margin:0 0 10px;line-height:1.5}
+.bio-reco-warn button{background:none;border:none;color:var(--acc1);font-weight:700;cursor:pointer;padding:0;font-size:12px;text-decoration:underline}
+.bio-reco-ctx{display:none}
 .bio-reco-ctx b{color:var(--ink)}
 .bio-reco-ctx .season{color:var(--acc2)}
 .bio-reco-panel{display:flex;flex-direction:column}
@@ -291,6 +321,8 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .bio-spin-overlay .spin-lbl{font-size:12px;color:var(--ink);background:rgba(0,0,0,.8);padding:4px 13px;border-radius:20px}
 #bioRecoPanel{transition:opacity .4s ease}
 .reco-prov{font-size:11px;color:var(--mut);margin-top:5px}.reco-prov b{color:var(--acc1)}
+.reco-wl-btn{background:var(--panel);border:1px solid var(--line);color:var(--mut);border-radius:7px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;margin-top:6px}
+.reco-wl-btn.on{border-color:var(--acc2);color:var(--acc2);background:rgba(255,46,67,.08)}
 /* ── Filtros / watchlist / rewatch ── */
 .wl-btn{background:var(--panel);border:1px solid var(--line);color:var(--mut);border-radius:7px;padding:5px 11px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap}
 .wl-btn.on{border-color:var(--acc2);color:var(--acc2);background:rgba(255,46,67,.08)}
@@ -316,8 +348,7 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .daily-title{font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .daily-sub{font-size:12px;color:var(--mut);margin-top:2px}
 .title-pt{display:block;font-size:0.78em;font-style:italic;color:var(--mut);margin-top:2px;font-weight:normal;line-height:1.3}
-.daily-hscroll{display:flex;gap:10px;overflow-x:auto;padding:4px 0 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-top:8px}
-.daily-hscroll::-webkit-scrollbar{display:none}
+.daily-hscroll{display:flex;gap:10px;overflow-x:auto;padding:4px 0 14px;-webkit-overflow-scrolling:touch;margin-top:8px}
 .daily-card{flex:none;width:90px;cursor:pointer;position:relative}
 .daily-card>img,.daily-card .dp{width:90px;height:134px;border-radius:7px;object-fit:cover;background:var(--p2);display:block}
 .daily-card-info{padding:5px 2px 0}
@@ -364,6 +395,13 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .filmo-prog{display:flex;align-items:center;gap:9px;margin:4px 0 2px;font-size:11.5px;color:var(--mut)}
 .filmo-bar{flex:1;height:7px;background:var(--p2);border-radius:4px;overflow:hidden}
 .filmo-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc1))}
+.sr-poster{position:relative;flex:none}
+.sr-poster img.blur-seen{filter:blur(3.5px) brightness(.55);transition:filter .15s}
+.sr-seen-badge{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.22);border-radius:5px;pointer-events:none}
+.sr.seen .si .st,.sr.seen .si .sy{opacity:.6}
+.see-more{display:inline-block;color:var(--acc1);font-weight:700;cursor:pointer;font-size:12.5px;margin:6px 0;user-select:none}
+.filmo-hide-row{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--mut);margin:0 0 9px;cursor:pointer;user-select:none}
+.filmo-hide-row input{accent-color:var(--acc1);width:15px;height:15px}
 /* ── Stats tab ── */
 .st-hd{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px 16px;margin-top:13px;text-align:center}
 .st-hd-big{font-size:38px;font-weight:800;color:var(--acc1);line-height:1}
@@ -386,6 +424,14 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .hm-l4{background:var(--acc1)}
 .hm-legend{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--dim);margin-top:7px}
 .hm-legend .hm-c{width:10px;height:10px}
+/* scrollbars suaves, no estilo do site, em todas as áreas roláveis */
+.hm-wrap,.daily-hscroll,.cast,.scard-film,.sheet,.over .ob,select{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.hm-wrap::-webkit-scrollbar,.daily-hscroll::-webkit-scrollbar,.cast::-webkit-scrollbar,.scard-film::-webkit-scrollbar{height:6px;width:6px}
+.sheet::-webkit-scrollbar,.over .ob::-webkit-scrollbar,select::-webkit-scrollbar{width:6px}
+.hm-wrap::-webkit-scrollbar-track,.daily-hscroll::-webkit-scrollbar-track,.cast::-webkit-scrollbar-track,.scard-film::-webkit-scrollbar-track,.sheet::-webkit-scrollbar-track,.over .ob::-webkit-scrollbar-track,select::-webkit-scrollbar-track{background:transparent}
+.hm-wrap::-webkit-scrollbar-thumb,.daily-hscroll::-webkit-scrollbar-thumb,.cast::-webkit-scrollbar-thumb,.scard-film::-webkit-scrollbar-thumb,.sheet::-webkit-scrollbar-thumb,.over .ob::-webkit-scrollbar-thumb,select::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
+.hm-wrap::-webkit-scrollbar-thumb:hover,.daily-hscroll::-webkit-scrollbar-thumb:hover,.cast::-webkit-scrollbar-thumb:hover,.scard-film::-webkit-scrollbar-thumb:hover,.sheet::-webkit-scrollbar-thumb:hover,.over .ob::-webkit-scrollbar-thumb:hover,select::-webkit-scrollbar-thumb:hover{background:var(--acc1)}
+select{color-scheme:dark}
 .yy-rows{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .yy-row{display:grid;grid-template-columns:46px 1fr auto auto;align-items:center;gap:8px;padding:9px 12px;background:var(--panel);border-bottom:1px solid var(--line);font-size:12.5px}
 .yy-row:last-child{border-bottom:none}
@@ -476,16 +522,19 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 <div class="over" id="settings" style="justify-content:center"><div class="box">
   <h2>Ajustes</h2>
   <p id="setInfo"></p>
-  <button class="btn sec" id="setUpload">Atualizar filmes (export do Letterboxd)</button>
+  <button class="btn sec" id="setExport">Exportar dados (CSV)</button>
+  <button class="btn sec" id="setUpload">Importar dados (export do Letterboxd)</button>
   <input type="file" id="fileIn" accept=".zip,.csv" style="display:none"/>
-  <button class="btn sec" id="setResync">Buscar o que falta no TMDB</button>
-  <button class="btn sec" id="setKey">Trocar chave do TMDB</button>
-  <button class="btn sec" id="setSaveHTML">Salvar HTML com todos os dados</button>
-  <div class="set-row">Ícone da tela inicial</div>
-  <div class="icon-opts" id="iconOpts"></div>
+  <button class="btn sec" id="setResync">Atualizar informações e imagens (TMDB)</button>
+  <button class="btn sec" id="setKey">Trocar chave (TMDB)</button>
+  <button class="btn sec" id="setSaveHTML">Salvar HTML atualizado</button>
+  <div class="set-opt">
+    <span class="set-opt-lbl">Ícone da tela inicial</span>
+    <div class="icon-opts" id="iconOpts"></div>
+  </div>
   <div id="ghIconArea" style="margin-top:8px"></div>
-  <button class="btn danger" id="setClear">Apagar cache do TMDB</button>
-  <button class="btn sec" id="setClose">Fechar</button>
+  <button class="btn danger" id="setClear">Apagar cache (TMDB)</button>
+  <button class="btn sec" id="setClose">Fechar página</button>
   <p class="note" style="margin-top:16px">Dados e imagens via TMDB; produto não endossado pelo TMDB. Atualizar filmes mescla o novo export com o que já existe (não apaga histórico).<br><br>"Salvar HTML" gera um novo arquivo com todos os seus dados embutidos — faça commit no GitHub para garantir backup permanente.<br><br>Avaliações e dados ficam no IndexedDB do navegador. Ao salvar o HTML e fazer commit, os dados ficam gravados no próprio arquivo — nada se perde ao abrir em nova aba ou novo aparelho.</p>
 </div></div>
 
@@ -496,6 +545,7 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
     <label class="eyb">Link do site pessoal</label><input class="tin" id="bioSite" placeholder="ex.: tiago.com"/>
     <label class="eyb">Cor da espiral</label><div class="chips" id="bioAccent"></div>
     <label class="eyb" style="margin-top:14px">Top 5 favoritos (toque para escolher)</label><div class="favrow" id="bioFavs"></div>
+    <label class="eyb" style="margin-top:14px">Chave do OMDb (notas IMDb nas recomendações)</label><div id="bioOmdbKeyRow"></div>
     <button class="btn" id="bioSave" style="margin-top:18px">Salvar</button>
   </div></div>
 
@@ -503,6 +553,16 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 <div class="over" id="favOver"><div class="oh"><h2>Escolher filme</h2><button class="icon-btn" id="favClose">✕</button></div>
   <input class="tin" id="favIn" placeholder="buscar nos seus filmes…" autocomplete="off"/>
   <div class="ob" id="favRes"></div></div>
+
+<!-- ANO A ANO (ficha completa) -->
+<div class="over" id="yyOver"><div class="oh"><h2>Ano a ano</h2><button class="icon-btn" id="yyClose">✕</button></div>
+  <input class="tin full-search" id="yyIn" placeholder="buscar ano…" autocomplete="off" inputmode="numeric"/>
+  <div class="ob" id="yyRes"></div></div>
+
+<!-- DÉCADAS (ficha completa) -->
+<div class="over" id="decOver"><div class="oh"><h2>Décadas</h2><button class="icon-btn" id="decClose">✕</button></div>
+  <input class="tin full-search" id="decIn" placeholder="buscar década…" autocomplete="off" inputmode="numeric"/>
+  <div class="ob" id="decRes"></div></div>
 
 
 <!-- COMPARTILHAR CARD -->
@@ -571,10 +631,11 @@ async function _setAppIcon(variant){
             if(!blob)return rej(new Error('no blob'));
             if(_iconUrl)URL.revokeObjectURL(_iconUrl);
             _iconUrl=URL.createObjectURL(blob);
-            // Favicon da aba (blob: funciona em desktop/Android)
-            const lnk=document.querySelector('link[rel="icon"][type="image/png"]')||document.createElement('link');
+            // Remove todos os links de favicon para forçar refresh no browser
+            document.querySelectorAll('link[rel="icon"],link[rel="shortcut icon"]').forEach(el=>{try{el.parentNode.removeChild(el);}catch(e){}});
+            const lnk=document.createElement('link');
             lnk.rel='icon'; lnk.type='image/png'; lnk.href=_iconUrl;
-            if(!lnk.parentNode)document.head.appendChild(lnk);
+            document.head.appendChild(lnk);
             res();
           }catch(e){rej(e);}
         },'image/png');
@@ -782,16 +843,41 @@ async function tmdb(path,params){
   }catch(e){if(e&&e.code===401)throw e; if(i===3)return null; await new Promise(s=>setTimeout(s,1200*(i+1)));}}
   return null;
 }
-function pickMatch(res,t,y){
-  const nn=norm(t); const exact=res.filter(x=>norm(x.title)===nn||norm(x.original_title)===nn);
-  const pool=exact.length?exact:res;
-  const yhit=pool.filter(x=>{const ry=(x.release_date||'').slice(0,4);return ry&&Math.abs(+ry-y)<=1;});
-  return yhit[0]||pool[0];
+function _toFilmRecord(m,t,y){
+  return {id:m.id,po:m.poster_path||null,ti:m.title||t,ot:m.original_title||m.title||t,ye:(m.release_date||'').slice(0,4)||y,gids:m.genre_ids||[],lang:m.original_language||null};
+}
+// Diretor real (IMDb, via OMDb) para desempatar candidatos com título igual/parecido
+async function _refDirector(t,y){
+  try{const od=await omdbFetch(t,y);if(od&&od.Director&&od.Director!=='N/A')return od.Director.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);}catch(e){}
+  return null;
+}
+// Validação em etapas: 1) título exato  2) ano de lançamento (±1)  3) diretor (cruza TMDB × IMDb/OMDb) se ainda houver ambiguidade
+async function pickMatch(res,t,y){
+  const nn=norm(t);
+  const exact=res.filter(x=>norm(x.title)===nn||norm(x.original_title)===nn);
+  // Etapa 1: sem título exato, não há base confiável — não adivinha com o resultado mais "popular"
+  if(!exact.length)return null;
+  // Etapa 2: dos candidatos com título exato, prioriza os com ano compatível
+  const yhit=exact.filter(x=>{const ry=(x.release_date||'').slice(0,4);return ry&&Math.abs(+ry-y)<=1;});
+  const cands=yhit.length?yhit:exact;
+  if(cands.length===1)return cands[0];
+  // Etapa 3: ainda ambíguo (mais de um filme com mesmo título/ano) — desempata pelo diretor
+  const dirNames=await _refDirector(t,y);
+  if(dirNames&&dirNames.length){
+    for(const c of cands){
+      try{
+        const cr=await credits(c.id);
+        if(cr&&cr.di&&cr.di.some(d=>dirNames.some(dn=>{const dl=(d[1]||'').toLowerCase();return dl===dn||dl.includes(dn)||dn.includes(dl);})))return c;
+      }catch(e){}
+    }
+  }
+  // sem desempate seguro: usa o candidato mais relevante/votado entre os já validados por título+ano
+  return [...cands].sort((a,b)=>(b.vote_count||0)-(a.vote_count||0))[0];
 }
 async function searchFilm(t,y){
   for(const params of [{query:t,primary_release_year:y},{query:t,year:y},{query:t}]){
     const j=await tmdb('/search/movie',params); const res=(j&&j.results)||[]; if(!res.length)continue;
-    const m=pickMatch(res,t,y); if(m) return {id:m.id,po:m.poster_path||null,ti:m.title||t,ot:m.original_title||m.title||t,ye:(m.release_date||'').slice(0,4)||y,gids:m.genre_ids||[],lang:m.original_language||null};
+    const m=await pickMatch(res,t,y); if(m)return _toFilmRecord(m,t,y);
   } return null;
 }
 async function credits(id){
@@ -815,11 +901,25 @@ async function watchProviders(id){
 }
 async function movieDetails(id){
   const j=await tmdb('/movie/'+id,{language:'pt-BR'}); if(!j)return null;
-  return {ov:(j.overview||'').slice(0,320),rt:j.runtime||null,tg:(j.tagline||'').slice(0,120),tp:j.title||null};
+  return {ov:(j.overview||'').trim(),rt:j.runtime||null,tg:(j.tagline||'').slice(0,120),tp:j.title||null};
 }
 async function personBio(id){
   const j=await tmdb('/person/'+id,{language:'pt-BR'}); if(!j)return null;
-  return (j.biography||'').slice(0,400)||null;
+  return (j.biography||'').trim()||null;
+}
+// Texto truncado + botao "ver mais" (sem innerHTML, evita problemas com aspas/simbolos no texto)
+function renderExpandable(el,fullText,lim){
+  if(!el)return;
+  lim=lim||220;
+  el.textContent='';
+  const t=(fullText||'').trim();
+  if(!t){el.textContent='Sem informacao disponivel.';return;}
+  if(t.length<=lim){el.textContent=t;return;}
+  el.textContent=t.slice(0,lim).trim()+'…';
+  const sm=document.createElement('span');
+  sm.className='see-more';sm.textContent=' ver mais';
+  sm.onclick=ev=>{ev.stopPropagation();el.textContent=t;};
+  el.appendChild(sm);
 }
 
 /* ---------- sync ---------- */
@@ -930,10 +1030,16 @@ function renderFilms(){
   const decs=[...new Set(base.map(r=>Math.floor(r.y/10)*10))].filter(d=>d).sort((a,b)=>b-a);
   const langCounts={};base.forEach(r=>{if(r.lang)langCounts[r.lang]=(langCounts[r.lang]||0)+1;});
   const langOpts=Object.entries(langCounts).sort((a,b)=>b[1]-a[1]).slice(0,18);
-  const modes=[['all','Todos'],['watchlist','Quero ver'],['rewatch','Revistos'],['unrated','Sem nota']];
+  const modes=[['all','Todos'],['unrated','Sem nota']];
+  const wlCount=watchlist().length,rwCount=films().filter(r=>(r.rw||0)>=1).length;
+  const featRow=`<div class="feat-row">
+    <button class="feat-btn${fMode==='watchlist'?' on':''}" id="fFeatWl" data-m="watchlist">${ICON_EYE}<span class="feat-lbl">Quero ver</span><span class="feat-n">${fmt(wlCount)}</span></button>
+    <button class="feat-btn${fMode==='rewatch'?' on':''}" id="fFeatRw" data-m="rewatch">↺<span class="feat-lbl">Revistos</span><span class="feat-n">${fmt(rwCount)}</span></button>
+  </div>`;
   const langSel=langOpts.length?`<select id="fLang"><option value="">Idioma: todos</option>${langOpts.map(([c,n])=>`<option value="${c}" ${fLang===c?'selected':''}>${LANGS[c]||c.toUpperCase()} · ${n}</option>`).join('')}</select>`:'';
   const tagSel=tagOpts.length?`<select id="fTag"><option value="">Tags: todas (${fmt(Object.keys(tagCounts).length)})</option>${tagOpts.map(([t,n])=>`<option value="${t.replace(/"/g,'&quot;')}" ${fTag===t?'selected':''}>${t} · ${n}</option>`).join('')}</select>`:'';
-  const ctrl=`<div class="controls"><div class="seg" id="pSort">${[['rt','Nota'],['yr','Ano'],['az','A–Z']].map(([s,l])=>`<button data-s="${s}" class="${pSort===s?'on':''}">${l}</button>`).join('')}</div><button class="chip" id="fCPais">${GLOBE_SVG} País</button></div>`
+  const ctrl=featRow
+    +`<div class="controls"><div class="seg" id="pSort">${[['rt','Nota'],['yr','Ano'],['az','A–Z']].map(([s,l])=>`<button data-s="${s}" class="${pSort===s?'on':''}">${l}</button>`).join('')}</div><button class="chip" id="fCPais">${GLOBE_SVG} País</button></div>`
     +`<div class="chips" id="fMode" style="margin:0 0 9px">${modes.map(([m,l])=>`<button class="chip ${fMode===m?'on':''}" data-m="${m}">${l}</button>`).join('')}</div>`
     +(decs.length?`<div class="chips" id="pDec" style="margin:0 0 9px"><button class="chip ${pDec==null?'on':''}" data-d="all">Todas</button>${decs.map(d=>`<button class="chip ${pDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>`:'')
     +`<div class="controls" style="margin:0 0 11px">${langSel}${tagSel}</div>`;
@@ -954,6 +1060,7 @@ function renderFilms(){
   $('#pSort').onclick=e=>{const b=e.target.closest('button');if(b){pSort=b.dataset.s;renderFilms();}};
   const pd=$('#pDec');if(pd)pd.onclick=e=>{const b=e.target.closest('button');if(b){pDec=b.dataset.d==='all'?null:+b.dataset.d;renderFilms();}};
   $('#fMode').onclick=e=>{const b=e.target.closest('button');if(b){fMode=b.dataset.m;pDec=null;fTag='';renderFilms();}};
+  const featRowEl=$('.feat-row');if(featRowEl)featRowEl.onclick=e=>{const b=e.target.closest('.feat-btn');if(!b)return;const m=b.dataset.m;fMode=(fMode===m?'all':m);pDec=null;fTag='';renderFilms();};
   const fl2=$('#fLang');if(fl2)fl2.onchange=e=>{fLang=e.target.value;renderFilms();};
   const ftg=$('#fTag');if(ftg)ftg.onchange=e=>{fTag=e.target.value;renderFilms();};
   const fcp=$('#fCPais');if(fcp)fcp.onclick=()=>{fView='country';renderFilms();};
@@ -1154,40 +1261,78 @@ async function openPerson(p){const {mini,bf}=personDetail({fl:p.f});
   const isAct=p.id&&!isDir&&films().some(r=>(r.ca||[]).some(c=>c[0]===p.id));
   const actLbl=p.g===1?'atriz':'ator';
   showSheet(`<div class="top">${ph}<div><h3>${p.n}</h3><div class="yr"><b>${p.f.length}</b> filme(s) vistos</div>${bf?`<div class="yr" style="margin-top:6px">Melhor: <b style="color:var(--gold)">${bf.t}</b> ${star(bf.r)}</div>`:''}</div></div><div class="lbl">Biografia</div><div class="bio-scroll"><p id="pBio" style="font-size:13px;color:var(--mut);line-height:1.6;margin:0">Carregando…</p></div>${isDir?'<div id="dirFilmo"><div class="lbl">Filmografia como diretor</div><div class="note" style="margin:0">Calculando o que falta…</div></div>':''}${isAct?`<div id="actorFilmo"><div class="lbl">Filmografia como ${actLbl}</div><div class="note" style="margin:0">Calculando o que falta…</div></div>`:''}<div class="lbl">Filmes vistos</div><div class="mini">${mini}</div>`);
-  if(p.id){const b=await personBio(p.id);const el=$('#pBio');if(el)el.textContent=b||'Sem biografia disponível.';}
+  if(p.id){const b=await personBio(p.id);const el=$('#pBio');if(el)renderExpandable(el,b,220);}
   if(isDir)fillDirFilmography(p);
   if(isAct)fillActorFilmography(p);
 }
-const _filmoCache={};
-async function directorFilmography(id){
-  if(_filmoCache[id])return _filmoCache[id];
-  try{const j=await tmdb('/person/'+id+'/movie_credits',{language:'pt-BR'});if(!j)return null;
-    // Exclui videoclipes, conteúdo adulto e itens sem votos suficientes (curtas/lives/etc.)
-    const seen=new Map();(j.crew||[]).filter(c=>c.job==='Director'&&!c.adult&&!c.video&&(c.vote_count||0)>=50).forEach(c=>{if(!seen.has(c.id))seen.set(c.id,c);});
-    return(_filmoCache[id]=[...seen.values()]);
-  }catch(e){return null;}
+const SEEN_BADGE_SVG='<svg viewBox="0 0 32 32" width="20" height="20"><path d="M 4 16 A 12 7.5 0 0 1 28 16" style="stroke:var(--acc1)" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M 28 16 A 12 7.5 0 0 1 4 16" style="stroke:var(--acc2)" stroke-width="3.4" fill="none" stroke-linecap="round"/><circle cx="16" cy="16" r="2.6" fill="#f4f0e6"/></svg>';
+// Encontra o registro local (visto) correspondente a um filme do TMDB, por id ou titulo normalizado
+function _localRecFor(m){
+  if(m.id){const byId=films().find(r=>r.id===m.id);if(byId)return byId;}
+  const t1=norm(m.title||''),t2=norm(m.original_title||'');
+  if(!t1&&!t2)return null;
+  return films().find(r=>norm(r.t)===t1||norm(r.ti||'')===t1||(t2&&(norm(r.t)===t2||norm(r.ti||'')===t2)))||null;
+}
+function _filmoSortArr(arr,sort){
+  const yr=m=>+((m.release_date||'').slice(0,4))||0;
+  arr=arr.slice();
+  if(sort==='year')arr.sort((a,b)=>yr(b)-yr(a));
+  else if(sort==='rating')arr.sort((a,b)=>(b.vote_average||0)-(a.vote_average||0));
+  else if(sort==='myrating')arr.sort((a,b)=>{const la=_localRecFor(a),lb=_localRecFor(b);const ra=la&&la.r!=null?la.r:-1,rb=lb&&lb.r!=null?lb.r:-1;return rb-ra||yr(b)-yr(a);});
+  else arr.sort((a,b)=>(b.vote_count||0)-(a.vote_count||0)); // popularidade (padrao)
+  return arr;
+}
+function _filmoRow(m){
+  const y=(m.release_date||'').slice(0,4);
+  const mk=key(m.title,+y);const inWl=!!(cache[mk]&&cache[mk].wl);
+  const localRec=_localRecFor(m);const seen=!!localRec;
+  const myR=seen&&localRec.r!=null?localRec.r:null;
+  const dk=mk.replace(/"/g,'&quot;');
+  const po=m.poster_path?`<img loading="lazy" src="${IMG}/w92${m.poster_path}" data-k="${dk}" data-tmdbid="${m.id}" data-ptitle="${(m.title||'').replace(/"/g,'&quot;')}" data-ppo="${m.poster_path}" class="${seen?'blur-seen':''}" style="cursor:pointer"/>` :'<div class="pp"></div>';
+  const badge=seen?`<div class="sr-seen-badge" title="Voce ja viu">${SEEN_BADGE_SVG}</div>`:'';
+  const ratingTxt=myR!=null?' · sua nota '+star(myR):(m.vote_average?' · '+m.vote_average.toFixed(1)+'★ TMDB':'');
+  const wlBtn=seen?'':`<button class="wl-btn${inWl?' on':''}" data-t="${(m.title||'').replace(/"/g,'&quot;')}" data-y="${y}" data-id="${m.id}" data-po="${m.poster_path||''}">${inWl?'✓ ver depois':'+ ver depois'}</button>`;
+  return `<div class="sr${seen?' seen':''}"><div class="sr-poster">${po}${badge}</div><div class="si"><div class="st">${_titlePair(m.original_title||m.title,m.original_title&&m.original_title!==m.title?m.title:null)}</div><div class="sy">${y||'—'}${m.vote_count?' · '+fmt(m.vote_count)+' votos':''}${ratingTxt}</div></div>${wlBtn}</div>`;
+}
+const _filmoState={};
+// elId: id do container; stKey: chave de estado (unica por pessoa+papel); full: lista completa do TMDB; labelText: titulo da secao; kind: 'dir'|'actor'; id: tmdb person id
+function _renderFilmoEl(elId,stKey,full,labelText,kind,id){
+  const el=$('#'+elId);if(!el)return;
+  if(!full||!full.length){el.innerHTML='';return;}
+  const st=_filmoState[stKey]=_filmoState[stKey]||{mode:'top',sort:'pop',hideSeen:false};
+  st.elId=elId;st.label=labelText;st.kind=kind;st.id=id;
+  const valid=full.filter(m=>(m.release_date||'').length>=4);
+  const seenCount=valid.filter(m=>!!_localRecFor(m)).length;
+  const total=valid.length,pct=total?Math.round(seenCount/total*100):0;
+  let listHtml,ctrlHtml;
+  if(st.mode==='top'){
+    const unseen=valid.filter(m=>!_localRecFor(m)).sort((a,b)=>(b.vote_count||0)-(a.vote_count||0)).slice(0,8);
+    listHtml=unseen.length?`<div class="note" style="margin:8px 0 4px">Ainda não viu (mais populares):</div>${unseen.map(_filmoRow).join('')}`:'<div class="note" style="margin:6px 0 0">'+ICON_CHECK+' Você viu toda a filmografia principal'+(kind==='dir'?' dele':'')+'.</div>';
+    ctrlHtml=`<button class="see-more" data-filmo-expand="${stKey}">Ver filmografia completa (${fmt(total)}) ›</button>`;
+  }else{
+    let arr=valid.slice();
+    if(st.hideSeen)arr=arr.filter(m=>!_localRecFor(m));
+    arr=_filmoSortArr(arr,st.sort);
+    const sortOpts=[['pop','Popularidade'],['year','Ano'],['rating','Nota do site'],['myrating','Minha nota']];
+    ctrlHtml=`<div class="controls" style="margin:8px 0 9px"><div class="seg" data-filmo-sort="${stKey}">${sortOpts.map(([s,l])=>`<button data-s="${s}" class="${st.sort===s?'on':''}">${l}</button>`).join('')}</div></div>`
+      +`<label class="filmo-hide-row"><input type="checkbox" data-filmo-hide="${stKey}" ${st.hideSeen?'checked':''}/> Ocultar filmes já vistos</label>`
+      +`<button class="see-more" data-filmo-collapse="${stKey}">Ver só os recomendados ‹</button>`;
+    listHtml=arr.length?arr.map(_filmoRow).join(''):'<div class="note" style="margin:6px 0 0">Nenhum filme com esse filtro.</div>';
+  }
+  el.innerHTML=`<div class="lbl">${labelText}</div>`
+    +`<div class="filmo-prog"><div class="filmo-bar"><i style="width:${pct}%"></i></div><span>${seenCount} de ${total} vistos · ${pct}%</span></div>`
+    +ctrlHtml+listHtml;
+  _wlFilmoBtn(el);
+}
+function _filmoRefresh(stKey){
+  const st=_filmoState[stKey];if(!st)return;
+  const full=st.kind==='dir'?_filmoCache[st.id]:_filmoCache['a_'+st.id];
+  if(!full)return;
+  _renderFilmoEl(st.elId,stKey,full,st.label,st.kind,st.id);
 }
 async function fillDirFilmography(p){
-  const el=$('#dirFilmo');if(!el)return;
   const list=await directorFilmography(p.id);
-  if(!list||!list.length){el.innerHTML='';return;}
-  const seenIds=new Set(films().filter(r=>r.id).map(r=>r.id));
-  const seenTitles=new Set(films().map(r=>norm(r.t)).concat(films().map(r=>norm(r.ti||''))));
-  const isSeen=m=>seenIds.has(m.id)||seenTitles.has(norm(m.title||''))||seenTitles.has(norm(m.original_title||''));
-  const total=list.length,seen=list.filter(isSeen).length,pct=total?Math.round(seen/total*100):0;
-  const unseen=list.filter(m=>!isSeen(m)&&(m.release_date||'').length>=4).sort((a,b)=>(b.vote_count||0)-(a.vote_count||0)).slice(0,8);
-  const items=unseen.map(m=>{const y=(m.release_date||'').slice(0,4);
-    const mk=key(m.title,+y);const inWl=!!(cache[mk]&&cache[mk].wl);
-    const _dk=mk.replace(/"/g,'&quot;');
-    const po=m.poster_path?`<img loading="lazy" src="${IMG}/w92${m.poster_path}" data-k="${_dk}" data-tmdbid="${m.id}" data-ptitle="${(m.title||'').replace(/"/g,'&quot;')}" data-ppo="${m.poster_path}" style="cursor:pointer"/>` :'<div class="pp"></div>';
-    return `<div class="sr">${po}<div class="si"><div class="st">${_titlePair(m.original_title||m.title,m.original_title&&m.original_title!==m.title?m.title:null)}</div><div class="sy">${y||'—'}${m.vote_count?' · '+fmt(m.vote_count)+' votos':''}</div></div><button class="wl-btn${inWl?' on':''}" data-t="${(m.title||'').replace(/"/g,'&quot;')}" data-y="${y}" data-id="${m.id}" data-po="${m.poster_path||''}">${inWl?'✓ ver depois':'+ ver depois'}</button></div>`;}).join('');
-  el.innerHTML=`<div class="lbl">Filmografia como diretor</div>`
-    +`<div class="filmo-prog"><div class="filmo-bar"><i style="width:${pct}%"></i></div><span>${seen} de ${total} vistos · ${pct}%</span></div>`
-    +(unseen.length?`<div class="note" style="margin:8px 0 4px">Ainda não viu (mais populares):</div>${items}`:'<div class="note" style="margin:6px 0 0">'+ICON_CHECK+' Você viu toda a filmografia principal dele.</div>');
-  el.querySelectorAll('.wl-btn[data-id]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();const k=key(b.dataset.t,+b.dataset.y);
-    if(cache[k]&&cache[k].wl){del(k);PEOPLE=null;b.textContent='+ ver depois';b.classList.remove('on');toast('Removido da lista');return;}
-    const rec={t:b.dataset.t,y:+b.dataset.y,r:null,wl:1,id:+b.dataset.id||undefined,po:b.dataset.po||null,ti:b.dataset.t,ye:b.dataset.y,src:'user'};cache[k]=rec;put(k,rec);PEOPLE=null;b.textContent='✓ ver depois';b.classList.add('on');toast('Quero ver: '+b.dataset.t);
-    if(rec.id){credits(rec.id).then(cr=>{if(cr){rec.ca=cr.ca;rec.di=cr.di;rec.co=cr.co;if(cr.rt)rec.rt=cr.rt;rec.lang=cr.lang;}rec.cc=1;put(k,rec);PEOPLE=null;});}});
+  _renderFilmoEl('dirFilmo','dir_'+p.id,list,'Filmografia como diretor','dir',p.id);
 }
 async function actorFilmography(id){
   const ck='a_'+id;if(_filmoCache[ck])return _filmoCache[ck];
@@ -1203,24 +1348,9 @@ function _wlFilmoBtn(list,labelSuffix){
     if(rec.id){credits(rec.id).then(cr=>{if(cr){rec.ca=cr.ca;rec.di=cr.di;rec.co=cr.co;if(cr.rt)rec.rt=cr.rt;rec.lang=cr.lang;}rec.cc=1;put(k,rec);PEOPLE=null;});}});
 }
 async function fillActorFilmography(p){
-  const el=$('#actorFilmo');if(!el)return;
   const list=await actorFilmography(p.id);
-  if(!list||!list.length){el.innerHTML='';return;}
-  const seenIds=new Set(films().filter(r=>r.id).map(r=>r.id));
-  const seenTitles=new Set(films().map(r=>norm(r.t)).concat(films().map(r=>norm(r.ti||''))));
-  const isSeen=m=>seenIds.has(m.id)||seenTitles.has(norm(m.title||''))||seenTitles.has(norm(m.original_title||''));
-  const total=list.length,seenN=list.filter(isSeen).length,pct=total?Math.round(seenN/total*100):0;
-  const unseen=list.filter(m=>!isSeen(m)&&(m.release_date||'').length>=4).slice(0,8);
   const actLbl=p.g===1?'atriz':'ator';
-  const items=unseen.map(m=>{const y=(m.release_date||'').slice(0,4);
-    const mk=key(m.title,+y);const inWl=!!(cache[mk]&&cache[mk].wl);
-    const _ak=mk.replace(/"/g,'&quot;');
-    const po=m.poster_path?`<img loading="lazy" src="${IMG}/w92${m.poster_path}" data-k="${_ak}" data-tmdbid="${m.id}" data-ptitle="${(m.title||'').replace(/"/g,'&quot;')}" data-ppo="${m.poster_path}" style="cursor:pointer"/>` :'<div class="pp"></div>';
-    return `<div class="sr">${po}<div class="si"><div class="st">${_titlePair(m.original_title||m.title,m.original_title&&m.original_title!==m.title?m.title:null)}</div><div class="sy">${y||'—'}${m.vote_count?' · '+fmt(m.vote_count)+' votos':''}</div></div><button class="wl-btn${inWl?' on':''}" data-t="${(m.title||'').replace(/"/g,'&quot;')}" data-y="${y}" data-id="${m.id}" data-po="${m.poster_path||''}">${inWl?'✓ ver depois':'+ ver depois'}</button></div>`;}).join('');
-  el.innerHTML=`<div class="lbl">Filmografia como ${actLbl}</div>`
-    +`<div class="filmo-prog"><div class="filmo-bar"><i style="width:${pct}%"></i></div><span>${seenN} de ${total} vistos · ${pct}%</span></div>`
-    +(unseen.length?`<div class="note" style="margin:8px 0 4px">Ainda não viu (mais populares):</div>${items}`:'<div class="note" style="margin:6px 0 0">'+ICON_CHECK+' Você viu toda a filmografia principal.</div>');
-  _wlFilmoBtn(el);
+  _renderFilmoEl('actorFilmo','act_'+p.id,list,'Filmografia como '+actLbl,'actor',p.id);
 }
 function openGenre(g){const fl=films().filter(r=>(r.gids||[]).some(id=>(GENRES[id]||('#'+id))===g)).map(r=>({t:r.ti||r.t,y:+(r.ye||r.y),r:r.r,p:r.po}));
   const {mini,bf}=personDetail({fl});const rd=fl.filter(f=>f.r!=null);const avg=rd.length?rd.reduce((s,f)=>s+f.r,0)/rd.length:null;
@@ -1391,7 +1521,24 @@ function bioFavSlots(host){host.innerHTML=[0,1,2,3,4].map(i=>{const k=(bio.favs|
   host.querySelectorAll('.favslot').forEach(el=>el.onclick=()=>openFavPicker(+el.dataset.fav));}
 function openBioEdit(){$('#bioName').value=bio.name||'';$('#bioSite').value=bio.site||'';
   $('#bioAccent').innerHTML=Object.keys(ACCENTS).map(a=>{const[c1,c2]=ACCENTS[a];return `<button class="chip theme-chip ${(bio.accent||'vertigo')===a?'on':''}" data-a="${a}"><span class="sw" style="background:linear-gradient(135deg,${c1},${c2})"></span>${ACC_LBL[a]}</button>`;}).join('');
-  bioFavSlots($('#bioFavs'));$('#bioEdit').classList.add('show');}
+  bioFavSlots($('#bioFavs'));renderBioOmdbKeyRow();$('#bioEdit').classList.add('show');}
+// Linha de gerenciamento da chave OMDb dentro de "Editar perfil" (fica fechada por padrão p/ não pesar o layout)
+function renderBioOmdbKeyRow(){
+  const row=$('#bioOmdbKeyRow');if(!row)return;
+  const custom=!!getOmdbKey();
+  row.innerHTML='<div class="reco-eng" style="margin:0"><span class="dot" style="background:'+(custom?'var(--acc1)':'var(--mut)')+'"></span>'
+    +(custom?'Chave própria configurada':'Usando chave padrão')
+    +(custom?' <button id="bioOmdbDel2">Remover</button>':' <button id="bioOmdbChg2">Trocar</button>')+'</div>';
+  const chg=$('#bioOmdbChg2');if(chg)chg.onclick=()=>{
+    if($('#bioOmdbBox2'))return;
+    row.insertAdjacentHTML('beforeend',_recoOmdbBoxHtml().replace('id="recoOmdbBox"','id="bioOmdbBox2"').replace('id="recoOmdbIn"','id="bioOmdbIn2"').replace('id="recoOmdbSave"','id="bioOmdbSave2"'));
+    $('#bioOmdbSave2').onclick=()=>{
+      const v=$('#bioOmdbIn2').value.trim();if(!v){toast('Cole a chave');return;}
+      setOmdbKey(v);toast('Chave OMDb salva');renderBioOmdbKeyRow();
+    };
+  };
+  const del=$('#bioOmdbDel2');if(del)del.onclick=()=>{setOmdbKey(null);toast('Chave removida, usando padrão');renderBioOmdbKeyRow();};
+}
 $('#bioAccent').onclick=e=>{const b=e.target.closest('button');if(!b)return;bio.accent=b.dataset.a;bio.cat=THEME_SPIRAL[bio.accent]||bio.cat||'films';saveBio();applyAccent();$$('#bioAccent .chip').forEach(x=>x.classList.toggle('on',x.dataset.a===bio.accent));render();};
 $('#bioSave').onclick=()=>{bio.name=$('#bioName').value.trim();bio.site=$('#bioSite').value.trim();saveBio();$('#bioEdit').classList.remove('show');renderBio();};
 $('#bioEditClose').onclick=()=>{$('#bioEdit').classList.remove('show');renderBio();};
@@ -1403,6 +1550,28 @@ function renderFavRes(q){const nq=norm(q);let list=films();if(nq)list=list.filte
   }).join('')||'<div class="note">Nenhum filme encontrado.</div>';
   $$('#favRes .sr').forEach(el=>el.onclick=()=>{bio.favs=bio.favs||[];bio.favs[curFav]=el.dataset.k;saveBio();$('#favOver').classList.remove('show');if($('#bioEdit').classList.contains('show'))bioFavSlots($('#bioFavs'));renderBio();});}
 $('#favClose').onclick=()=>$('#favOver').classList.remove('show');
+
+// ── Ficha completa "Ano a ano" (mantém a tela de estatísticas curta mesmo com o catálogo crescendo) ──
+function _yyRowHtml(r){return '<div class="yy-row"><span class="yy-y">'+r.y+'</span><span class="yy-n"><b>'+fmt(r.n)+'</b> filmes</span><span class="yy-a">'+(r.avg!=null?r.avg.toFixed(2).replace('.',',')+'★':'—')+'</span><span class="yy-g">'+(r.top?r.top[0]:'—')+'</span></div>';}
+function renderYYRes(q){
+  const all=_byYear();
+  const f=q?all.filter(r=>String(r.y).includes(q.trim())):all;
+  $('#yyRes').innerHTML='<div class="yy-rows">'+(f.length?f.map(_yyRowHtml).join(''):'<div class="note" style="padding:12px">Nada encontrado.</div>')+'</div>';
+}
+function openYYOver(){$('#yyIn').value='';renderYYRes('');$('#yyOver').classList.add('show');setTimeout(()=>$('#yyIn').focus(),100);}
+$('#yyClose').onclick=()=>$('#yyOver').classList.remove('show');
+$('#yyIn').oninput=e=>renderYYRes(e.target.value);
+
+// ── Ficha completa "Décadas" ──
+function _decRowHtml(d){const w=d.avg!=null?d.avg/5*100:0;return '<div class="barrow"><div class="bn">'+d.d+'s</div><div class="track"><div class="fill" style="width:'+w+'%"></div></div><div class="bmeta">'+(d.avg!=null?'<span class="g">'+star(+d.avg.toFixed(2))+'</span> · ':'')+fmt(d.n)+'f</div></div>';}
+function renderDecRes(q){
+  const all=_decadeStats().filter(d=>d.n>=1).sort((a,b)=>b.d-a.d);
+  const f=q?all.filter(d=>String(d.d).includes(q.trim())):all;
+  $('#decRes').innerHTML='<div class="bars">'+(f.length?f.map(_decRowHtml).join(''):'<div class="note" style="padding:12px">Nada encontrado.</div>')+'</div>';
+}
+function openDecOver(){$('#decIn').value='';renderDecRes('');$('#decOver').classList.add('show');setTimeout(()=>$('#decIn').focus(),100);}
+$('#decClose').onclick=()=>$('#decOver').classList.remove('show');
+$('#decIn').oninput=e=>renderDecRes(e.target.value);
 $('#shareClose').onclick=()=>$('#shareOver').classList.remove('show');
 $('#recoClose').onclick=()=>$('#recoOver').classList.remove('show');
 $('#favIn').oninput=e=>renderFavRes(e.target.value);
@@ -1648,8 +1817,7 @@ async function _fetchRecos(vibe){
     }
   }
   const pool=cands.length>=3?cands:candsAll; // fallback se nowIds filtrou demais
-  if(!getOmdbKey())return pool.slice(0,5); // sem OMDb: retorna por popularidade
-  // Com OMDb: enriquecer com nota IMDb real e filtrar
+  // Sempre tenta enriquecer com nota IMDb real (chave própria se configurada, senão chave padrão)
   const MIN={terror:6.5,noir:7.0,arte:7.2,queer:6.8,scifi:7.0,brasil:6.5,surpresa:7.0};
   const minR=MIN[vibe]||6.8;
   const enriched=[]; let checked=0;
@@ -1657,7 +1825,7 @@ async function _fetchRecos(vibe){
     if(checked>=22||enriched.filter(x=>x._imdb!=null).length>=8)break;
     checked++;
     const yr=(mv.release_date||'').slice(0,4);
-    const od=await omdbFetch(mv.original_title||mv.title,yr,mv.title);
+    const od=await _omdbByTmdbId(mv.id,mv.title,mv.original_title,yr);
     const rating=od?parseFloat(od.imdbRating):NaN;
     if(!isNaN(rating)&&rating<minR)continue; // nota abaixo do corte
     const votes=od?parseInt((od.imdbVotes||'0').replace(/,/g,''),10):0;
@@ -1671,43 +1839,80 @@ async function _fetchRecos(vibe){
   return enriched.length?enriched.slice(0,5):pool.slice(0,5); // fallback sem filtro OMDb
 }
 
-// ── cache de sessão para OMDb (evita repetir chamadas) ──
+// ── cache de sessão (memória) + cache persistente (localStorage) p/ não repetir chamadas entre sessões ──
 const _omdbCache={};
+// Diagnóstico: motivo da última falha do OMDb (ex.: "Invalid API key!", "Request limit reached!", "HTTP 401")
+let _omdbLastError=null;
+const _OMDB_PERSIST_KEY='cs_omdb_p2', _OMDB_PERSIST_MAX=600;
+function _omdbPersistLoad(){try{return JSON.parse(localStorage.getItem(_OMDB_PERSIST_KEY)||'{}');}catch(e){return{};}}
+function _omdbPersistGet(tmdbId){const m=_omdbPersistLoad();return m[tmdbId]||null;}
+function _omdbPersistSet(tmdbId,od){
+  try{
+    const m=_omdbPersistLoad();
+    m[tmdbId]={imdbRating:od.imdbRating,imdbVotes:od.imdbVotes,imdbID:od.imdbID,Director:od.Director,Response:'True',_ts:Date.now()};
+    const keys=Object.keys(m);
+    if(keys.length>_OMDB_PERSIST_MAX){keys.sort((a,b)=>(m[a]._ts||0)-(m[b]._ts||0)).slice(0,keys.length-_OMDB_PERSIST_MAX).forEach(k=>delete m[k]);}
+    localStorage.setItem(_OMDB_PERSIST_KEY,JSON.stringify(m));
+  }catch(e){}
+}
+// Contador de chamadas/dia (evita insistir e estourar a cota do plano grátis do OMDb sem aviso)
+const _OMDB_DAILY_LIMIT=950;
+function _omdbDayKey(){return 'cs_omdb_n_'+new Date().toISOString().slice(0,10);}
+function _omdbCallsLeft(){try{return _OMDB_DAILY_LIMIT-(+localStorage.getItem(_omdbDayKey())||0);}catch(e){return _OMDB_DAILY_LIMIT;}}
+function _omdbCallAllowed(){
+  if(_omdbCallsLeft()<=0){_omdbLastError='Limite diário do OMDb (≈1.000) provavelmente atingido — volta a funcionar após meia-noite UTC';return false;}
+  return true;
+}
+function _omdbCallMark(){try{const k=_omdbDayKey();localStorage.setItem(k,String((+localStorage.getItem(k)||0)+1));}catch(e){}}
 async function omdbFetch(title,year,titleFallback){
   const ck=(title||'')+'|'+(year||'');
   if(_omdbCache[ck]!==undefined)return _omdbCache[ck];
+  if(!_omdbCallAllowed())return(_omdbCache[ck]=null);
   const apikey=getOmdbKey()||'2e29b4de';
   const tryFetch=async(t,y)=>{
     try{
+      _omdbCallMark();
       const r=await fetch('https://www.omdbapi.com/?t='+encodeURIComponent(t)+(y?'&y='+y:'')+'&r=json&apikey='+apikey);
-      if(!r.ok)return null; const j=await r.json(); return j.Response==='True'?j:null;
-    }catch(e){return null;}
+      if(!r.ok){_omdbLastError='HTTP '+r.status;return null;}
+      const j=await r.json();
+      if(j.Response==='True'){_omdbLastError=null;return j;}
+      if(j.Error)_omdbLastError=j.Error;
+      return null;
+    }catch(e){_omdbLastError='Falha de rede';return null;}
   };
   let res=await tryFetch(title,year);
-  if(!res&&titleFallback&&titleFallback!==title)res=await tryFetch(titleFallback,year);
-  if(!res&&year)res=await tryFetch(title,'');  // tenta sem ano
+  if(!res&&titleFallback&&titleFallback!==title&&_omdbCallAllowed())res=await tryFetch(titleFallback,year);
+  if(!res&&year&&_omdbCallAllowed())res=await tryFetch(title,'');  // tenta sem ano
   return(_omdbCache[ck]=res);
 }
 
-// IMDb por ID TMDB (evita problema de idioma no título)
+// IMDb por ID TMDB (evita problema de idioma no título) — checa cache persistente antes de gastar chamadas
 async function _omdbByTmdbId(tmdbId,ptTitle,origTitle,year){
+  const persisted=_omdbPersistGet(tmdbId);
+  if(persisted)return persisted;
   const od=await omdbFetch(origTitle||ptTitle,year,ptTitle);
-  if(od)return od;
+  if(od){_omdbPersistSet(tmdbId,od);return od;}
   try{
+    const ck='i:'+tmdbId;if(_omdbCache[ck]!==undefined)return _omdbCache[ck];
+    if(!_omdbCallAllowed())return(_omdbCache[ck]=null);
     const eid=await tmdb('/movie/'+tmdbId+'/external_ids',{});
-    const imdbId=eid&&eid.imdb_id;if(!imdbId)return null;
-    const ck='i:'+imdbId;if(_omdbCache[ck]!==undefined)return _omdbCache[ck];
+    const imdbId=eid&&eid.imdb_id;if(!imdbId)return(_omdbCache[ck]=null);
+    if(!_omdbCallAllowed())return(_omdbCache[ck]=null);
     const apikey=getOmdbKey()||'2e29b4de';
+    _omdbCallMark();
     const r=await fetch('https://www.omdbapi.com/?i='+imdbId+'&r=json&apikey='+apikey);
-    if(!r.ok)return(_omdbCache[ck]=null);
+    if(!r.ok){_omdbLastError='HTTP '+r.status;return(_omdbCache[ck]=null);}
     const jj=await r.json();
-    return(_omdbCache[ck]=jj.Response==='True'?jj:null);
-  }catch(e){return null;}
+    if(jj.Response==='True'){_omdbLastError=null;_omdbPersistSet(tmdbId,jj);return(_omdbCache[ck]=jj);}
+    if(jj.Error)_omdbLastError=jj.Error;
+    return(_omdbCache[ck]=null);
+  }catch(e){_omdbLastError='Falha de rede';return null;}
 }
 // ── card unificado ──
 function _recoCard(o){
   const _rk=((o.title||'')+'|'+(o.year||'')).replace(/"/g,'&quot;');
-  const po=o.poster?'<img src="'+IMG+'/w154'+o.poster+'" loading="lazy" data-recokey="'+_rk+'" style="cursor:pointer"/>':'<div class="reco-ph" data-recokey="'+_rk+'" style="cursor:pointer">'+initials(o.title||'?')+'</div>';
+  const _matchKey=(o.tmdbId!=null?String(o.tmdbId):_rk).replace(/"/g,'&quot;');
+  const po=o.poster?'<img src="'+IMG+'/w154'+o.poster+'" loading="lazy" data-recokey="'+_matchKey+'" style="cursor:pointer"/>':'<div class="reco-ph" data-recokey="'+_matchKey+'" style="cursor:pointer">'+initials(o.title||'?')+'</div>';
   const meta=(o.sub||'').trim();
   let scoreHtml='';
   if(o.imdbRating!=null)
@@ -1718,11 +1923,12 @@ function _recoCard(o){
     scoreHtml='<div class="reco-score" style="color:var(--acc1)">'+o.status+'</div>';
   const provHtml=(o.providers&&o.providers.length)?'<div class="reco-prov">'+ICON_PLAY+'Streaming BR: <b>'+o.providers.join(' · ')+'</b></div>':'';
   const _rejectBtn=o.tmdbId?'<button class="reco-reject" data-reject="'+o.tmdbId+'" title="Não mostrar mais">'+ICON_RECO_REJECT+'</button>':'';
+  const _krec=cache[o.ckey||_rk];const _onWl=!!(_krec&&_krec.wl);const _seen=!!(_krec&&_krec.r!=null&&!_krec.wl);
+  const wlBtn=_seen?'<div class="reco-score" style="color:var(--acc1)">'+ICON_CHECK+' Já visto</div>':'<button class="reco-wl-btn'+(_onWl?' on':'')+'" data-recowl="'+_matchKey+'">'+(_onWl?'✓ Na watchlist':'+ Quero ver')+'</button>';
   return '<div class="reco-card" data-cardid="'+(o.tmdbId||'')+'">'+po+'<div class="reco-info">'
-    +'<div class="reco-title-row"><div class="reco-title">'+(o.titlePt?_titlePair(o.title,o.titlePt):o.title)+(o.year?' ('+o.year+')':'')+'</div>'+_rejectBtn+'</div>'
+    +'<div class="reco-title-row"><div class="reco-title">'+o.title+(o.year?' ('+o.year+')':'')+'</div>'+_rejectBtn+'</div>'
     +(meta?'<div class="reco-meta">'+meta+'</div>':'')
-    +(o.why?'<div class="reco-why'+(o.main?' reco-why-main':'')+'">'+o.why+'</div>':'')
-    +scoreHtml+provHtml
+    +scoreHtml+provHtml+wlBtn
     +'</div></div>';
 }
 const ICON_PLAY='<svg viewBox="0 0 24 24" fill="currentColor" style="width:11px;height:11px;vertical-align:-1px;margin-right:4px"><path d="M8 5v14l11-7z"/></svg>';
@@ -1783,16 +1989,40 @@ function openReco(){
 }
 function _wireRecoCardClicks(panel){
   if(!panel||!_bioRecoMovies)return;
+  const _findRecoMovie=rk=>{
+    const byId=_bioRecoMovies.find(m=>String(m.id)===rk);
+    if(byId)return byId;
+    return _bioRecoMovies.find(m=>((m.original_title||m.title)+'|'+(m.release_date||'').slice(0,4))===rk);
+  };
   panel.querySelectorAll('[data-recokey]').forEach(el=>{
     el.onclick=e=>{
       e.stopPropagation();
-      const rk=el.dataset.recokey;
-      const m=_bioRecoMovies.find(m=>(m.title+'|'+(m.release_date||'').slice(0,4))===rk);
+      const m=_findRecoMovie(el.dataset.recokey);
       if(!m)return;
       const yr=(m.release_date||'').slice(0,4);
       const k=key(m.title,yr);
-      if(!cache[k])cache[k]={t:m.title,y:+yr||0,id:m.id,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null,ti:m.original_title||m.title,ye:yr,src:'reco'};
+      if(!cache[k])cache[k]={t:m.title,y:+yr||0,id:m.id,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null,ti:m.title,ot:m.original_title||m.title,ye:yr,src:'reco'};
       openFilm(k);
+    };
+  });
+  panel.querySelectorAll('.reco-wl-btn').forEach(btn=>{
+    btn.onclick=e=>{
+      e.stopPropagation();
+      const m=_bioRecoMovies&&_findRecoMovie(btn.dataset.recowl);
+      if(!m)return;
+      const yr=(m.release_date||'').slice(0,4);
+      const k=key(m.title,yr);
+      let rec=cache[k];
+      if(rec&&rec.wl){delete rec.wl;put(k,rec);toast('Tirado da watchlist');}
+      else if(rec&&rec.r!=null){toast('Esse você já assistiu');return;}
+      else{
+        rec=rec||{t:m.title,y:+yr||0};rec.wl=1;rec.r=null;rec.id=m.id;rec.po=m.poster_path||null;rec.gids=m.genre_ids||[];rec.lang=m.original_language||null;rec.ti=m.title;rec.ot=m.original_title||m.title;rec.ye=String(yr);rec.src='reco';
+        cache[k]=rec;put(k,rec);toast('Quero ver: '+m.title);
+        if(rec.id&&!rec.cc){credits(rec.id).then(c=>{if(c){rec.ca=c.ca;rec.di=c.di;rec.co=c.co;if(c.rt)rec.rt=c.rt;rec.lang=c.lang;}rec.cc=1;put(k,rec);PEOPLE=null;});}
+      }
+      PEOPLE=null;
+      btn.classList.toggle('on',!!cache[k].wl);
+      btn.textContent=cache[k].wl?'✓ Na watchlist':'+ Quero ver';
     };
   });
   panel.querySelectorAll('.reco-reject').forEach(btn=>{
@@ -1876,9 +2106,10 @@ async function _runBioReco(vibe){
     const titlePt=(m.original_title&&m.original_title!==m.title)?m.title:null;
     return _recoCard({poster:m.poster_path,title:m.original_title||m.title,titlePt,year:yr,sub:gen,why:ov2||'',main:i===0,
       imdbRating,score:imdbRating==null&&m.vote_average?m.vote_average.toFixed(1):null,tmdbId:m.id,
-      tag:cfg.note,providers});
+      ckey:key(m.title,yr),tag:cfg.note,providers});
   });
   const cards=await Promise.all(cardPromises);
+  // Sem aviso visivel quando nao ha nota IMDb: cai silenciosamente para a nota do TMDB (score) nos cards.
   _bioRecoHTML=cards.join('');
   // Fase 7: exibir resultados
   sb.classList.add('bio-results-mode');
@@ -1890,6 +2121,8 @@ async function _runBioReco(vibe){
     void recoPanel.offsetHeight;
     recoPanel.style.opacity='1';
     _wireRecoCardClicks(recoPanel);
+    const fixBtn=$('#bioOmdbFix');
+    if(fixBtn)fixBtn.onclick=openBioEdit; // chave fica só em "Editar perfil", não solta na página de recomendações
   }
 }
 
@@ -2229,7 +2462,9 @@ const ACH_SETS=[
   {cat:'Movimentos',icon:'movement',name:'New Hollywood',goal:10,films:[['Bonnie and Clyde',1967],['The Graduate',1967],['Easy Rider',1969],['The Wild Bunch',1969],['Midnight Cowboy',1969],['Five Easy Pieces',1970],['The Last Picture Show',1971],['A Clockwork Orange',1971],['The French Connection',1971],['Mean Streets',1973],['Chinatown',1974],['Taxi Driver',1976],['Nashville',1975],['Dog Day Afternoon',1975],['Apocalypse Now',1979]]},
   {cat:'Movimentos',icon:'movement',name:'Cinema Novo',goal:5,films:[['Black God, White Devil',1964],['Barren Lives',1963],['Entranced Earth',1967],['Macunaíma',1969],['The Guns',1964],['The Red Light Bandit',1968],['Antonio das Mortes',1969]]},
   {cat:'Movimentos',icon:'movement',name:'Novo Cinema Alemão',goal:5,films:[['Aguirre, the Wrath of God',1972],['The Marriage of Maria Braun',1979],['Wings of Desire',1987],['Paris, Texas',1984],['Fitzcarraldo',1982],['Ali: Fear Eats the Soul',1974],['The American Friend',1977],['Kings of the Road',1976]]},
-  {cat:'Movimentos',icon:'movement',name:'Nova Onda Tcheca',goal:4,films:[['Closely Watched Trains',1966],['Daisies',1966],['The Firemen\'s Ball',1967],['Loves of a Blonde',1965],['Marketa Lazarová',1967],['Valerie and Her Week of Wonders',1970]]},
+  {cat:'Movimentos',icon:'movement',name:'Montagem Soviética',goal:5,films:[['Strike',1925],['Battleship Potemkin',1925],['Mother',1926],['October: Ten Days That Shook the World',1928],['Arsenal',1929],['Man with a Movie Camera',1929],['Earth',1930]]},
+  {cat:'Movimentos',icon:'movement',name:'Nova Onda Japonesa',goal:5,films:[['Cruel Story of Youth',1960],['Pigs and Battleships',1961],['Pitfall',1962],['Woman in the Dunes',1964],['Branded to Kill',1967],['Death by Hanging',1968],['Funeral Parade of Roses',1969],['Eros Plus Massacre',1969]]},
+  {cat:'Movimentos',icon:'movement',name:'Novo Cinema Queer',goal:4,films:[['Paris Is Burning',1990],['Poison',1991],['My Own Private Idaho',1991],['The Living End',1992],['Go Fish',1994],['Happy Together',1997]]},
   // Trilogias (precisa de todas)
   {cat:'Trilogias',icon:'trilogy',name:'Trilogia Antes (Linklater)',films:[['Before Sunrise',1995],['Before Sunset',2004],['Before Midnight',2013]]},
   {cat:'Trilogias',icon:'trilogy',name:'Trilogia do Silêncio (Bergman)',films:[['Through a Glass Darkly',1961],['Winter Light',1963],['The Silence',1963]]},
@@ -2241,6 +2476,8 @@ const ACH_SETS=[
   {cat:'Trilogias',icon:'trilogy',name:'Trilogia Qatsi (Reggio)',films:[['Koyaanisqatsi',1982],['Powaqqatsi',1988],['Naqoyqatsi',2002]]},
   {cat:'Trilogias',icon:'trilogy',name:'O Poderoso Chefão (Coppola)',films:[['The Godfather',1972],['The Godfather Part II',1974],['The Godfather Part III',1990]]},
   {cat:'Trilogias',icon:'trilogy',name:'Incomunicabilidade (Antonioni)',films:[['L\'Avventura',1960],['La Notte',1961],['L\'Eclisse',1962]]},
+  {cat:'Trilogias',icon:'trilogy',name:'Trilogia da Morte (Iñárritu)',films:[['Amores Perros',2000],['21 Grams',2003],['Babel',2006]]},
+  {cat:'Trilogias',icon:'trilogy',name:'Trilogia Toy Story (Pixar)',films:[['Toy Story',1995],['Toy Story 2',1999],['Toy Story 3',2010]]},
   // Diretores (filmografia de longas)
   {cat:'Diretores',icon:'director',name:'Tarkovsky completo',goal:7,films:[['Ivan\'s Childhood',1962],['Andrei Rublev',1966],['Solaris',1972],['Mirror',1975],['Stalker',1979],['Nostalghia',1983],['The Sacrifice',1986]]},
   {cat:'Diretores',icon:'director',name:'Kubrick completo',goal:12,films:[['Fear and Desire',1953],['Killer\'s Kiss',1955],['The Killing',1956],['Paths of Glory',1957],['Spartacus',1960],['Lolita',1962],['Dr. Strangelove',1964],['2001: A Space Odyssey',1968],['A Clockwork Orange',1971],['Barry Lyndon',1975],['The Shining',1980],['Full Metal Jacket',1987],['Eyes Wide Shut',1999]]},
@@ -2251,13 +2488,11 @@ const ACH_SETS=[
   {cat:'Diretores',icon:'director',name:'Ari Aster completo',goal:3,films:[['Hereditary',2018],['Midsommar',2019],['Beau Is Afraid',2023]]},
   {cat:'Diretores',icon:'director',name:'Jordan Peele completo',goal:3,films:[['Get Out',2017],['Us',2019],['Nope',2022]]},
   {cat:'Diretores',icon:'director',name:'Charlie Kaufman completo',goal:3,films:[['Synecdoche, New York',2008],['Anomalisa',2015],['I\'m Thinking of Ending Things',2020]]},
-  // Atores (papéis essenciais)
-  {cat:'Atores',icon:'actor',name:'Toshiro Mifune',goal:5,films:[['Rashomon',1950],['Seven Samurai',1954],['Throne of Blood',1957],['The Hidden Fortress',1958],['Yojimbo',1961],['Sanjuro',1962],['High and Low',1963],['Drunken Angel',1948],['Stray Dog',1949]]},
-  {cat:'Atores',icon:'actor',name:'Liv Ullmann',goal:4,films:[['Persona',1966],['Hour of the Wolf',1968],['Shame',1968],['The Passion of Anna',1969],['Cries and Whispers',1972],['Scenes from a Marriage',1974],['Autumn Sonata',1978]]},
-  {cat:'Atores',icon:'actor',name:'Max von Sydow',goal:4,films:[['The Seventh Seal',1957],['Wild Strawberries',1957],['The Virgin Spring',1960],['Through a Glass Darkly',1961],['Winter Light',1963],['The Exorcist',1973],['Hour of the Wolf',1968]]},
-  {cat:'Atores',icon:'actor',name:'Marcello Mastroianni',goal:4,films:[['La Dolce Vita',1960],['8½',1963],['La Notte',1961],['Divorce Italian Style',1961],['City of Women',1980],['Dark Eyes',1987]]},
-  {cat:'Atores',icon:'actor',name:'Isabelle Huppert',goal:4,films:[['The Piano Teacher',2001],['Elle',2016],['La Cérémonie',1995],['Things to Come',2016],['White Material',2009],['8 Women',2002]]},
-  {cat:'Atores',icon:'actor',name:'Setsuko Hara',goal:3,films:[['Late Spring',1949],['Early Summer',1951],['Tokyo Story',1953],['Late Autumn',1960]]},
+  {cat:'Diretores',icon:'director',name:'David Fincher completo',goal:12,films:[['Alien 3',1992],['Se7en',1995],['The Game',1997],['Fight Club',1999],['Panic Room',2002],['Zodiac',2007],['The Curious Case of Benjamin Button',2008],['The Social Network',2010],['The Girl with the Dragon Tattoo',2011],['Gone Girl',2014],['Mank',2020],['The Killer',2023]]},
+  {cat:'Diretores',icon:'director',name:'Park Chan-wook completo',goal:9,films:[['Joint Security Area',2000],['Sympathy for Mr. Vengeance',2002],['Oldboy',2003],['Sympathy for Lady Vengeance',2005],['I\'m a Cyborg, But That\'s OK',2006],['Thirst',2009],['Stoker',2013],['The Handmaiden',2016],['Decision to Leave',2022]]},
+  {cat:'Diretores',icon:'director',name:'Alain Guiraudie completo',goal:5,films:[['No Rest for the Brave',2003],['The King of Escape',2009],['Stranger by the Lake',2013],['Staying Vertical',2016],['Misericordia',2024]]},
+  {cat:'Diretores',icon:'director',name:'Wong Kar-wai completo',goal:8,films:[['As Tears Go By',1988],['Days of Being Wild',1990],['Chungking Express',1994],['Ashes of Time',1994],['Fallen Angels',1995],['Happy Together',1997],['In the Mood for Love',2000],['2046',2004],['My Blueberry Nights',2007],['The Grandmaster',2013]]},
+  {cat:'Diretores',icon:'director',name:'Almodóvar essencial',goal:6,films:[['Women on the Verge of a Nervous Breakdown',1988],['All About My Mother',1999],['Talk to Her',2002],['Volver',2006],['Broken Embraces',2009],['The Skin I Live In',2011],['Julieta',2016],['Pain and Glory',2019],['Parallel Mothers',2021]]},
 ];
 function _watchedIndex(){
   const idx=new Map();
@@ -2282,19 +2517,13 @@ function openAchievement(i){
 function _achievements(){
   const all=films(),idx=_watchedIndex(),out=[];
   ACH_SETS.forEach((a,i)=>{const goal=a.goal||a.films.length;const v=_setProgress(a.films,idx);
-    out.push({cat:a.cat,icon:a.icon,n:a.name,d:a.desc||(a.cat==='Trilogias'?'Ver a trilogia completa':a.cat==='Movimentos'?goal+' filmes do movimento':a.cat==='Atores'?goal+' papéis essenciais':'Filmografia de longas'),v,goal,setIdx:i});});
+    out.push({cat:a.cat,icon:a.icon,n:a.name,d:a.desc||(a.cat==='Trilogias'?'Ver a trilogia completa':a.cat==='Movimentos'?goal+' filmes do movimento':'Filmografia de longas'),v,goal,setIdx:i});});
   const countries=new Set();all.forEach(r=>{const co=r.co&&(Array.isArray(r.co)?r.co[0]:r.co);if(co)countries.add(normalizeKey(co)||co);});
   const decades=new Set();all.forEach(r=>{const d=Math.floor(r.y/10)*10;if(d>=1900)decades.add(d);});
   const langs=new Set();all.forEach(r=>{if(r.lang)langs.add(r.lang);});
-  const octH={};all.forEach(r=>{if(!r.ts)return;const d=new Date(r.ts);if(d.getMonth()===9&&(r.gids||[]).includes(27))octH[d.getFullYear()]=(octH[d.getFullYear()]||0)+1;});
-  const octMax=Math.max(0,...Object.values(octH));
-  const silent=all.filter(r=>r.y&&r.y<1930).length;
   out.push({cat:'Panorama',icon:'globe',n:'Volta ao mundo',d:'Filmes de 25 países',v:countries.size,goal:25});
   out.push({cat:'Panorama',icon:'time',n:'Viagem no tempo',d:'Filmes de 8 décadas',v:decades.size,goal:8});
   out.push({cat:'Panorama',icon:'lang',n:'Poliglota',d:'12 idiomas originais',v:langs.size,goal:12});
-  out.push({cat:'Panorama',icon:'horror',n:'Maratona de Outubro',d:'5 terrores num mesmo outubro',v:octMax,goal:5});
-  out.push({cat:'Panorama',icon:'flame',n:'Maratonista',d:'7 dias seguidos de cinema',v:_streaks().longest,goal:7});
-  out.push({cat:'Panorama',icon:'silent',n:'Era do silêncio',d:'3 filmes anteriores a 1930',v:silent,goal:3});
   return out.map(a=>({...a,done:a.v>=a.goal,pct:Math.min(100,Math.round(a.v/a.goal*100))}));
 }
 function _checkMilestone(){
@@ -2366,32 +2595,34 @@ function renderStats(){
       +'<div class="stbox"><div class="sv" style="font-size:11px">'+DOW_NAMES[cd.topDow].slice(0,3)+'</div><div class="sl">dia favorito</div></div>'
       +'</div>';
   }
-  // ano a ano
+  // ano a ano (preview curto + ficha completa com busca, p/ não crescer com o catálogo)
   const yy=_byYear();
+  const YY_PREVIEW=5;
   if(yy.length){
-    html+='<span class="eyb" style="margin-top:18px">Ano a ano</span><div class="yy-rows">'
-      +yy.slice(0,12).map(r=>'<div class="yy-row"><span class="yy-y">'+r.y+'</span><span class="yy-n"><b>'+fmt(r.n)+'</b> filmes</span><span class="yy-a">'+(r.avg!=null?r.avg.toFixed(2).replace('.',',')+'★':'—')+'</span><span class="yy-g">'+(r.top?r.top[0]:'—')+'</span></div>').join('')
+    html+='<div class="eyb-row"><span class="eyb" style="margin:0">Ano a ano</span>'+(yy.length>YY_PREVIEW?'<button class="eyb-more" onclick="openYYOver()">Ver tudo ('+yy.length+' anos) →</button>':'')+'</div><div class="yy-rows">'
+      +yy.slice(0,YY_PREVIEW).map(r=>'<div class="yy-row"><span class="yy-y">'+r.y+'</span><span class="yy-n"><b>'+fmt(r.n)+'</b> filmes</span><span class="yy-a">'+(r.avg!=null?r.avg.toFixed(2).replace('.',',')+'★':'—')+'</span><span class="yy-g">'+(r.top?r.top[0]:'—')+'</span></div>').join('')
       +'</div>';
   }
-  // décadas por nota
+  // décadas por nota (preview curto + ficha completa)
   const dec=_decadeStats().filter(d=>d.n>=1);
+  const DEC_PREVIEW=5;
   if(dec.length){
     const byAvg=dec.filter(d=>d.rc>=3&&d.avg!=null).sort((a,b)=>b.avg-a.avg);
     const list=(byAvg.length?byAvg:dec.slice().sort((a,b)=>b.n-a.n));
-    html+='<span class="eyb" style="margin-top:18px">Décadas '+(byAvg.length?'por nota média':'por quantidade')+'</span><div class="bars">'
-      +list.map(d=>{const w=d.avg!=null?d.avg/5*100:0;return '<div class="barrow"><div class="bn">'+d.d+'s</div><div class="track"><div class="fill" style="width:'+w+'%"></div></div><div class="bmeta">'+(d.avg!=null?'<span class="g">'+star(+d.avg.toFixed(2))+'</span> · ':'')+fmt(d.n)+'f</div></div>';}).join('')
+    html+='<div class="eyb-row"><span class="eyb" style="margin:0">Décadas '+(byAvg.length?'por nota média':'por quantidade')+'</span>'+(list.length>DEC_PREVIEW?'<button class="eyb-more" onclick="openDecOver()">Ver tudo ('+list.length+') →</button>':'')+'</div><div class="bars">'
+      +list.slice(0,DEC_PREVIEW).map(d=>{const w=d.avg!=null?d.avg/5*100:0;return '<div class="barrow"><div class="bn">'+d.d+'s</div><div class="track"><div class="fill" style="width:'+w+'%"></div></div><div class="bmeta">'+(d.avg!=null?'<span class="g">'+star(+d.avg.toFixed(2))+'</span> · ':'')+fmt(d.n)+'f</div></div>';}).join('')
       +'</div><div class="note" style="margin-top:2px">'+(byAvg.length?'Décadas com 3+ filmes avaliados, ordenadas pela sua nota média.':'Ordenado por quantidade.')+'</div>';
   }
   // conquistas — catálogo de cinema (movimentos, trilogias, diretores, atores, panorama)
   const ach=_achievements();
-  const doneN=ach.filter(a=>a.done).length;
-  html+='<span class="eyb" style="margin-top:18px">Conquistas</span>';
-  html+='<div class="ach-hero">'+_vertigoSpiralSVG(154)+'<div class="ach-hero-c"><div class="ach-hero-num">'+doneN+'<span>/'+ach.length+'</span></div><div class="ach-hero-lbl">conquistas</div></div></div>';
-  const acats=['Todas','Concluídas','Movimentos','Trilogias','Diretores','Atores','Panorama'];
-  html+='<div class="chips" id="achCat" style="margin:0 0 10px">'+acats.map(c=>'<button class="chip '+(_achCat===c?'on':'')+'" data-c="'+c+'">'+c+'</button>').join('')+'</div>';
+  const acats=['Todas','Concluídas','Movimentos','Trilogias','Diretores','Panorama'];
   let shown=ach;
   if(_achCat==='Concluídas')shown=ach.filter(a=>a.done);
   else if(_achCat!=='Todas')shown=ach.filter(a=>a.cat===_achCat);
+  const heroN=shown.filter(a=>a.done).length,heroT=shown.length;
+  html+='<span class="eyb" style="margin-top:18px">Conquistas</span>';
+  html+='<div class="ach-hero">'+_vertigoSpiralSVG(154)+'<div class="ach-hero-c"><div class="ach-hero-num">'+heroN+'<span>/'+heroT+'</span></div><div class="ach-hero-lbl">'+(_achCat==='Todas'?'conquistas':_achCat.toLowerCase())+'</div></div></div>';
+  html+='<div class="chips" id="achCat" style="margin:0 0 10px">'+acats.map(c=>'<button class="chip '+(_achCat===c?'on':'')+'" data-c="'+c+'">'+c+'</button>').join('')+'</div>';
   shown=shown.slice().sort((a,b)=>(b.done-a.done)||(b.pct-a.pct)||(b.v-a.v)||a.n.localeCompare(b.n));
   html+='<div class="ach-grid">'+(shown.length?shown.map(a=>'<div class="ach '+(a.done?'on':'')+'"'+(a.setIdx!=null?' data-ai="'+a.setIdx+'"':'')+'><div class="ach-ic">'+(AICON[a.icon]||AICON.star)+'</div><div class="ach-bd"><div class="ach-n">'+a.n+(a.done?' '+ICON_CHECK:'')+'</div><div class="ach-d">'+a.d+'</div><div class="ach-bar"><i style="width:'+a.pct+'%"></i></div><div class="ach-p">'+fmt(Math.min(a.v,a.goal))+'/'+fmt(a.goal)+(a.setIdx!=null?' · ver filmes':'')+'</div></div></div>').join(''):'<div class="note">Nenhuma conquista neste filtro ainda.</div>')+'</div>';
   $('#view').innerHTML=html;
@@ -2423,12 +2654,13 @@ async function openFilm(k){_curFilmKey=k;const r=cache[k];if(!r)return;const t=r
   if(r.id&&(r.ov===undefined||r.tp===undefined)){const d=await movieDetails(r.id);if(d){r.ov=d.ov;r.rt=d.rt;r.tg=d.tg;if(d.tp)r.tp=d.tp;put(k,r);}}
   const runtime=r.rt?`${Math.floor(r.rt/60)}h ${r.rt%60}min`:'';
   const tagline=r.tg?`<div class="yr" style="margin-top:4px;font-style:italic;color:var(--dim)">"${r.tg}"</div>`:'';
-  const overview=r.ov?`<div class="lbl">Sinopse</div><p style="font-size:13px;color:var(--mut);line-height:1.6;margin:0 0 4px">${r.ov}</p>`:'';
+  const overview=r.ov?`<div class="lbl">Sinopse</div><p id="filmOv" style="font-size:13px;color:var(--mut);line-height:1.6;margin:0 0 4px"></p>`:'';
   showSheet(`<div class="top">${poster}<div><h3>${_titleHtml(r)}</h3><div class="yr">${y}${runtime?' · <b>'+runtime+'</b>':''}${r.r!=null?` · sua nota <b>${star(r.r)}</b>`:''}</div>${tagline}${gn?`<div class="yr" style="margin-top:6px">${gn}</div>`:''}${dirs?`<div class="yr" style="margin-top:6px">Direção: <b>${dirs}</b></div>`:''}</div></div>
     ${overview}
     <div class="lbl">Sua nota</div><div class="rating-row">${starWidget(r.r||0,k)}${!r.wl?`<div class="rw-ctl"><button class="rw-b" id="rwMinus">−</button><span class="rw-n" id="rwN">${r.rw||0} ${(r.rw||0)===1?'vez':'vezes'}</span><button class="rw-b" id="rwPlus">+</button></div>`:''}</div>${!r.wl?`<div class="date-share-row"><input type="date" id="filmDate" class="film-date-mini" value="${r.ts?new Date(r.ts).toISOString().slice(0,10):''}" title="Data que assisti"/><button class="rw-b" id="filmDateClear" title="Limpar data" style="padding:0 8px;font-size:16px">×</button></div>`:''}<div class="rate-hint">Deslize sobre as estrelas · metade esquerda = ,5 · arraste antes da 1ª estrela para apagar nota</div>
     ${_filmExtrasHtml(r)}
     ${cast?`<div class="lbl">Elenco principal</div><div class="cast">${cast}</div>`:(r.id?'<div class="note">Elenco ainda sendo baixado…</div>':'')}`,k);
+  if(r.ov){const ovEl=$('#filmOv');if(ovEl)renderExpandable(ovEl,r.ov,200);}
   _wireFilmExtras(k);}
 function _filmExtrasHtml(r){
   const isWl=!!r.wl;
@@ -2481,6 +2713,12 @@ function _commitStar(info){
     if(stEl){if(s){const rect=s.getBoundingClientRect();const half=(e.clientX-rect.left)<rect.width/2;_previewStars(stEl,half?+s.dataset.i-0.5:+s.dataset.i);}else{const f=stEl.querySelector('.s');if(f&&e.clientX<f.getBoundingClientRect().left)_previewStars(stEl,0);}}
   });
   sh.addEventListener('mouseleave',e=>{const stars=e.target.classList&&e.target.classList.contains('stars')?e.target:null;if(stars)_previewStars(stars,+(stars.dataset.orig||0));},true);
+  let _mouseActive=false,_mouseStarsEl=null;
+  sh.addEventListener('mousedown',e=>{const s=e.target.closest&&e.target.closest('.s');if(s){_mouseActive=true;_mouseStarsEl=s.closest('.stars');}else{_mouseActive=false;_mouseStarsEl=null;}});
+  window.addEventListener('mouseup',e=>{if(!_mouseActive)return;_mouseActive=false;const se=_mouseStarsEl;_mouseStarsEl=null;const info=_starsFromPoint(e.clientX,e.clientY,sh);
+    if(info){_commitStar(info);}
+    else if(se){const rect=se.getBoundingClientRect();if(e.clientX<rect.left){_commitStar({stars:se,val:0,key:se.dataset.key});}else{_previewStars(se,+(se.dataset.orig||0));}}
+  });
   let _touchActive=false,_touchStarsEl=null;
   sh.addEventListener('touchstart',e=>{const s=e.target.closest&&e.target.closest('.s');if(s){_touchActive=true;_touchStarsEl=s.closest('.stars');}else{_touchActive=false;_touchStarsEl=null;}},{passive:true});
   sh.addEventListener('touchmove',e=>{if(!_touchActive||!_touchStarsEl)return;const t=e.touches[0];const info=_starsFromPoint(t.clientX,t.clientY,sh);if(info){_previewStars(info.stars,info.val);}else{const rect=_touchStarsEl.getBoundingClientRect();if(t.clientX<rect.left)_previewStars(_touchStarsEl,0);}e.preventDefault();},{passive:false});
@@ -2490,6 +2728,12 @@ $('#sheet').addEventListener('click',e=>{
   // filmShareBtn handled by sheetShareBtn
   if(e.target.id==='rwPlus'||e.target.id==='rwMinus'){const rec=cache[_curFilmKey];if(!rec)return;rec.rw=Math.max(0,(rec.rw||0)+(e.target.id==='rwPlus'?1:-1));put(_curFilmKey,rec);const el=$('#rwN');if(el)el.textContent=rec.rw+' '+(rec.rw===1?'vez':'vezes');return;}
   if(e.target.id==='filmWlRemove'){del(_curFilmKey);$('#modal').classList.remove('show');PEOPLE=null;toast('Removido da watchlist');render();return;}
+  const fexp=e.target.closest('[data-filmo-expand]');
+  if(fexp){const stKey=fexp.dataset.filmoExpand;const st=_filmoState[stKey];if(st){st.mode='all';_filmoRefresh(stKey);}return;}
+  const fcol=e.target.closest('[data-filmo-collapse]');
+  if(fcol){const stKey=fcol.dataset.filmoCollapse;const st=_filmoState[stKey];if(st){st.mode='top';_filmoRefresh(stKey);}return;}
+  const fsort=e.target.closest('[data-filmo-sort] button');
+  if(fsort){const stKey=fsort.closest('[data-filmo-sort]').dataset.filmoSort;const st=_filmoState[stKey];if(st){st.sort=fsort.dataset.s;_filmoRefresh(stKey);}return;}
   if(e.target.dataset&&e.target.dataset.pid){
     const _pid=+e.target.dataset.pid,_pname=e.target.dataset.pname||'',_ppic=e.target.dataset.ppic||'';
     const _PP=people();const _pf=[..._PP.D,..._PP.A].find(p=>p.id===_pid);
@@ -2502,12 +2746,11 @@ $('#sheet').addEventListener('click',e=>{
     openFilm(_fk);return;
   }
   const ftx=e.target.closest('.ftag');if(ftx&&e.target.tagName==='I'){const rec=cache[_curFilmKey];if(rec){rec.tags=(rec.tags||[]).filter(x=>x!==ftx.dataset.t);if(!rec.tags.length)delete rec.tags;put(_curFilmKey,rec);ftx.remove();}return;}
-  const s=e.target.closest('.s');if(!s)return;
-  const k=s.dataset.key,i=+s.dataset.i;
-  const rect=s.getBoundingClientRect();const half=(e.clientX-rect.left)<rect.width/2;const val=half?i-0.5:i;
-  const rec=cache[k];if(!rec)return;const wasWl=!!rec.wl;const hadRating=rec.r!=null&&!wasWl;
-  rec.r=val;delete rec.wl;rec.s=1;if(!hadRating&&!rec.ts)rec.ts=Date.now();put(k,rec);PEOPLE=null;
-  toast((hadRating?'Nota corrigida: ':(wasWl?'Visto! ':'Avaliado: '))+rec.t+' '+star(val));openFilm(k);
+  // avaliação por estrela: tratada via mousedown/mouseup e touchstart/touchend (suporta clique simples e arrastar p/ esquerda p/ apagar nota)
+})
+$('#sheet').addEventListener('change',e=>{
+  const fh=e.target.closest('[data-filmo-hide]');
+  if(fh){const stKey=fh.dataset.filmoHide;const st=_filmoState[stKey];if(st){st.hideSeen=fh.checked;_filmoRefresh(stKey);}return;}
 })
 $('#modal').onclick=e=>{if(e.target.id==='modal'){_sheetHistory=[];$('#modal').classList.remove('show');const si=$('#searchIn');if(si&&si.value.trim()&&$('#searchOver').classList.contains('show'))doSearch(si.value);}};
 
@@ -2637,6 +2880,24 @@ async function importExport(file){
   wlist.forEach(r=>{const y=parseInt(r.Year);if(!y)return;const k=key(r.Name,y);if(cache[k])return;cache[k]={t:r.Name,y:y,r:null,wl:1,src:'lb'};put(k,cache[k]);wlAdded++;});
   PEOPLE=null;toast(added+' novos · '+upd+' notas'+(wlAdded?' · '+wlAdded+' p/ ver':''));render();sync();
 }
+function exportCSV(){
+  const rows=films().filter(r=>r.r!=null||r.ts).map(r=>{
+    const name=r.t||r.ti||r.ot||'';
+    const year=r.y||'';
+    const rating=r.r!=null?r.r:'';
+    const rewatch=(r.rw||0)>=1?'Yes':'';
+    const tags=(r.tags||[]).join(', ');
+    const wd=r.ts?new Date(r.ts).toISOString().slice(0,10):'';
+    return [wd,name,year,rating,rewatch,tags,wd];
+  });
+  const header=['Date','Name','Year','Rating','Rewatch','Tags','Watched Date'];
+  const esc=v=>{v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const csv=[header,...rows].map(r=>r.map(esc).join(',')).join('\r\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cinestats-dados.csv';document.body.appendChild(a);a.click();a.remove();
+  toast(fmt(rows.length)+' filmes exportados');
+}
+$('#setExport').onclick=()=>{$('#settings').classList.remove('show');exportCSV();};
 $('#setUpload').onclick=()=>$('#fileIn').click();
 $('#fileIn').onchange=e=>{const f=e.target.files[0];if(f){$('#settings').classList.remove('show');importExport(f);}e.target.value='';};
 /* ---------- onboarding / settings ---------- */
