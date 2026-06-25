@@ -290,6 +290,11 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .reco-vibes{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
 .reco-vibe{border:1px solid var(--line);background:var(--panel);color:var(--mut);border-radius:20px;padding:8px 13px;font-size:13px;font-weight:700;cursor:pointer;transition:border-color .15s,color .15s}
 .reco-vibe:active,.reco-vibe.on{border-color:var(--acc1);color:var(--acc1);background:rgba(30,201,138,.08)}
+.reco-title-row{display:flex;align-items:flex-start;gap:4px}
+.reco-title-row .reco-title{flex:1}
+.reco-reject{background:none;border:none;color:var(--dim);cursor:pointer;padding:2px;opacity:.4;flex:none;transition:opacity .15s,color .15s;line-height:1;border-radius:4px;margin-top:2px}
+.reco-reject:hover,.reco-reject:active{opacity:1;color:var(--acc2)}
+.reco-reject svg{width:13px;height:13px;display:block}
 .reco-card{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
 .reco-card:last-child{border-bottom:none}
 .reco-title-row{display:flex;align-items:flex-start;gap:4px}
@@ -1494,7 +1499,7 @@ async function openCountry(c){
     '<div class="note" style="margin:10px 14px 4px">Estatísticas calculadas a partir do seu histórico. País de produção principal segundo o TMDB.</div>');
 }
 
-function openEntity(e){if(!e)return;if(e.kind==='vibe')_runBioReco(e.ref);else if(e.kind==='film')openFilm(e.ref);else if(e.kind==='genre')openGenre(e.ref);else if(e.kind==='country')openCountry(e.ref);else if(e._p)openPerson(e._p);}
+function openEntity(e){if(!e)return;if(e.kind==='film')openFilm(e.ref);else if(e.kind==='genre')openGenre(e.ref);else if(e.kind==='country')openCountry(e.ref);else if(e._p)openPerson(e._p);}
 let spiralRAF=null;
 let _spiralRecoItems=null;
 let _bioRecoHTML=null;  // persiste os cards de recomendação entre re-renders
@@ -1617,8 +1622,10 @@ function renderBio(){
 function openRecoModal(){
   const ctx=_recoContext();
   const ctxLine=`<b>${ctx.dow}, ${ctx.periodo}</b> · ${ctx.dayNote}${ctx.season?`<br><span class="season">${ctx.season}</span>`:''}`;
-  const ctxEl=$('#recoCtxLine');if(ctxEl){ctxEl.innerHTML=ctxLine+'<br><span style="font-size:11.5px;color:var(--dim)">Toque numa vibe na espiral para receber indicações</span>';}
-  const va=$('#bioVibeArea');if(va)va.style.display='none';
+  const ctxEl=$('#recoCtxLine');if(ctxEl)ctxEl.innerHTML=ctxLine;
+  const vibeHtml=Object.entries(VIBE_CFG).map(([k,v])=>`<button class="reco-vibe${_bioRecoVibe===k?' on':''}" data-v="${k}"><span class="ricon">${RICON[k]}</span>${v.name}</button>`).join('');
+  const va=$('#bioVibeArea');
+  if(va){va.style.display='';va.innerHTML=vibeHtml;va.onclick=e=>{const b=e.target.closest('.reco-vibe');if(b)_runBioReco(b.dataset.v);};}
   const spiralEl=$('#spiral'),recoPanel=$('#bioRecoPanel'),sb=$('#spiralbox');
   if(_bioRecoHTML&&recoPanel){
     if(spiralEl){spiralEl.style.display='none';spiralEl.style.opacity='1';}
@@ -1629,7 +1636,7 @@ function openRecoModal(){
     if(spiralEl){spiralEl.style.display='';spiralEl.style.opacity='1';}
     if(recoPanel)recoPanel.style.display='none';
     if(sb){sb.classList.remove('bio-results-mode');sb.style.position='';}
-    requestAnimationFrame(()=>renderSpiral(_vibeItems(),bio.cat||'films'));
+    requestAnimationFrame(()=>renderSpiral(_spiralRecoItems||[],bio.cat||'films'));
   }
   $('#recoOver').classList.add('show');
 }
@@ -1929,13 +1936,15 @@ async function _getNowPlayingIds(){
   if(_nowPlayingCache&&Date.now()-_nowPlayingTs<TTL)return _nowPlayingCache;
   try{
     const ids=new Set();
-    for(let pg=1;pg<=2;pg++){const jj=await tmdb('/movie/now_playing',{language:'pt-BR',page:pg});((jj&&jj.results)||[]).forEach(m=>ids.add(m.id));}
+    for(let pg=1;pg<=2;pg++){
+      const jj=await tmdb('/movie/now_playing',{language:'pt-BR',page:pg});
+      ((jj&&jj.results)||[]).forEach(m=>ids.add(m.id));
+    }
     _nowPlayingCache=ids;_nowPlayingTs=Date.now();return ids;
   }catch(e){return _nowPlayingCache||new Set();}
 }
-// ── busca em massa no TMDB (heurística, sem IA) ──
 async function _fetchRecos(vibe){
-  const cfg=VIBE_CFG[vibe]; if(!cfg)return[];
+  const cfg=VIBE_CFG[vibe];if(!cfg)return[];
   const ctx=_recoContext();
   let genreIds=cfg.genres;
   if(!genreIds)genreIds=[...new Set([..._dayGenres(ctx),..._topGenreIds(3)])].slice(0,3);
@@ -1943,16 +1952,16 @@ async function _fetchRecos(vibe){
   const seenTitles=_watchedTitleSet();
   const rejectedIds=_getRejected();
   const nowIds=await _getNowPlayingIds();
-  // TMDB: candidatos com filtro frouxo (sem nota — OMDb faz o controle de qualidade)
-  const cands=[]; const candsAll=[]; // candsAll inclui cartaz (fallback)
+  const cands=[];const candsAll=[];
   for(let page=1;page<=5&&candsAll.length<28;page++){
-    const p={with_genres:genreIds.join(','),sort_by:'popularity.desc',page,language:'pt-BR','vote_count.gte':300,'without_genres':'10751,16'};
+    const p={with_genres:genreIds.join(','),sort_by:'popularity.desc',page,language:'pt-BR',
+      'vote_count.gte':300,'without_genres':'10751,16'};
     if(cfg.lang)p['with_original_language']=cfg.lang;
     if(vibe==='brasil')delete p['without_genres'];
     if(vibe==='surpresa'&&ctx.d===0&&ctx.h<18)delete p['without_genres'];
     if(ctx.d>=1&&ctx.d<=5)p['with_runtime.lte']=115;
     if(ctx.m<=2&&genreIds.indexOf(18)>=0)p['primary_release_date.gte']='2019-01-01';
-    const j=await tmdb('/discover/movie',p); if(!j||!j.results)break;
+    const j=await tmdb('/discover/movie',p);if(!j||!j.results)break;
     for(const mv of j.results){
       if(seenIds.has(mv.id)||rejectedIds.has(mv.id))continue;
       if(seenTitles.has(norm(mv.title||''))||seenTitles.has(norm(mv.original_title||'')))continue;
@@ -1960,25 +1969,18 @@ async function _fetchRecos(vibe){
       if(!nowIds.has(mv.id))cands.push(mv);
     }
   }
-  const pool=cands.length>=3?cands:candsAll; // fallback se nowIds filtrou demais
-  // Enriquecimento com nota IMDb real (chave própria se configurada, senão chave padrão)
+  const pool=cands.length>=3?cands:candsAll;
   const MIN={terror:6.5,noir:7.0,arte:7.2,queer:6.8,scifi:7.0,brasil:6.5,surpresa:7.0};
   const minR=MIN[vibe]||6.8;
   const enriched=await _enrichImdb(pool,{minR,minVotes:800,want:8,maxCheck:22});
-  // Só exibimos títulos COM nota IMDb real — nunca a nota do TMDB.
   const withImdb=enriched.filter(m=>m._imdb!=null).sort((a,b)=>b._imdb-a._imdb);
   if(withImdb.length)return withImdb.slice(0,5);
-  // Perfil não rendeu título novo com nota IMDb → alternativa paralela (populares da vibe / em alta hoje)
   return await _fetchPopularReco(vibe);
 }
-
-// Anexa nota IMDb real (via OMDb) a uma lista de filmes do TMDB, preenchendo _imdb/_imdbVotes/_imdbID.
-// opts: {minR, minVotes} aplicam corte de qualidade (omitidos = sem corte, usado no fallback popular);
-//       {want} = quantos títulos COM nota IMDb buscar; {maxCheck} = teto de chamadas OMDb.
 async function _enrichImdb(movies,opts){
   opts=opts||{};
   const want=opts.want||8,maxCheck=opts.maxCheck||22;
-  const out=[]; let checked=0,got=0;
+  const out=[];let checked=0,got=0;
   for(const mv of movies){
     if(got>=want||checked>=maxCheck)break;
     checked++;
@@ -1986,8 +1988,8 @@ async function _enrichImdb(movies,opts){
     const od=await _omdbByTmdbId(mv.id,mv.title,mv.original_title,yr);
     const rating=od?parseFloat(od.imdbRating):NaN;
     const votes=od?parseInt((od.imdbVotes||'0').replace(/,/g,''),10):0;
-    if(opts.minR!=null&&!isNaN(rating)&&rating<opts.minR)continue;   // nota abaixo do corte
-    if(opts.minVotes!=null&&!isNaN(rating)&&votes<opts.minVotes)continue; // votos de menos
+    if(opts.minR!=null&&!isNaN(rating)&&rating<opts.minR)continue;
+    if(opts.minVotes!=null&&!isNaN(rating)&&votes<opts.minVotes)continue;
     mv._imdb=isNaN(rating)?null:rating;
     mv._imdbVotes=votes||null;
     mv._imdbID=od?od.imdbID||null:null;
@@ -1996,116 +1998,42 @@ async function _enrichImdb(movies,opts){
   }
   return out;
 }
-
-// Alternativa paralela: quando o perfil não rende títulos novos, busca populares da vibe
-// escolhida (filtros frouxos) ou, se ainda assim faltar, os filmes em alta hoje (/trending/day).
-// Todos são enriquecidos com nota IMDb real e marcados com _fallbackKind ('vibe' | 'today').
 async function _fetchPopularReco(vibe){
   const cfg=VIBE_CFG[vibe];
   const ctx=_recoContext();
   const seenIds=new Set(films().filter(r=>r.id).map(r=>r.id));
   const seenTitles=_watchedTitleSet();
   const rejectedIds=_getRejected();
-  const skip=mv=>!mv||seenIds.has(mv.id)||rejectedIds.has(mv.id)||seenTitles.has(norm(mv.title||''))||seenTitles.has(norm(mv.original_title||''));
+  const skip=mv=>!mv||seenIds.has(mv.id)||rejectedIds.has(mv.id)
+    ||seenTitles.has(norm(mv.title||''))||seenTitles.has(norm(mv.original_title||''));
   let genreIds=cfg&&cfg.genres;
   if(!genreIds)genreIds=[...new Set([..._dayGenres(ctx),..._topGenreIds(3)])].slice(0,3);
-  // 1) Populares da vibe — sem corte de runtime/data, vote_count baixo
   let kind='vibe';
-  const chosen=[]; const seenLocal=new Set();
+  const chosen=[];const seenLocal=new Set();
   const push=mv=>{if(!skip(mv)&&!seenLocal.has(mv.id)){seenLocal.add(mv.id);chosen.push(mv);}};
   if(genreIds&&genreIds.length){
     for(let page=1;page<=3&&chosen.length<24;page++){
       const p={with_genres:genreIds.join(','),sort_by:'popularity.desc',page,language:'pt-BR','vote_count.gte':80};
       if(cfg&&cfg.lang)p['with_original_language']=cfg.lang;
       if(vibe!=='brasil')p['without_genres']='10751,16';
-      const j=await tmdb('/discover/movie',p); if(!j||!j.results)break;
+      const j=await tmdb('/discover/movie',p);if(!j||!j.results)break;
       j.results.forEach(push);
     }
   }
-  // 2) Em alta hoje — se a vibe rendeu pouco
   if(chosen.length<3){
     kind='today';
     const tj=await tmdb('/trending/movie/day',{language:'pt-BR'});
     ((tj&&tj.results)||[]).forEach(push);
   }
-  if(!chosen.length)return [];
+  if(!chosen.length)return[];
   const enriched=await _enrichImdb(chosen,{want:8,maxCheck:20});
   const withImdb=enriched.filter(m=>m._imdb!=null).sort((a,b)=>b._imdb-a._imdb);
   const final=(withImdb.length?withImdb:enriched).slice(0,5);
   final.forEach(m=>{m._fallbackKind=kind;});
   return final;
 }
-
-// ── cache de sessão (memória) + cache persistente (localStorage) p/ não repetir chamadas entre sessões ──
-const _omdbCache={};
-// Diagnóstico: motivo da última falha do OMDb (ex.: "Invalid API key!", "Request limit reached!", "HTTP 401")
-let _omdbLastError=null;
-const _OMDB_PERSIST_KEY='cs_omdb_p2', _OMDB_PERSIST_MAX=600;
-function _omdbPersistLoad(){try{return JSON.parse(localStorage.getItem(_OMDB_PERSIST_KEY)||'{}');}catch(e){return{};}}
-function _omdbPersistGet(tmdbId){const m=_omdbPersistLoad();return m[tmdbId]||null;}
-function _omdbPersistSet(tmdbId,od){
-  try{
-    const m=_omdbPersistLoad();
-    m[tmdbId]={imdbRating:od.imdbRating,imdbVotes:od.imdbVotes,imdbID:od.imdbID,Director:od.Director,Response:'True',_ts:Date.now()};
-    const keys=Object.keys(m);
-    if(keys.length>_OMDB_PERSIST_MAX){keys.sort((a,b)=>(m[a]._ts||0)-(m[b]._ts||0)).slice(0,keys.length-_OMDB_PERSIST_MAX).forEach(k=>delete m[k]);}
-    localStorage.setItem(_OMDB_PERSIST_KEY,JSON.stringify(m));
-  }catch(e){}
-}
-// Contador de chamadas/dia (evita insistir e estourar a cota do plano grátis do OMDb sem aviso)
-const _OMDB_DAILY_LIMIT=950;
-function _omdbDayKey(){return 'cs_omdb_n_'+new Date().toISOString().slice(0,10);}
-function _omdbCallsLeft(){try{return _OMDB_DAILY_LIMIT-(+localStorage.getItem(_omdbDayKey())||0);}catch(e){return _OMDB_DAILY_LIMIT;}}
-function _omdbCallAllowed(){
-  if(_omdbCallsLeft()<=0){_omdbLastError='Limite diário do OMDb (≈1.000) provavelmente atingido — volta a funcionar após meia-noite UTC';return false;}
-  return true;
-}
-function _omdbCallMark(){try{const k=_omdbDayKey();localStorage.setItem(k,String((+localStorage.getItem(k)||0)+1));}catch(e){}}
-async function omdbFetch(title,year,titleFallback){
-  const ck=(title||'')+'|'+(year||'');
-  if(_omdbCache[ck]!==undefined)return _omdbCache[ck];
-  if(!_omdbCallAllowed())return(_omdbCache[ck]=null);
-  const apikey=getOmdbKey()||'2e29b4de';
-  const tryFetch=async(t,y)=>{
-    try{
-      _omdbCallMark();
-      const r=await fetch('https://www.omdbapi.com/?t='+encodeURIComponent(t)+(y?'&y='+y:'')+'&r=json&apikey='+apikey);
-      if(!r.ok){_omdbLastError='HTTP '+r.status;return null;}
-      const j=await r.json();
-      if(j.Response==='True'){_omdbLastError=null;return j;}
-      if(j.Error)_omdbLastError=j.Error;
-      return null;
-    }catch(e){_omdbLastError='Falha de rede';return null;}
-  };
-  let res=await tryFetch(title,year);
-  if(!res&&titleFallback&&titleFallback!==title&&_omdbCallAllowed())res=await tryFetch(titleFallback,year);
-  if(!res&&year&&_omdbCallAllowed())res=await tryFetch(title,'');  // tenta sem ano
-  return(_omdbCache[ck]=res);
-}
-
-// IMDb por ID TMDB (evita problema de idioma no título) — checa cache persistente antes de gastar chamadas
-async function _omdbByTmdbId(tmdbId,ptTitle,origTitle,year){
-  const persisted=_omdbPersistGet(tmdbId);
-  if(persisted)return persisted;
-  const od=await omdbFetch(origTitle||ptTitle,year,ptTitle);
-  if(od){_omdbPersistSet(tmdbId,od);return od;}
-  try{
-    const ck='i:'+tmdbId;if(_omdbCache[ck]!==undefined)return _omdbCache[ck];
-    if(!_omdbCallAllowed())return(_omdbCache[ck]=null);
-    const eid=await tmdb('/movie/'+tmdbId+'/external_ids',{});
-    const imdbId=eid&&eid.imdb_id;if(!imdbId)return(_omdbCache[ck]=null);
-    if(!_omdbCallAllowed())return(_omdbCache[ck]=null);
-    const apikey=getOmdbKey()||'2e29b4de';
-    _omdbCallMark();
-    const r=await fetch('https://www.omdbapi.com/?i='+imdbId+'&r=json&apikey='+apikey);
-    if(!r.ok){_omdbLastError='HTTP '+r.status;return(_omdbCache[ck]=null);}
-    const jj=await r.json();
-    if(jj.Response==='True'){_omdbLastError=null;_omdbPersistSet(tmdbId,jj);return(_omdbCache[ck]=jj);}
-    if(jj.Error)_omdbLastError=jj.Error;
-    return(_omdbCache[ck]=null);
-  }catch(e){_omdbLastError='Falha de rede';return null;}
-}
-// ── card unificado ──
+const ICON_PLAY='<svg viewBox="0 0 24 24" fill="currentColor" style="width:11px;height:11px;vertical-align:-1px;margin-right:4px"><path d="M8 5v14l11-7z"/></svg>';
+const ICON_RECO_REJECT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
 function _recoCard(o){
   const _rk=((o.title||'')+'|'+(o.year||'')).replace(/"/g,'&quot;');
   const _matchKey=(o.tmdbId!=null?String(o.tmdbId):_rk).replace(/"/g,'&quot;');
@@ -2128,8 +2056,6 @@ function _recoCard(o){
     +scoreHtml+provHtml+wlBtn
     +'</div></div>';
 }
-const ICON_PLAY='<svg viewBox="0 0 24 24" fill="currentColor" style="width:11px;height:11px;vertical-align:-1px;margin-right:4px"><path d="M8 5v14l11-7z"/></svg>';
-const ICON_RECO_REJECT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
 // Aviso curto quando a recomendação veio da alternativa paralela (populares), não do perfil.
 function _recoFallNote(kind){
   if(kind==='today')return '<div class="reco-fallnote">Sem títulos novos pelo seu perfil agora — mostrando o que está <b>em alta hoje</b>.</div>';
@@ -2192,6 +2118,70 @@ function openReco(){
   _wireRecoEngine();
   $('#recoOver').classList.add('show');
 }
+
+async function _runBioReco(vibe){
+  // Toggle: clicar na vibe ativa volta ao estado normal
+  if(_bioRecoVibe===vibe){_bioRecoHTML=null;_bioRecoVibe=null;_spiralRecoItems=null;_bioRecoMovies=null;renderBio();return;}
+  _bioRecoVibe=vibe;
+  const sb=$('#spiralbox');if(!sb)return;
+  $$('#bioVibeArea .reco-vibe').forEach(b=>b.classList.toggle('on',b.dataset.v===vibe));
+  sb.classList.remove('bio-results-mode');
+  const spiralEl=$('#spiral'),recoPanel=$('#bioRecoPanel');
+  if(spiralEl){spiralEl.style.cssText='';spiralEl.style.opacity='1';spiralEl.style.display='';}
+  if(recoPanel)recoPanel.style.display='none';
+  // Fase 1: espiral girando com placeholders durante a busca
+  const savedSpeed=bio.speed??2;
+  const loadItems=Array(5).fill(null).map(()=>({kind:'_',ref:'',label:'· · ·',sub:''}));
+  bio.speed=3;renderSpiral(loadItems,bio.cat||'films');bio.speed=savedSpeed;
+  // Fase 2: busca
+  let movies=[];try{movies=await _fetchRecos(vibe);}catch(e){}
+  if(!movies.length){
+    stopSpiralAnim();
+    if(spiralEl)spiralEl.innerHTML='<div class="reco-empty">Nenhum título encontrado. Tente outra vibe!</div>';
+    return;
+  }
+  _bioRecoMovies=movies;
+  // Fase 3: títulos como tags na espiral
+  _spiralRecoItems=movies.map(m=>({kind:'film',ref:key(m.title,(m.release_date||'').slice(0,4)),label:m.original_title||m.title,sub:(m.release_date||'').slice(0,4)}));
+  bio.speed=savedSpeed;renderSpiral(_spiralRecoItems,bio.cat||'films');
+  // Fase 4: aguardar
+  await new Promise(r=>setTimeout(r,1800));
+  // Fase 5: fade out da espiral
+  if(spiralEl){spiralEl.style.transition='opacity .65s ease';spiralEl.style.opacity='0';}
+  await new Promise(r=>setTimeout(r,650));
+  stopSpiralAnim();
+  // Fase 6: construir cards
+  const cfg=VIBE_CFG[vibe];
+  const fbKind=(movies[0]&&movies[0]._fallbackKind)||null;
+  const cardPromises=movies.map(async(m,i)=>{
+    const yr=(m.release_date||'').slice(0,4);
+    const gen=(m.genre_ids||[]).slice(0,3).map(id=>GENRES[id]).filter(Boolean).join(' · ');
+    const ov2=(m.overview||'').slice(0,120)+(m.overview&&m.overview.length>120?'…':'');
+    let providers=null;
+    try{const pv=await watchProviders(m.id);if(pv&&pv.names&&pv.names.length)providers=pv.names;}catch(e){}
+    let imdbRating=m._imdb||null;
+    if(imdbRating==null){
+      try{const od=await _omdbByTmdbId(m.id,m.title,m.original_title,yr);if(od){const rv=parseFloat(od.imdbRating);if(!isNaN(rv)){imdbRating=rv;m._imdb=rv;}}}catch(e){}
+    }
+    const titlePt=(m.original_title&&m.original_title!==m.title)?m.title:null;
+    return _recoCard({poster:m.poster_path,title:m.original_title||m.title,titlePt,year:yr,sub:gen,why:ov2||'',main:i===0,
+      imdbRating,score:null,tmdbId:m.id,ckey:key(m.title,yr),tag:m._fallbackKind==='today'?'Em alta hoje':cfg.note,providers});
+  });
+  const cards=await Promise.all(cardPromises);
+  _bioRecoHTML=_recoFallNote(fbKind)+cards.join('');
+  // Fase 7: exibir resultados
+  sb.classList.add('bio-results-mode');
+  if(spiralEl)spiralEl.style.display='none';
+  if(recoPanel){
+    recoPanel.innerHTML=_bioRecoHTML;
+    recoPanel.style.display='block';
+    recoPanel.style.opacity='0';
+    void recoPanel.offsetHeight;
+    recoPanel.style.opacity='1';
+    _wireRecoCardClicks(recoPanel);
+  }
+}
+
 function _wireRecoCardClicks(panel){
   if(!panel||!_bioRecoMovies)return;
   const _findRecoMovie=rk=>{
@@ -2202,28 +2192,36 @@ function _wireRecoCardClicks(panel){
   panel.querySelectorAll('[data-recokey]').forEach(el=>{
     el.onclick=e=>{
       e.stopPropagation();
-      const m=_findRecoMovie(el.dataset.recokey);
-      if(!m)return;
+      const m=_findRecoMovie(el.dataset.recokey);if(!m)return;
       const yr=(m.release_date||'').slice(0,4);
       const k=key(m.title,yr);
-      if(!cache[k])cache[k]={t:m.title,y:+yr||0,id:m.id,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null,ti:m.title,ot:m.original_title||m.title,ye:yr,src:'reco',_stub:1};
+      if(!cache[k])cache[k]={t:m.title,y:+yr||0,id:m.id,po:m.poster_path||null,
+        gids:m.genre_ids||[],lang:m.original_language||null,ti:m.title,
+        ot:m.original_title||m.title,ye:yr,src:'reco',_stub:1};
       openFilm(k);
     };
   });
   panel.querySelectorAll('.reco-wl-btn').forEach(btn=>{
     btn.onclick=e=>{
       e.stopPropagation();
-      const m=_bioRecoMovies&&_findRecoMovie(btn.dataset.recowl);
-      if(!m)return;
+      const m=_bioRecoMovies&&_findRecoMovie(btn.dataset.recowl);if(!m)return;
       const yr=(m.release_date||'').slice(0,4);
       const k=key(m.title,yr);
       let rec=cache[k];
       if(rec&&rec.wl){delete rec.wl;put(k,rec);toast('Tirado da watchlist');}
       else if(rec&&rec.r!=null){toast('Esse você já assistiu');return;}
       else{
-        rec=rec||{t:m.title,y:+yr||0};rec.wl=1;rec.r=null;rec.id=m.id;rec.po=m.poster_path||null;rec.gids=m.genre_ids||[];rec.lang=m.original_language||null;rec.ti=m.title;rec.ot=m.original_title||m.title;rec.ye=String(yr);rec.src='reco';
+        rec=rec||{t:m.title,y:+yr||0};
+        rec.wl=1;rec.r=null;rec.id=m.id;rec.po=m.poster_path||null;
+        rec.gids=m.genre_ids||[];rec.lang=m.original_language||null;
+        rec.ti=m.title;rec.ot=m.original_title||m.title;rec.ye=String(yr);rec.src='reco';
         cache[k]=rec;put(k,rec);toast('Quero ver: '+m.title);
-        if(rec.id&&!rec.cc){credits(rec.id).then(c=>{if(c){rec.ca=c.ca;rec.di=c.di;rec.co=c.co;if(c.rt)rec.rt=c.rt;rec.lang=c.lang;}rec.cc=1;put(k,rec);PEOPLE=null;});}
+        if(rec.id&&!rec.cc){
+          credits(rec.id).then(c=>{
+            if(c){rec.ca=c.ca;rec.di=c.di;rec.co=c.co;if(c.rt)rec.rt=c.rt;rec.lang=c.lang;}
+            rec.cc=1;put(k,rec);PEOPLE=null;
+          });
+        }
       }
       PEOPLE=null;
       btn.classList.toggle('on',!!cache[k].wl);
@@ -2235,8 +2233,7 @@ function _wireRecoCardClicks(panel){
       e.stopPropagation();
       const id=+btn.dataset.reject;
       _addRejected(id);
-      const card=btn.closest('.reco-card');
-      if(!card)return;
+      const card=btn.closest('.reco-card');if(!card)return;
       card.style.transition='opacity .3s ease,transform .3s ease';
       card.style.opacity='0';
       card.style.transform='translateX(16px)';
@@ -2253,80 +2250,6 @@ function _wireRecoCardClicks(panel){
     };
   });
 }
-
-
-function _vibeItems(){return Object.entries(VIBE_CFG).map(([k,v])=>({kind:'vibe',ref:k,label:v.name,sub:v.note||''}));}
-async function _runBioReco(vibe){
-  // Toggle: clicar na vibe ativa volta ao estado normal
-  if(_bioRecoVibe===vibe){_bioRecoHTML=null;_bioRecoVibe=null;_spiralRecoItems=null;_bioRecoMovies=null;
-    const sp2=$('#spiral');if(sp2){sp2.style.cssText='';sp2.style.display='';}
-    const rp2=$('#bioRecoPanel');if(rp2)rp2.style.display='none';
-    const sb2=$('#spiralbox');if(sb2)sb2.classList.remove('bio-results-mode');
-    renderSpiral(_vibeItems(),bio.cat||'films');return;}
-  _bioRecoVibe=vibe;
-  const sb=$('#spiralbox');if(!sb)return;
-  // Voltar ao estado normal do spiralbox (caso tenha resultado anterior)
-  sb.classList.remove('bio-results-mode');
-  const spiralEl=$('#spiral'),recoPanel=$('#bioRecoPanel');
-  if(spiralEl){spiralEl.style.cssText='';spiralEl.style.opacity='1';spiralEl.style.display='';}
-  if(recoPanel)recoPanel.style.display='none';
-  // Fase 1: espiral girando com placeholders durante a busca
-  const savedSpeed=bio.speed??2;
-  const loadItems=Array(5).fill(null).map(()=>({kind:'_',ref:'',label:'· · ·',sub:''}));
-  bio.speed=3;renderSpiral(loadItems,bio.cat||'films');bio.speed=savedSpeed;
-  // Fase 2: busca
-  let movies=[];try{movies=await _fetchRecos(vibe);}catch(e){}
-  if(!movies.length){
-    stopSpiralAnim();
-    if(spiralEl)spiralEl.innerHTML='<div class="reco-empty">Nenhum título encontrado. Tente outra vibe!</div>';
-    return;
-  }
-  _bioRecoMovies=movies; // armazena para click nos pôsteres
-  // Fase 3: títulos como tags na espiral
-  _spiralRecoItems=movies.map(m=>({kind:'film',ref:key(m.title,(m.release_date||'').slice(0,4)),label:m.original_title||m.title,sub:(m.release_date||'').slice(0,4)}));
-  bio.speed=savedSpeed;
-  renderSpiral(_spiralRecoItems,bio.cat||'films');
-  // Fase 4: aguardar os títulos aparecerem
-  await new Promise(r=>setTimeout(r,1800));
-  // Fase 5: fade out da espiral
-  if(spiralEl){spiralEl.style.transition='opacity .65s ease';spiralEl.style.opacity='0';}
-  await new Promise(r=>setTimeout(r,650));
-  stopSpiralAnim();
-  // Fase 6: construir cards (providers em paralelo)
-  const cfg=VIBE_CFG[vibe];
-  const fbKind=(movies[0]&&movies[0]._fallbackKind)||null;
-  const cardPromises=movies.map(async(m,i)=>{
-    const yr=(m.release_date||'').slice(0,4);
-    const gen=(m.genre_ids||[]).slice(0,3).map(id=>GENRES[id]).filter(Boolean).join(' · ');
-    const ov2=(m.overview||'').slice(0,120)+(m.overview&&m.overview.length>120?'…':'');
-    let providers=null;
-    try{const pv=await watchProviders(m.id);if(pv&&pv.names&&pv.names.length)providers=pv.names;}catch(e){}
-    // Nota exibida sempre do IMDb; nunca fallback para a nota do TMDB.
-    let imdbRating=m._imdb||null;
-    if(imdbRating==null){try{const od=await _omdbByTmdbId(m.id,m.title,m.original_title,yr);if(od){const rv=parseFloat(od.imdbRating);if(!isNaN(rv)){imdbRating=rv;m._imdb=rv;}}}catch(e){}}
-    const titlePt=(m.original_title&&m.original_title!==m.title)?m.title:null;
-    return _recoCard({poster:m.poster_path,title:m.original_title||m.title,titlePt,year:yr,sub:gen,why:ov2||'',main:i===0,
-      imdbRating,score:null,tmdbId:m.id,
-      ckey:key(m.title,yr),tag:m._fallbackKind==='today'?'Em alta hoje':cfg.note,providers});
-  });
-  const cards=await Promise.all(cardPromises);
-  // Cards exibem só a nota real do IMDb; quando indisponível, não mostram nota (nunca a do TMDB).
-  _bioRecoHTML=_recoFallNote(fbKind)+cards.join('');
-  // Fase 7: exibir resultados
-  sb.classList.add('bio-results-mode');
-  if(spiralEl)spiralEl.style.display='none';
-  if(recoPanel){
-    recoPanel.innerHTML=_bioRecoHTML;
-    recoPanel.style.display='block';
-    recoPanel.style.opacity='0';
-    void recoPanel.offsetHeight;
-    recoPanel.style.opacity='1';
-    _wireRecoCardClicks(recoPanel);
-    const fixBtn=$('#bioOmdbFix');
-    if(fixBtn)fixBtn.onclick=openBioEdit; // chave fica só em "Editar perfil", não solta na página de recomendações
-  }
-}
-
 function _wireRecoEngine(){
   const eng=$('#recoEng'); if(!eng)return;
   const showOmdbBox=()=>{if($('#recoOmdbBox'))return;eng.insertAdjacentHTML('afterend',_recoOmdbBoxHtml());$('#recoOmdbSave').onclick=()=>{const v=$('#recoOmdbIn').value.trim();if(!v){toast('Cole a chave');return;}setOmdbKey(v);toast('Chave OMDb salva');openReco();};};
