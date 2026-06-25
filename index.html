@@ -349,8 +349,7 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .reco-mini img{width:75px;height:112px;border-radius:6px;object-fit:cover;display:block}
 .reco-mini .mini-ph{width:75px;height:112px;background:var(--p2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--dim);text-align:center;padding:4px;box-sizing:border-box}
 .reco-mini-lbl{font-size:9.5px;color:var(--mut);margin-top:3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.jw-wrap{margin-top:7px;min-height:1px}
-.jw-wrap .jw-widget-iframe{border-radius:6px!important}
+
 /* ── Search explore ── */
 .srch-explore-title{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);margin:14px 0 9px;display:block}
 .srch-explore-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
@@ -545,7 +544,6 @@ select{color-scheme:dark}
   .over-nav{bottom:calc(58px + env(safe-area-inset-bottom))!important;}
 }
 </style>
-<script src="https://widget.justwatch.com/justwatch_widget.js" async></script>
 </head><body>
 <div class="wrap">
   <header>
@@ -1670,19 +1668,23 @@ function openRecoModal(){
 $('#recoOverClose').onclick=()=>{stopSpiralAnim();$('#recoOver').classList.remove('show');$('#bnReco').classList.remove('on');_updateBotNav();};
 
 /* ── Popular sections in reco tab ── */
-let _recoTrendCache=null;let _recoTrendTs=0;
+let _recoTrendCache=null;let _recoTrendTs=0;let _recoTrendLoading=false;
 async function _loadRecoTrending(){
   const el=$('#recoTrending');if(!el)return;
   if(!KEY){el.innerHTML='';return;}
   const now=Date.now();
   if(_recoTrendCache&&(now-_recoTrendTs)<600000){el.innerHTML=_recoTrendCache;_wireTrendClicks(el);return;}
+  if(_recoTrendLoading)return;
+  _recoTrendLoading=true;
   el.innerHTML='';
   const seenIds=new Set(films().filter(r=>r.id).map(r=>r.id));
   const seenT=_watchedTitleSet();
   const _filt=arr=>arr.filter(m=>!seenIds.has(m.id)&&!seenT.has(norm(m.title||''))&&!seenT.has(norm(m.original_title||''))).slice(0,14);
   const _row=arr=>arr.map(m=>{const y=(m.release_date||'').slice(0,4);const k2=key(m.title,y);const ek=k2.replace(/"/g,'&quot;');const lbl=(m.original_title||m.title).slice(0,22);const po=m.poster_path?'<img src="'+IMG+'/w92'+m.poster_path+'" loading="lazy" style="width:75px;height:112px;border-radius:6px;object-fit:cover;display:block"><div class="reco-mini-lbl">'+lbl+'</div>':'<div class="mini-ph">'+lbl+'</div>';
     return '<div class="reco-mini" data-k="'+ek+'" data-tmdbid="'+m.id+'" data-po="'+(m.poster_path||'')+'">'+po+'</div>';}).join('');
-  const [j1,j2]=await Promise.all([tmdb('/movie/now_playing',{language:'pt-BR',region:'BR',page:1}),tmdb('/movie/popular',{language:'pt-BR',page:1})]);
+  let j1,j2;
+  try{[j1,j2]=await Promise.all([tmdb('/movie/now_playing',{language:'pt-BR',region:'BR',page:1}),tmdb('/movie/popular',{language:'pt-BR',page:1})]);}
+  catch(e){_recoTrendLoading=false;el.innerHTML='';return;}
   const curY=new Date().getFullYear();
   const playing=_filt(((j1&&j1.results)||[]).filter(m=>+(m.release_date||'0').slice(0,4)>=curY-1));
   const popular=_filt((j2&&j2.results)||[]);
@@ -1692,6 +1694,7 @@ async function _loadRecoTrending(){
   if(popular.length)html+='<div class="reco-trend-section"><span class="reco-trend-title">Populares agora · fonte TMDB</span><div class="reco-trend-row">'+_row(popular)+'</div></div>';
   html+='</div>';
   _recoTrendCache=html;_recoTrendTs=now;
+  _recoTrendLoading=false;
   el.innerHTML=html;_wireTrendClicks(el);
 }
 function _wireTrendClicks(el){
@@ -2016,7 +2019,7 @@ async function _fetchRecos(vibe){
   const cands=[];const candsAll=[];
   for(let page=1;page<=5&&candsAll.length<28;page++){
     const p={with_genres:genreIds.join(','),sort_by:'popularity.desc',page,language:'pt-BR',
-      'vote_count.gte':300,'without_genres':'10751,16'};
+      'vote_count.gte':100,'without_genres':'10751,16'};
     if(cfg.lang)p['with_original_language']=cfg.lang;
     if(vibe==='brasil')delete p['without_genres'];
     if(vibe==='surpresa'&&ctx.d===0&&ctx.h<18)delete p['without_genres'];
@@ -2033,13 +2036,14 @@ async function _fetchRecos(vibe){
   const pool=cands.length>=3?cands:candsAll;
   const MIN={terror:6.5,noir:7.0,arte:7.2,queer:6.8,scifi:7.0,brasil:6.5,surpresa:7.0};
   const minR=MIN[vibe]||6.8;
-  const enriched=await _enrichImdb(pool,{minR,minVotes:300,want:8,maxCheck:22});
+  // Tenta enriquecer com IMDb mas sem bloquear resultados
+  const enriched=await _enrichImdb(pool,{minR:Math.max(5.5,minR-1.0),minVotes:100,want:8,maxCheck:18});
   const withImdb=enriched.filter(m=>m._imdb!=null).sort((a,b)=>b._imdb-a._imdb);
   if(withImdb.length>=2)return withImdb.slice(0,5);
-  // Fallback direto ao pool se o IMDb não retornou resultados suficientes
+  // Se IMDb não retornou suficientes, usa pool direto (cada vibe tem seu próprio)
   if(enriched.length>=2)return enriched.slice(0,5);
   if(pool.length>=2)return pool.slice(0,5);
-  return await _fetchPopularReco(vibe);
+  return [];// vibe sem resultados → mensagem específica, sem fallback genérico
 }
 async function _enrichImdb(movies,opts){
   opts=opts||{};
@@ -2114,13 +2118,10 @@ function _recoCard(o){
   const _rejectBtn=o.tmdbId?'<button class="reco-reject" data-reject="'+o.tmdbId+'" title="Não mostrar mais">'+ICON_RECO_REJECT+'</button>':'';
   const _krec=cache[o.ckey||_rk];const _onWl=!!(_krec&&_krec.wl);const _seen=!!(_krec&&_krec.r!=null&&!_krec.wl);
   const wlBtn=_seen?'<div class="reco-score" style="color:var(--acc1)">'+ICON_CHECK+' Já visto</div>':'<button class="reco-wl-btn'+(_onWl?' on':'')+'" data-recowl="'+_matchKey+'">'+(_onWl?'✓ Na watchlist':'+ Quero ver')+'</button>';
-  const _jwtitle=(o.title||'').replace(/"/g,'&quot;');
-  const _jwyear=o.year||'';
-  const jwHtml=_jwyear?'<div class="jw-wrap" data-jw-widget data-object-type="movie" data-title="'+_jwtitle+'" data-release-year="'+_jwyear+'" data-origin-country="BR"></div>':'';
   return '<div class="reco-card" data-cardid="'+(o.tmdbId||'')+'">'+po+'<div class="reco-info">'
     +'<div class="reco-title-row"><div class="reco-title">'+o.title+(o.year?' ('+o.year+')':'')+'</div>'+_rejectBtn+'</div>'
     +(meta?'<div class="reco-meta">'+meta+'</div>':'')
-    +scoreHtml+provHtml+wlBtn+jwHtml
+    +scoreHtml+provHtml+wlBtn
     +'</div></div>';
 }
 // Aviso curto quando a recomendação veio da alternativa paralela (populares), não do perfil.
@@ -2152,7 +2153,6 @@ async function _runRecoHeuristic(vibe){
       imdbRating:m._imdb||null,score:null,tag:m._fallbackKind==='today'?'Em alta hoje':cfg.note,providers}));
   }
   res.innerHTML=_recoFallNote(fbKind)+cards.join('');
-  if(window.JustWatch)setTimeout(()=>window.JustWatch.reloadWidgets(),200);
   // Update spiral with recommendation results
   _spiralRecoItems=movies.map(m=>({kind:'film',ref:key(m.title,(m.release_date||'').slice(0,4)),label:m.original_title||m.title,sub:(m.release_date||'').slice(0,4)}));
   const _sp=$('#spiral');if(_sp)renderSpiral(_spiralRecoItems,bio.cat||'films');
@@ -2205,17 +2205,8 @@ async function _runBioReco(vibe){
   let movies=[];
   try{movies=await _fetchRecos(vibe);}catch(e){console.warn('_fetchRecos error:',e);}
   if(!movies.length){
-    // Último recurso: trending do dia
-    try{
-      const seenIds=new Set(films().filter(r=>r.id).map(r=>r.id));
-      const seenT=_watchedTitleSet();
-      const tj=await tmdb('/trending/movie/day',{language:'pt-BR'});
-      movies=((tj&&tj.results)||[]).filter(m=>!seenIds.has(m.id)&&!seenT.has(norm(m.title||''))&&!seenT.has(norm(m.original_title||''))).slice(0,5);
-    }catch(e2){}
-  }
-  if(!movies.length){
     stopSpiralAnim();
-    if(spiralEl)spiralEl.innerHTML='<div class="reco-empty">Nenhum título encontrado. Verifique sua chave TMDB ou tente outra vibe.</div>';
+    if(spiralEl)spiralEl.innerHTML='<div class="reco-empty">Nenhum título novo para esta vibe. Tente outra!</div>';
     return;
   }
   _bioRecoMovies=movies;
@@ -2257,7 +2248,6 @@ async function _runBioReco(vibe){
     void recoPanel.offsetHeight;
     recoPanel.style.opacity='1';
     _wireRecoCardClicks(recoPanel);
-    if(window.JustWatch)setTimeout(()=>window.JustWatch.reloadWidgets(),200);
   }
 }
 
