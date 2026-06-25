@@ -1,5 +1,10 @@
 <!DOCTYPE html><!--
   CineStats — Changelog
+  v4.4 [2026-06-24]: Layout: página inicial alterada para a aba Stats. Rótulos de texto removidos
+                  da nav inferior — apenas ícones. Ícone de Recomendar substituído por claquete.
+                  Aba "Abas" agora abre navegação superior com: Filmes, Diretores, Atores, Atrizes.
+                  Filmografia: desfoque de filmes vistos substituído por ocultar/reexibir. Biografia/
+                  sinopse: botão "ver menos" disponível após expandir "ver mais".
   v4.3 [2026-06-24]: Conquistas: removidos os papéis de atores/atrizes (Mifune, Ullmann, von Sydow,
                   Mastroianni, Huppert, Hara, Deneuve) e os marcos de Panorama "Maratona de
                   Outubro", "Maratonista" e "Era do silêncio". Recomendações: removido o aviso
@@ -118,12 +123,10 @@ header{background:var(--panel);border:1px solid var(--line);border-radius:16px;p
 select{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px;font-size:12px;font-weight:600;min-height:34px}
 .chips{display:flex;gap:5px;flex-wrap:wrap}.chip{border:1px solid var(--line);background:var(--panel);color:var(--mut);border-radius:18px;padding:5px 11px;font-size:11.5px;font-weight:600;cursor:pointer;min-height:30px}
 .chip.on{border-color:var(--cyan);color:var(--cyan);background:rgba(91,200,194,.1)}
-.feat-row{display:flex;gap:9px;margin:0 0 12px}
-.feat-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:13px;padding:11px 8px;font-size:13px;font-weight:700;cursor:pointer;min-height:44px}
-.feat-btn svg{width:16px;height:16px;flex:none}
-.feat-btn .feat-n{font-weight:800;opacity:.85}
-.feat-btn.on{border-color:transparent;color:#0b0f0d;background:linear-gradient(135deg,var(--acc1),var(--acc2))}
-.feat-btn.on .feat-n{color:#0b0f0d}
+.chip-feat{padding:6px 12px;font-size:12px;font-weight:700}
+.chip-feat .feat-n{font-size:10.5px;font-weight:800;opacity:.75}
+.chip-feat.on .feat-n{opacity:1}
+.chip-feat svg{width:13px;height:13px;flex:none;margin-right:2px}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 @media(min-width:480px){.grid{grid-template-columns:repeat(4,1fr)}}
 .po{aspect-ratio:2/3;border-radius:7px;overflow:hidden;background:var(--p2);position:relative;cursor:pointer}
@@ -398,9 +401,7 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .filmo-bar{flex:1;height:7px;background:var(--p2);border-radius:4px;overflow:hidden}
 .filmo-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc1))}
 .sr-poster{position:relative;flex:none}
-.sr-poster img.blur-seen{filter:blur(3.5px) brightness(.55);transition:filter .15s}
-.filmo-blur-seen .sr.seen .sr-poster img,.filmo-blur-seen .sr.seen .sr-poster .pp{filter:blur(3px) brightness(.5)}
-.filmo-blur-seen .sr.seen .si{opacity:.45}
+.filmo-hide-seen .sr.seen{display:none}
 .sr-seen-badge{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.22);border-radius:5px;pointer-events:none}
 .sr.seen .si .st,.sr.seen .si .sy{opacity:.6}
 .see-more{display:inline-block;color:var(--acc1);font-weight:700;cursor:pointer;font-size:12.5px;margin:6px 0;user-select:none}
@@ -490,12 +491,12 @@ select{color-scheme:dark}
 .bot-tabs-panel button{background:var(--p2);border:1px solid var(--line);color:var(--mut);border-radius:16px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer}
 .bot-tabs-panel button.on{border-color:var(--acc1);color:var(--acc1);background:rgba(30,201,138,.07)}
 @media(max-width:680px){
-  .tabs{display:none}
+  .tabs{display:none}.tabs-mode .tabs{display:flex}
   .wrap{padding-bottom:calc(env(safe-area-inset-bottom) + 72px)}
   .bot-nav{display:flex;position:fixed;bottom:0;left:0;right:0;height:calc(58px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(12,12,14,.97);border-top:1px solid var(--line);z-index:20;align-items:center;justify-content:space-around;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-  .bot-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:var(--dim);padding:7px 2px;cursor:pointer;-webkit-tap-highlight-color:transparent;min-height:44px;justify-content:center}
+  .bot-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:0;background:none;border:none;color:var(--dim);padding:8px 2px;cursor:pointer;-webkit-tap-highlight-color:transparent;min-height:44px;justify-content:center}
   .bot-nav-item svg{width:22px;height:22px}
-  .bot-nav-item span{font-size:9px;font-weight:700;letter-spacing:.02em;line-height:1}
+  .bot-nav-item span{display:none}
   .bot-nav-item.on{color:var(--acc1)}
   .bot-nav-center{width:48px;height:48px;border-radius:50%;border:2px solid var(--acc1);background:rgba(30,201,138,.08);display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;transition:background .15s}
   .bot-nav-center svg{width:26px;height:26px}
@@ -512,13 +513,10 @@ select{color-scheme:dark}
     <button class="icon-btn" id="gear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="18" r="1.4" fill="currentColor" stroke="none"/><circle cx="6" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></button>
   </header>
   <div class="tabs" id="tabs">
-    <button data-t="bio" class="on tab-bio">Bio</button>
     <button data-t="films">Filmes</button>
     <button data-t="dir">Diretores</button>
     <button data-t="actor">Atores</button>
     <button data-t="actress">Atrizes</button>
-    <button data-t="genre">Gênero</button>
-    <button data-t="stats">Stats</button>
   </div>
   <div class="prog" id="prog"><span id="progTxt"></span><div class="bar"><i id="progBar"></i></div></div>
   <div id="view"></div>
@@ -637,7 +635,7 @@ select{color-scheme:dark}
     <svg viewBox="0 0 48 48" fill="none" style="width:26px;height:26px" aria-hidden="true"><path d="M25.5 24.0 L25.68 24.37 L25.76 24.81 L25.71 25.3 L25.53 25.8 L25.21 26.28 L24.75 26.7 L24.17 27.01 L23.48 27.19 L22.73 27.21 L21.95 27.04 L21.19 26.68 L20.49 26.12 L19.91 25.39 L19.49 24.51 L19.28 23.5 L19.29 22.43 L19.55 21.35 L20.06 20.3 L20.83 19.37 L21.81 18.59 L22.99 18.03 L24.31 17.74 L25.7 17.74 L27.1 18.06 L28.45 18.7 L29.65 19.65 L30.65 20.87 L31.38 22.32 L31.78 23.95 L31.83 25.66 L31.48 27.39 L30.75 29.05 L29.65 30.55 L28.22 31.8 L26.5 32.73 L24.58 33.28 L22.54 33.4 L20.48 33.07 L18.49 32.29 L16.69 31.06 L15.16 29.44 L13.99 27.49 L13.26 25.28 L13.02 22.92 L13.3 20.52 L14.11 18.2 L15.43 16.06 L17.21 14.23 L19.38 12.8 L21.86 11.85 L24.53 11.46 L27.26 11.66 L29.93 12.45 L32.41 13.83 L34.57 15.74 L36.29 18.11 L37.48 20.84 L38.07 23.8 L37.99 26.87 L37.25 29.9 L35.85 32.73 L33.84 35.24 L31.3 37.28 L28.34 38.74 L25.09 39.55 L21.69 39.63 L18.31 38.97 L15.11 37.58 L12.25 35.51 L9.87 32.83 L8.09 29.66 L7.03 26.14 L6.75 22.43 L7.29 18.7 L8.63 15.13 L10.73 11.89 L13.52 9.14 L16.87 7.04 L20.64 5.69 L24.66 5.18 L28.74 5.55 L32.69 6.8 L36.31 8.9 L39.44 11.76 L41.9 15.27 L43.57 19.27 L44.35 23.57 L44.17 27.99 L43.05 32.32 L40.99 36.34" stroke="var(--acc1)" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M25.5 24.0 L25.68 23.63 L25.76 23.19 L25.71 22.7 L25.53 22.2 L25.21 21.72 L24.75 21.3 L24.17 20.99 L23.48 20.81 L22.73 20.79 L21.95 20.96 L21.19 21.32 L20.49 21.88 L19.91 22.61 L19.49 23.49 L19.28 24.5 L19.29 25.57 L19.55 26.65 L20.06 27.7 L20.83 28.63 L21.81 29.41 L22.99 29.97 L24.31 30.26 L25.7 30.26 L27.1 29.94 L28.45 29.3 L29.65 28.35 L30.65 27.13 L31.38 25.68 L31.78 24.05 L31.83 22.34 L31.48 20.61 L30.75 18.95 L29.65 17.45 L28.22 16.2 L26.5 15.27 L24.58 14.72 L22.54 14.6 L20.48 14.93 L18.49 15.71 L16.69 16.94 L15.16 18.56 L13.99 20.51 L13.26 22.72 L13.02 25.08 L13.3 27.48 L14.11 29.8 L15.43 31.94 L17.21 33.77 L19.38 35.2 L21.86 36.15 L24.53 36.54 L27.26 36.34 L29.93 35.55 L32.41 34.17 L34.57 32.26 L36.29 29.89 L37.48 27.16 L38.07 24.2 L37.99 21.13 L37.25 18.1 L35.85 15.27 L33.84 12.76 L31.3 10.72 L28.34 9.26 L25.09 8.45 L21.69 8.37 L18.31 9.03 L15.11 10.42 L12.25 12.49 L9.87 15.17 L8.09 18.34 L7.03 21.86 L6.75 25.57 L7.29 29.3 L8.63 32.87 L10.73 36.11 L13.52 38.86 L16.87 40.96 L20.64 42.31 L24.66 42.82 L28.74 42.45 L32.69 41.2 L36.31 39.1 L39.44 36.24 L41.9 32.73 L43.57 28.73 L44.35 24.43 L44.17 20.01 L43.05 15.68 L40.99 11.66" stroke="var(--acc2)" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="24" cy="24" r="2.3" fill="var(--ink)" opacity="0.95"/></svg>
   </button>
   <button class="bot-nav-item" id="bnReco">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z"/><path d="M2 11l3.5-7h13l3.5 7"/><line x1="8" y1="4" x2="8" y2="11"/><line x1="12" y1="4" x2="12" y2="11"/><line x1="16" y1="4" x2="16" y2="11"/><line x1="2" y1="17" x2="22" y2="17"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="13" rx="2"/><polyline points="2 8 6 3 18 3 22 8"/><line x1="7" y1="3" x2="9" y2="8"/><line x1="12" y1="3" x2="12" y2="8"/><line x1="17" y1="3" x2="15" y2="8"/><line x1="2" y1="14" x2="22" y2="14"/></svg>
     <span>Recomendar</span>
   </button>
   <button class="bot-nav-item" id="bnBio">
@@ -845,7 +843,7 @@ const ICON_SHARE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 const ICON_EXT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;vertical-align:-1px;margin-right:3px"><path d="M8 17L17 8M9 8h8v8"/></svg>';
 const ICON_EYE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="2.6"/></svg>';
 const ICON_SPARK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-3px;margin-right:5px"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 4v3M17 5.5h3"/></svg>';
-let KEY=null, cache={}, db=null, tab='bio', busy=false, PEOPLE=null;
+let KEY=null, cache={}, db=null, tab='stats', busy=false, PEOPLE=null;
 const _filmoCache={};
 let pSort='rt', pDec=null, rScope='all', rDec=null, rYr=null, gSort='count', expanded={};
 let fView='list', rView='list', gView='list';  // 'list' or 'country'
@@ -989,10 +987,19 @@ function renderExpandable(el,fullText,lim){
   const t=(fullText||'').trim();
   if(!t){el.textContent='Sem informacao disponivel.';return;}
   if(t.length<=lim){el.textContent=t;return;}
-  el.textContent=t.slice(0,lim).trim()+'…';
+  const truncSpan=document.createElement('span');
+  truncSpan.textContent=t.slice(0,lim).trim()+'…';
+  el.appendChild(truncSpan);
   const sm=document.createElement('span');
   sm.className='see-more';sm.textContent=' ver mais';
-  sm.onclick=ev=>{ev.stopPropagation();el.textContent=t;};
+  sm.onclick=ev=>{
+    ev.stopPropagation();
+    el.textContent=t;
+    const less=document.createElement('span');
+    less.className='see-more';less.textContent=' ver menos';
+    less.onclick=ev2=>{ev2.stopPropagation();renderExpandable(el,t,lim);};
+    el.appendChild(less);
+  };
   el.appendChild(sm);
 }
 
@@ -1104,17 +1111,13 @@ function renderFilms(){
   const decs=[...new Set(base.map(r=>Math.floor(r.y/10)*10))].filter(d=>d).sort((a,b)=>b-a);
   const langCounts={};base.forEach(r=>{if(r.lang)langCounts[r.lang]=(langCounts[r.lang]||0)+1;});
   const langOpts=Object.entries(langCounts).sort((a,b)=>b[1]-a[1]).slice(0,18);
-  const modes=[['all','Todos'],['unrated','Sem nota']];
   const wlCount=watchlist().length,rwCount=films().filter(r=>(r.rw||0)>=1).length;
-  const featRow=`<div class="feat-row">
-    <button class="feat-btn${fMode==='watchlist'?' on':''}" id="fFeatWl" data-m="watchlist">${ICON_EYE}<span class="feat-lbl">Quero ver</span><span class="feat-n">${fmt(wlCount)}</span></button>
-    <button class="feat-btn${fMode==='rewatch'?' on':''}" id="fFeatRw" data-m="rewatch">↺<span class="feat-lbl">Revistos</span><span class="feat-n">${fmt(rwCount)}</span></button>
-  </div>`;
+  const modes=[['watchlist',`${ICON_EYE} Quero ver`,'chip-feat',wlCount],['rewatch',`<svg style="width:13px;height:13px;flex:none;margin-right:2px;vertical-align:-2px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Revistos`,'chip-feat',rwCount],['all','Todos','',null],['unrated','Sem nota','',null]];
+
   const langSel=langOpts.length?`<select id="fLang"><option value="">Idioma: todos</option>${langOpts.map(([c,n])=>`<option value="${c}" ${fLang===c?'selected':''}>${LANGS[c]||c.toUpperCase()} · ${n}</option>`).join('')}</select>`:'';
   const tagSel=tagOpts.length?`<select id="fTag"><option value="">Tags: todas (${fmt(Object.keys(tagCounts).length)})</option>${tagOpts.map(([t,n])=>`<option value="${t.replace(/"/g,'&quot;')}" ${fTag===t?'selected':''}>${t} · ${n}</option>`).join('')}</select>`:'';
-  const ctrl=featRow
-    +`<div class="controls"><div class="seg" id="pSort">${[['rt','Nota'],['yr','Ano'],['az','A–Z']].map(([s,l])=>`<button data-s="${s}" class="${pSort===s?'on':''}">${l}</button>`).join('')}</div><button class="chip" id="fCPais">${GLOBE_SVG} País</button></div>`
-    +`<div class="chips" id="fMode" style="margin:0 0 9px">${modes.map(([m,l])=>`<button class="chip ${fMode===m?'on':''}" data-m="${m}">${l}</button>`).join('')}</div>`
+  const ctrl=`<div class="controls"><div class="seg" id="pSort">${[['rt','Nota'],['yr','Ano'],['az','A–Z']].map(([s,l])=>`<button data-s="${s}" class="${pSort===s?'on':''}">${l}</button>`).join('')}</div><button class="chip" id="fCPais">${GLOBE_SVG} País</button></div>`
+    +`<div class="chips" id="fMode" style="margin:0 0 9px">${modes.map(([m,l,cls,cnt])=>`<button class="chip ${cls} ${fMode===m?'on':''}" data-m="${m}">${l}${cnt!=null?` <span class="feat-n">${fmt(cnt)}</span>`:''}</button>`).join('')}</div>`
     +(decs.length?`<div class="chips" id="pDec" style="margin:0 0 9px"><button class="chip ${pDec==null?'on':''}" data-d="all">Todas</button>${decs.map(d=>`<button class="chip ${pDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}</div>`:'')
     +`<div class="controls" style="margin:0 0 11px">${langSel}${tagSel}</div>`;
   let body;
@@ -1134,7 +1137,7 @@ function renderFilms(){
   $('#pSort').onclick=e=>{const b=e.target.closest('button');if(b){pSort=b.dataset.s;renderFilms();}};
   const pd=$('#pDec');if(pd)pd.onclick=e=>{const b=e.target.closest('button');if(b){pDec=b.dataset.d==='all'?null:+b.dataset.d;renderFilms();}};
   $('#fMode').onclick=e=>{const b=e.target.closest('button');if(b){fMode=b.dataset.m;pDec=null;fTag='';renderFilms();}};
-  const featRowEl=$('.feat-row');if(featRowEl)featRowEl.onclick=e=>{const b=e.target.closest('.feat-btn');if(!b)return;const m=b.dataset.m;fMode=(fMode===m?'all':m);pDec=null;fTag='';renderFilms();};
+
   const fl2=$('#fLang');if(fl2)fl2.onchange=e=>{fLang=e.target.value;renderFilms();};
   const ftg=$('#fTag');if(ftg)ftg.onchange=e=>{fTag=e.target.value;renderFilms();};
   const fcp=$('#fCPais');if(fcp)fcp.onclick=()=>{fView='country';renderFilms();};
@@ -1362,7 +1365,7 @@ function _filmoRow(m){
   const localRec=_localRecFor(m);const seen=!!localRec;
   const myR=seen&&localRec.r!=null?localRec.r:null;
   const dk=mk.replace(/"/g,'&quot;');
-  const po=m.poster_path?`<img loading="lazy" src="${IMG}/w92${m.poster_path}" data-k="${dk}" data-tmdbid="${m.id}" data-ptitle="${(m.title||'').replace(/"/g,'&quot;')}" data-ppo="${m.poster_path}" class="${seen?'blur-seen':''}" style="cursor:pointer"/>` :'<div class="pp"></div>';
+  const po=m.poster_path?`<img loading="lazy" src="${IMG}/w92${m.poster_path}" data-k="${dk}" data-tmdbid="${m.id}" data-ptitle="${(m.title||'').replace(/"/g,'&quot;')}" data-ppo="${m.poster_path}" class="" style="cursor:pointer"/>` :'<div class="pp"></div>';
   const badge=seen?`<div class="sr-seen-badge" title="Voce ja viu">${SEEN_BADGE_SVG}</div>`:'';
   const ratingTxt=myR!=null?' · sua nota '+star(myR):(m.vote_average?' · '+m.vote_average.toFixed(1)+'★ TMDB':'');
   const wlBtn=seen?'':`<button class="wl-btn${inWl?' on':''}" data-t="${(m.title||'').replace(/"/g,'&quot;')}" data-y="${y}" data-id="${m.id}" data-po="${m.poster_path||''}">${inWl?'✓ ver depois':'+ ver depois'}</button>`;
@@ -1393,13 +1396,13 @@ function _renderFilmoEl(elId,stKey,full,labelText,kind,id){
     arr=_filmoSortArr(arr,st.sort);
     const sortOpts=[['pop','Popular'],['rating','Nota'],['year','Ano']];
     ctrlHtml=`<div class="filmo-sort-row">${sortOpts.map(([s,l])=>`<button class="filmo-sort-btn${st.sort===s?' on':''}" data-filmo-sort-key="${stKey}" data-s="${s}">${l}</button>`).join('')}</div>`
-      +`<label class="filmo-hide-row"><input type="checkbox" data-filmo-hide="${stKey}" ${st.hideSeen?'checked':''}/> Embaçar filmes já vistos</label>`
+      +`<label class="filmo-hide-row"><input type="checkbox" data-filmo-hide="${stKey}" ${st.hideSeen?'checked':''}/> Ocultar filmes já vistos</label>`
       +`<button class="see-more" data-filmo-collapse="${stKey}">‹ Voltar ao resumo</button>`;
     listHtml=arr.length?arr.map(_filmoRow).join(''):'<div class="note" style="margin:6px 0 0">Nenhum filme com esse filtro.</div>';
   }
   el.innerHTML=`<div class="lbl">${labelText}</div>`
     +`<div class="filmo-prog"><div class="filmo-bar"><i style="width:${pct}%"></i></div><span>${seenCount} de ${total} vistos · ${pct}%</span></div>`
-    +ctrlHtml+`<div class="${st.hideSeen?'filmo-blur-seen':''}">${listHtml}</div>`;
+    +ctrlHtml+`<div class="${st.hideSeen?'filmo-hide-seen':''}">${listHtml}</div>`;
   _wlFilmoBtn(el);
 }
 function _filmoRefresh(stKey){
@@ -1620,33 +1623,28 @@ $('#recoOverClose').onclick=()=>{stopSpiralAnim();$('#recoOver').classList.remov
 
 /* ── bottom nav ── */
 function _updateBotNav(){
-  const contentTabs=['films','genre','dir','actor','actress'];
+  const contentTabs=['films','dir','actor','actress'];
   const bni=$('#bnTabs'),bns=$('#bnSearch'),bnst=$('#bnStats'),bnr=$('#bnReco'),bnb=$('#bnBio');
   if(!bni)return;
   bni.classList.toggle('on',contentTabs.includes(tab));
   bnst.classList.toggle('on',tab==='stats');
   bnb.classList.toggle('on',tab==='bio');
   bnr.classList.remove('on');bns.classList.remove('on');
+  // sync tabs-mode visibility with content tab state
+  if(!contentTabs.includes(tab)){document.body.classList.remove('tabs-mode');}
 }
 function _setTab(t){$$('#tabs button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));tab=t;render();_updateBotNav();}
-$('#bnBio').onclick=()=>{$('#botTabsPanel').classList.remove('show');_setTab('bio');};
-$('#bnStats').onclick=()=>{$('#botTabsPanel').classList.remove('show');_setTab('stats');};
-$('#bnSearch').onclick=()=>{$('#botTabsPanel').classList.remove('show');$('#searchOver').classList.add('show');setTimeout(()=>$('#searchIn').focus(),100);};
-$('#bnReco').onclick=()=>{$('#botTabsPanel').classList.remove('show');openRecoModal();};
+$('#tabs').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b)return;_setTab(b.dataset.t);};
+$('#bnBio').onclick=()=>{document.body.classList.remove('tabs-mode');_setTab('bio');};
+$('#bnStats').onclick=()=>{document.body.classList.remove('tabs-mode');_setTab('stats');};
+$('#bnSearch').onclick=()=>{document.body.classList.remove('tabs-mode');$('#searchOver').classList.add('show');setTimeout(()=>$('#searchIn').focus(),100);};
+$('#bnReco').onclick=()=>{document.body.classList.remove('tabs-mode');openRecoModal();};
 $('#bnTabs').onclick=()=>{
-  const panel=$('#botTabsPanel');
-  const isOpen=panel.classList.contains('show');
-  panel.classList.toggle('show',!isOpen);
-  if(!isOpen){
-    const contentTabs=['films','genre','dir','actor','actress'];
-    panel.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
-  }
+  const contentTabs=['films','dir','actor','actress'];
+  document.body.classList.add('tabs-mode');
+  if(!contentTabs.includes(tab)){_setTab('films');}else{_updateBotNav();}
+  const tabsEl=$('#tabs');if(tabsEl)tabsEl.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
 };
-$('#botTabsPanel').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b)return;$('#botTabsPanel').classList.remove('show');_setTab(b.dataset.t);};
-document.addEventListener('click',e=>{
-  const panel=$('#botTabsPanel');
-  if(panel&&panel.classList.contains('show')&&!panel.contains(e.target)&&e.target.id!=='bnTabs'){panel.classList.remove('show');}
-});
 
 function bioFavSlots(host){host.innerHTML=[0,1,2,3,4].map(i=>{const k=(bio.favs||[])[i];const r=k?cache[k]:null;
   return `<div class="favslot" data-fav="${i}">${r&&r.po?`<img src="${IMG}/w185${r.po}"/>`:(r?`<div class="ph2">${r.t}</div>`:'<span>+</span>')}</div>`;}).join('');
@@ -3189,7 +3187,7 @@ async function saveHTML(){
   toast('HTML salvo com '+allFilms.length+' filmes e configurações da bio — faça commit no GitHub!');
 }
 
-$('#tabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;$$('#tabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');tab=b.dataset.t;render();};
+// tabs onclick handled by _setTab delegation added near nav init
 // Pausa a animacao quando a aba/app fica em segundo plano (economia de bateria); retoma ao voltar.
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopSpiralAnim();else if(tab==='bio')render();});
 
