@@ -568,7 +568,7 @@ select{color-scheme:dark}
 <div class="toast" id="toast"></div>
 
 <!-- BUSCAR / AVALIAR -->
-<div class="over over-nav" id="searchOver"><div class="oh"><h2>Pesquisar</h2><button class="icon-btn" id="searchClose">✕</button></div>
+<div class="over over-nav" id="searchOver"><div class="oh"><h2>Pesquisar</h2></div>
   <input class="tin" id="searchIn" type="text" placeholder="filmes, diretores, atores…" autocomplete="off"/>
   <div class="ob" id="searchRes"></div>
 </div>
@@ -646,7 +646,7 @@ select{color-scheme:dark}
 
 <!-- RECOMENDAÇÕES (overlay) -->
 <div class="over over-nav" id="recoOver" style="justify-content:flex-start">
-  <div class="oh"><h2>Recomendar agora</h2><button class="icon-btn" id="recoOverClose">✕</button></div>
+  <div class="oh"><h2>Recomendar agora</h2></div>
   <div class="ob" style="padding-bottom:24px">
     <div class="bio-reco-ctx" id="recoCtxLine" style="display:none"></div>
     <div id="bioVibeArea" class="reco-vibes"></div>
@@ -1665,7 +1665,7 @@ function openRecoModal(){
   $('#recoOver').classList.add('show');
   _loadRecoTrending();
 }
-$('#recoOverClose').onclick=()=>{stopSpiralAnim();$('#recoOver').classList.remove('show');$('#bnReco').classList.remove('on');_updateBotNav();};
+// recoOverClose removed — nav overlay fechada pela navegação inferior
 
 /* ── Popular sections in reco tab ── */
 let _recoTrendCache=null;let _recoTrendTs=0;let _recoTrendLoading=false;
@@ -1720,11 +1720,13 @@ function _updateBotNav(){
 }
 function _setTab(t){$$('#tabs button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));tab=t;render();_updateBotNav();}
 $('#tabs').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b)return;_setTab(b.dataset.t);};
-$('#bnBio').onclick=()=>{document.body.classList.remove('tabs-mode');_setTab('bio');};
-$('#bnStats').onclick=()=>{document.body.classList.remove('tabs-mode');_setTab('stats');};
-$('#bnSearch').onclick=()=>{document.body.classList.remove('tabs-mode');$$('.bot-nav-item,.bot-nav-center').forEach(b=>b.classList.remove('on'));$('#searchOver').classList.add('show');$('#bnSearch').classList.add('on');setTimeout(()=>{$('#searchIn').focus();if(!$('#searchIn').value.trim())_showSearchExplore();},100);};
-$('#bnReco').onclick=()=>{document.body.classList.remove('tabs-mode');openRecoModal();$('#bnReco').classList.add('on');};
+function _hideNavOverlays(){$('#searchOver').classList.remove('show');$('#recoOver').classList.remove('show');stopSpiralAnim();}
+$('#bnBio').onclick=()=>{_hideNavOverlays();document.body.classList.remove('tabs-mode');_setTab('bio');};
+$('#bnStats').onclick=()=>{_hideNavOverlays();document.body.classList.remove('tabs-mode');_setTab('stats');};
+$('#bnSearch').onclick=()=>{_hideNavOverlays();document.body.classList.remove('tabs-mode');$$('.bot-nav-item,.bot-nav-center').forEach(b=>b.classList.remove('on'));$('#searchOver').classList.add('show');$('#bnSearch').classList.add('on');setTimeout(()=>{$('#searchIn').focus();if(!$('#searchIn').value.trim())_showSearchExplore();},100);};
+$('#bnReco').onclick=()=>{_hideNavOverlays();document.body.classList.remove('tabs-mode');openRecoModal();$('#bnReco').classList.add('on');};
 $('#bnTabs').onclick=()=>{
+  _hideNavOverlays();
   const contentTabs=['films','dir','actor','actress'];
   document.body.classList.add('tabs-mode');
   if(!contentTabs.includes(tab)){_setTab('films');}else{_updateBotNav();}
@@ -3132,7 +3134,7 @@ $('#searchRes').addEventListener('click',async e=>{
   if(!cache[k]){cache[k]={t:m.t,y:m.y,id:m.id,po:m.po,gids:m.gids,lang:m.lang,ti:m.t,ot:m.ot||m.t,ye:String(m.y),src:'user',_stub:1};}
   await openFilm(k);
 });
-$('#searchClose').onclick=()=>{$('#searchOver').classList.remove('show');$('#bnSearch').classList.remove('on');_updateBotNav();};
+// searchClose removed — nav overlay fechada pela navegação inferior
 $('#searchIn').oninput=e=>{clearTimeout(searchTimer);const q=e.target.value;searchTimer=setTimeout(()=>doSearch(q),350);};
 $('#search').onclick=()=>{$('#searchOver').classList.add('show');setTimeout(()=>{$('#searchIn').focus();if(!$('#searchIn').value.trim())_showSearchExplore();},100);};
 
