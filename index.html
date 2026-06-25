@@ -202,10 +202,16 @@ input.tin{width:100%;background:var(--panel);border:1px solid var(--line);color:
 .btn.danger:active,.btn.danger:hover{border-color:#ff8888}
 details{margin-top:14px;color:var(--mut);font-size:13px}details summary{cursor:pointer;color:var(--cyan);font-weight:600}
 details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
+
+.drag-panel{position:relative}
+.drag-knob{display:flex;justify-content:center;align-items:center;padding:7px 0 3px;cursor:ns-resize;user-select:none;-webkit-user-select:none}
+.drag-knob::before{content:'';display:block;width:32px;height:3.5px;border-radius:2px;background:var(--line);transition:background .15s,width .15s}
+.drag-knob.expanded::before{background:rgba(30,201,138,.35);width:20px}
+.drag-knob-arrow{font-size:9px;color:var(--dim);text-align:center;display:block;margin-top:1px;letter-spacing:.04em;transition:opacity .2s}
 .eyb{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:16px 0 9px;display:block}
 .eyb-row{display:flex;align-items:baseline;justify-content:space-between;margin:16px 0 9px}
 .eyb-row .eyb{margin:0}
-.eyb-more{background:none;border:none;color:var(--acc1);font-size:11px;font-weight:700;cursor:pointer;padding:0;letter-spacing:.02em}
+.eyb-more{display:none}
 .full-search{width:100%;margin-bottom:10px}
 .bio-id{display:flex;align-items:flex-start;gap:10px;margin-top:14px}
 .bio-id .bia{flex:1;min-width:0}.bio-id h2{margin:0;font-size:22px;word-break:break-word}
@@ -410,6 +416,12 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .filmo-rate-btn{background:none;border:1px solid var(--line);color:var(--mut);border-radius:7px;padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;margin-top:5px;display:inline-block}
 .filmo-rate-btn:hover,.filmo-rate-btn:active{border-color:var(--acc1);color:var(--acc1)}
 .filmo-unseen-info{font-size:11.5px;color:var(--dim);margin:6px 0 4px}
+
+.filmo-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.filmo-hdr .lbl{margin-bottom:0}
+.filmo-expand-btn{background:none;border:1px solid var(--line);color:var(--acc1);border-radius:8px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;transition:background .13s}
+.filmo-expand-btn:active,.filmo-expand-btn:hover{background:rgba(30,201,138,.1)}
+.filmo-expand-btn svg{width:14px;height:14px}
 .filmo-sort-row{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 9px}
 .filmo-sort-btn{background:none;border:1px solid var(--line);color:var(--mut);border-radius:16px;padding:4px 11px;font-size:11.5px;font-weight:700;cursor:pointer}
 .filmo-sort-btn.on{border-color:var(--acc1);color:var(--acc1);background:rgba(30,201,138,.07)}
@@ -850,6 +862,7 @@ let fView='list', rView='list', gView='list';  // 'list' or 'country'
 let fMode='all', fLang='', fTag='';  // filtros da aba Filmes
 let rankSort='count';                          // ranking: 'count' | 'avg'
 let statsYear=null;                            // ano selecionado no heatmap/aba Stats
+let _yyExpanded=false,_decExpanded=false; // drag-expand state
 const LANGS={en:'Inglês',ja:'Japonês',ko:'Coreano',fr:'Francês',it:'Italiano',de:'Alemão',es:'Espanhol',pt:'Português',ru:'Russo',zh:'Chinês',cn:'Chinês',sv:'Sueco',da:'Dinamarquês',fi:'Finlandês',no:'Norueguês',pl:'Polonês',cs:'Tcheco',hu:'Húngaro',nl:'Holandês',fa:'Persa',hi:'Hindi',ar:'Árabe',tr:'Turco',th:'Tailandês',el:'Grego',he:'Hebraico',ro:'Romeno',is:'Islandês',sr:'Sérvio',uk:'Ucraniano',vi:'Vietnamita',tl:'Filipino',id:'Indonésio',ka:'Georgiano',et:'Estoniano'};
 
 /* ---------- storage ---------- */
@@ -1388,8 +1401,7 @@ function _renderFilmoEl(elId,stKey,full,labelText,kind,id){
     const seenArr=valid.filter(m=>!!_localRecFor(m)).sort((a,b)=>(b.vote_count||0)-(a.vote_count||0)).slice(0,8);
     const unseenCount=valid.filter(m=>!_localRecFor(m)).length;
     listHtml=seenArr.length?seenArr.map(_filmoRow).join(''):'<div class="note" style="margin:6px 0 0">Nenhum filme desta filmografia na sua lista ainda.</div>';
-    const unseenNote=unseenCount?`<div class="filmo-unseen-info">+ ${unseenCount} não ${unseenCount===1?'visto':'vistos'}</div>`:'';
-    ctrlHtml=unseenNote+`<button class="see-more" data-filmo-expand="${stKey}">Ver filmografia completa (${fmt(total)}) ›</button>`;
+    ctrlHtml=unseenCount?`<div class="filmo-unseen-info">+ ${unseenCount} não ${unseenCount===1?'visto':'vistos'}</div>`:'';
   }else{
     let arr=valid.slice();
     // hideSeen=true: blur via CSS class (não remove da lista)
@@ -1397,10 +1409,13 @@ function _renderFilmoEl(elId,stKey,full,labelText,kind,id){
     const sortOpts=[['pop','Popular'],['rating','Nota'],['year','Ano']];
     ctrlHtml=`<div class="filmo-sort-row">${sortOpts.map(([s,l])=>`<button class="filmo-sort-btn${st.sort===s?' on':''}" data-filmo-sort-key="${stKey}" data-s="${s}">${l}</button>`).join('')}</div>`
       +`<label class="filmo-hide-row"><input type="checkbox" data-filmo-hide="${stKey}" ${st.hideSeen?'checked':''}/> Ocultar filmes já vistos</label>`
-      +`<button class="see-more" data-filmo-collapse="${stKey}">‹ Voltar ao resumo</button>`;
+      +``;
     listHtml=arr.length?arr.map(_filmoRow).join(''):'<div class="note" style="margin:6px 0 0">Nenhum filme com esse filtro.</div>';
   }
-  el.innerHTML=`<div class="lbl">${labelText}</div>`
+  const expandBtn=st.mode==='top'
+    ?`<button class="filmo-expand-btn" data-filmo-expand="${stKey}" title="Ver todos (${fmt(total)})">${'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'}</button>`
+    :`<button class="filmo-expand-btn" data-filmo-collapse="${stKey}" title="Recolher" style="color:var(--mut)">${'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'}</button>`;
+  el.innerHTML=`<div class="filmo-hdr"><div class="lbl" style="margin:0">${labelText}</div>${expandBtn}</div>`
     +`<div class="filmo-prog"><div class="filmo-bar"><i style="width:${pct}%"></i></div><span>${seenCount} de ${total} vistos · ${pct}%</span></div>`
     +ctrlHtml+`<div class="${st.hideSeen?'filmo-hide-seen':''}">${listHtml}</div>`;
   _wlFilmoBtn(el);
@@ -1479,7 +1494,7 @@ async function openCountry(c){
     '<div class="note" style="margin:10px 14px 4px">Estatísticas calculadas a partir do seu histórico. País de produção principal segundo o TMDB.</div>');
 }
 
-function openEntity(e){if(!e)return;if(e.kind==='film')openFilm(e.ref);else if(e.kind==='genre')openGenre(e.ref);else if(e.kind==='country')openCountry(e.ref);else if(e._p)openPerson(e._p);}
+function openEntity(e){if(!e)return;if(e.kind==='vibe')_runBioReco(e.ref);else if(e.kind==='film')openFilm(e.ref);else if(e.kind==='genre')openGenre(e.ref);else if(e.kind==='country')openCountry(e.ref);else if(e._p)openPerson(e._p);}
 let spiralRAF=null;
 let _spiralRecoItems=null;
 let _bioRecoHTML=null;  // persiste os cards de recomendação entre re-renders
@@ -1602,9 +1617,8 @@ function renderBio(){
 function openRecoModal(){
   const ctx=_recoContext();
   const ctxLine=`<b>${ctx.dow}, ${ctx.periodo}</b> · ${ctx.dayNote}${ctx.season?`<br><span class="season">${ctx.season}</span>`:''}`;
-  const ctxEl=$('#recoCtxLine');if(ctxEl)ctxEl.innerHTML=ctxLine;
-  const vibeHtml=Object.entries(VIBE_CFG).map(([k,v])=>`<button class="reco-vibe${_bioRecoVibe===k?' on':''}" data-v="${k}"><span class="ricon">${RICON[k]}</span>${v.name}</button>`).join('');
-  const va=$('#bioVibeArea');if(va){va.innerHTML=vibeHtml;va.onclick=e=>{const b=e.target.closest('.reco-vibe');if(b)_runBioReco(b.dataset.v);};}
+  const ctxEl=$('#recoCtxLine');if(ctxEl){ctxEl.innerHTML=ctxLine+'<br><span style="font-size:11.5px;color:var(--dim)">Toque numa vibe na espiral para receber indicações</span>';}
+  const va=$('#bioVibeArea');if(va)va.style.display='none';
   const spiralEl=$('#spiral'),recoPanel=$('#bioRecoPanel'),sb=$('#spiralbox');
   if(_bioRecoHTML&&recoPanel){
     if(spiralEl){spiralEl.style.display='none';spiralEl.style.opacity='1';}
@@ -1615,7 +1629,7 @@ function openRecoModal(){
     if(spiralEl){spiralEl.style.display='';spiralEl.style.opacity='1';}
     if(recoPanel)recoPanel.style.display='none';
     if(sb){sb.classList.remove('bio-results-mode');sb.style.position='';}
-    requestAnimationFrame(()=>renderSpiral(_spiralRecoItems||[],bio.cat||'films'));
+    requestAnimationFrame(()=>renderSpiral(_vibeItems(),bio.cat||'films'));
   }
   $('#recoOver').classList.add('show');
 }
@@ -2240,13 +2254,17 @@ function _wireRecoCardClicks(panel){
   });
 }
 
+
+function _vibeItems(){return Object.entries(VIBE_CFG).map(([k,v])=>({kind:'vibe',ref:k,label:v.name,sub:v.note||''}));}
 async function _runBioReco(vibe){
   // Toggle: clicar na vibe ativa volta ao estado normal
-  if(_bioRecoVibe===vibe){_bioRecoHTML=null;_bioRecoVibe=null;_spiralRecoItems=null;_bioRecoMovies=null;renderBio();return;}
+  if(_bioRecoVibe===vibe){_bioRecoHTML=null;_bioRecoVibe=null;_spiralRecoItems=null;_bioRecoMovies=null;
+    const sp2=$('#spiral');if(sp2){sp2.style.cssText='';sp2.style.display='';}
+    const rp2=$('#bioRecoPanel');if(rp2)rp2.style.display='none';
+    const sb2=$('#spiralbox');if(sb2)sb2.classList.remove('bio-results-mode');
+    renderSpiral(_vibeItems(),bio.cat||'films');return;}
   _bioRecoVibe=vibe;
   const sb=$('#spiralbox');if(!sb)return;
-  // Marcar vibe selecionada
-  $$('#bioVibeArea .reco-vibe').forEach(b=>b.classList.toggle('on',b.dataset.v===vibe));
   // Voltar ao estado normal do spiralbox (caso tenha resultado anterior)
   sb.classList.remove('bio-results-mode');
   const spiralEl=$('#spiral'),recoPanel=$('#bioRecoPanel');
@@ -2782,9 +2800,11 @@ function renderStats(){
   const yy=_byYear();
   const YY_PREVIEW=5;
   if(yy.length){
-    html+='<div class="eyb-row"><span class="eyb" style="margin:0">Ano a ano</span>'+(yy.length>YY_PREVIEW?'<button class="eyb-more" onclick="openYYOver()">Ver tudo ('+yy.length+' anos) →</button>':'')+'</div><div class="yy-rows">'
-      +yy.slice(0,YY_PREVIEW).map(r=>'<div class="yy-row"><span class="yy-y">'+r.y+'</span><span class="yy-n"><b>'+fmt(r.n)+'</b> filmes</span><span class="yy-a">'+(r.avg!=null?r.avg.toFixed(2).replace('.',',')+'★':'—')+'</span><span class="yy-g">'+(r.top?r.top[0]:'—')+'</span></div>').join('')
-      +'</div>';
+    {const showYY=_yyExpanded?yy:yy.slice(0,YY_PREVIEW);const hasMore=yy.length>YY_PREVIEW;
+    html+='<span class="eyb" style="margin:16px 0 9px;display:block">Ano a ano</span>'
+      +'<div class="drag-panel" id="yyPanel"><div class="yy-rows">'
+      +showYY.map(r=>'<div class="yy-row"><span class="yy-y">'+r.y+'</span><span class="yy-n"><b>'+fmt(r.n)+'</b> filmes</span><span class="yy-a">'+(r.avg!=null?r.avg.toFixed(2).replace('.',',')+'★':'—')+'</span><span class="yy-g">'+(r.top?r.top[0]:'—')+'</span></div>').join('')
+      +'</div>'+(hasMore?'<div class="drag-knob'+(_yyExpanded?' expanded':'')+'" id="yyKnob"><span class="drag-knob-arrow">'+(_yyExpanded?'▲ menos':'▼ mais')+'</span></div>':'')+'</div>';}
   }
   // décadas por nota (preview curto + ficha completa)
   const dec=_decadeStats().filter(d=>d.n>=1);
@@ -2792,9 +2812,12 @@ function renderStats(){
   if(dec.length){
     const byAvg=dec.filter(d=>d.rc>=3&&d.avg!=null).sort((a,b)=>b.avg-a.avg);
     const list=(byAvg.length?byAvg:dec.slice().sort((a,b)=>b.n-a.n));
-    html+='<div class="eyb-row"><span class="eyb" style="margin:0">Décadas '+(byAvg.length?'por nota média':'por quantidade')+'</span>'+(list.length>DEC_PREVIEW?'<button class="eyb-more" onclick="openDecOver()">Ver tudo ('+list.length+') →</button>':'')+'</div><div class="bars">'
-      +list.slice(0,DEC_PREVIEW).map(d=>{const w=d.avg!=null?d.avg/5*100:0;return '<div class="barrow"><div class="bn">'+d.d+'s</div><div class="track"><div class="fill" style="width:'+w+'%"></div></div><div class="bmeta">'+(d.avg!=null?'<span class="g">'+star(+d.avg.toFixed(2))+'</span> · ':'')+fmt(d.n)+'f</div></div>';}).join('')
-      +'</div><div class="note" style="margin-top:2px">'+(byAvg.length?'Décadas com 3+ filmes avaliados, ordenadas pela sua nota média.':'Ordenado por quantidade.')+'</div>';
+    {const showDec=_decExpanded?list:list.slice(0,DEC_PREVIEW);const hasMoreDec=list.length>DEC_PREVIEW;
+    html+='<span class="eyb" style="margin:16px 0 9px;display:block">Décadas '+(byAvg.length?'por nota média':'por quantidade')+'</span>'
+      +'<div class="drag-panel" id="decPanel"><div class="bars">'
+      +showDec.map(d=>{const w=d.avg!=null?d.avg/5*100:0;return '<div class="barrow"><div class="bn">'+d.d+'s</div><div class="track"><div class="fill" style="width:'+w+'%"></div></div><div class="bmeta">'+(d.avg!=null?'<span class="g">'+star(+d.avg.toFixed(2))+'</span> · ':'')+fmt(d.n)+'f</div></div>';}).join('')
+      +'</div>'+(hasMoreDec?'<div class="drag-knob'+(_decExpanded?' expanded':'')+'" id="decKnob"><span class="drag-knob-arrow">'+(_decExpanded?'▲ menos':'▼ mais')+'</span></div>':'')
+      +'</div><div class="note" style="margin-top:2px">'+(byAvg.length?'Décadas com 3+ filmes avaliados, ordenadas pela sua nota média.':'Ordenado por quantidade.')+'</div>';}
   }
   // conquistas — catálogo de cinema (movimentos, trilogias, diretores, atores, panorama)
   const ach=_achievements();
@@ -2823,6 +2846,24 @@ function renderStats(){
   }
   // dailyExpBtn removedif(!dl)return;const isExp=dl.style.maxHeight!=='';dl.style.maxHeight=isExp?'':'none';dl.style.overflow=isExp?'':'visible';deb.textContent=isExp?'Ver todos':'Recolher';};
   const hy=$('#hmYears');if(hy)hy.onclick=e=>{const b=e.target.closest('button');if(b){statsYear=+b.dataset.y;renderStats();}};
+  // drag-expand for yy and dec panels
+  function _wireDrag(panelId,knobId,expandedRef,setter){
+    const panel=$('#'+panelId),knob=$('#'+knobId);
+    if(!panel)return;
+    let sy=0,dragging=false;
+    const onStart=e=>{sy=(e.touches?e.touches[0]:e).clientY;dragging=true;};
+    const onEnd=e=>{
+      if(!dragging)return;dragging=false;
+      const dy=sy-(e.changedTouches?e.changedTouches[0]:e).clientY;
+      if(dy>28&&!expandedRef())setter(true);
+      else if(dy<-28&&expandedRef())setter(false);
+    };
+    panel.addEventListener('touchstart',onStart,{passive:true});
+    panel.addEventListener('touchend',onEnd,{passive:true});
+    if(knob){knob.addEventListener('click',e=>{e.stopPropagation();setter(!expandedRef());});}
+  }
+  _wireDrag('yyPanel','yyKnob',()=>_yyExpanded,v=>{_yyExpanded=v;renderStats();});
+  _wireDrag('decPanel','decKnob',()=>_decExpanded,v=>{_decExpanded=v;renderStats();});
   const ac=$('#achCat');if(ac)ac.onclick=e=>{const b=e.target.closest('button');if(b){_achCat=b.dataset.c;renderStats();}};
   $$('.ach[data-ai]').forEach(el=>el.onclick=()=>openAchievement(+el.dataset.ai));
 }
