@@ -1133,10 +1133,10 @@ function renderFilms(){
   const tagSel=tagOpts.length?`<select id="fTag"><option value="">Tags: todas (${fmt(Object.keys(tagCounts).length)})</option>${tagOpts.map(([t,n])=>`<option value="${t.replace(/"/g,'&quot;')}" ${fTag===t?'selected':''}>${t} · ${n}</option>`).join('')}</select>`:''
   const yearOpts=[...new Set(base.map(r=>r.y))].filter(Boolean).sort((a,b)=>b-a);
   const yearSel=pSort==='yr'&&yearOpts.length?`<select id="pYr"><option value="">Todos os anos</option>${yearOpts.map(y=>`<option value="${y}" ${pYr===y?'selected':''}>${y}</option>`).join('')}</select>`:'';
-  const ctrl=`<div class="controls"><div class="seg" id="pSort">${[['rt','Nota'],['yr','Ano'],['az','A–Z']].map(([s,l])=>`<button data-s="${s}" class="${pSort===s?'on':''}">` +l+`</button>`).join('')}</div><button class="chip" id="fCPais">${GLOBE_SVG} País</button></div>`
+  const ctrl=`<div class="controls"><div class="seg" id="pSort">${[['rt','Nota'],['yr','Ano'],['az','A–Z']].map(([s,l])=>`<button data-s="${s}" class="${pSort===s?'on':''}">` +l+`</button>`).join('')}</div>${yearSel}<button class="chip" id="fCPais">${GLOBE_SVG} País</button></div>`
     +`<div class="chips" id="fMode" style="margin:0 0 9px">${modes.map(([m,l,cls,cnt])=>`<button class="chip ${cls} ${fMode===m?'on':''}" data-m="${m}">${l}${cnt!=null?` <span class="feat-n">${fmt(cnt)}</span>`:''}</button>`).join('')}</div>`
     +(decs.length?`<div class="chips" id="pDec" style="margin:0 0 9px"><button class="chip ${pDec==null&&pYr==null?'on':''}" data-d="all">Todas</button>${decs.map(d=>`<button class="chip ${pDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}<button class="chip ${pDec==='unrated'?'on':''}" data-d="unrated">Sem nota</button></div>`:'')
-    +`<div class="controls" style="margin:0 0 11px">${langSel}${tagSel}${yearSel}</div>`;
+    +`<div class="controls" style="margin:0 0 11px">${langSel}${tagSel}</div>`;
   let body;
   if(!list.length){
     body=fMode==='watchlist'
