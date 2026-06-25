@@ -510,7 +510,7 @@ select{color-scheme:dark}
 @media(max-width:680px){
   .tabs{display:none}.tabs-mode .tabs{display:flex}
   .wrap{padding-bottom:calc(env(safe-area-inset-bottom) + 72px)}
-  .bot-nav{display:flex;position:fixed;bottom:0;left:0;right:0;height:calc(58px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(12,12,14,.97);border-top:1px solid var(--line);z-index:20;align-items:center;justify-content:space-around;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+  .bot-nav{display:flex;position:fixed;bottom:0;left:0;right:0;height:calc(58px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(12,12,14,.97);border-top:1px solid var(--line);z-index:55;align-items:center;justify-content:space-around;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
   .bot-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:0;background:none;border:none;color:var(--dim);padding:8px 2px;cursor:pointer;-webkit-tap-highlight-color:transparent;min-height:44px;justify-content:center}
   .bot-nav-item svg{width:22px;height:22px}
   .bot-nav-item span{display:none}
@@ -518,6 +518,7 @@ select{color-scheme:dark}
   .bot-nav-center{width:48px;height:48px;border-radius:50%;border:2px solid var(--acc1);background:rgba(30,201,138,.08);display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;transition:background .15s}
   .bot-nav-center svg{width:26px;height:26px}
   .bot-nav-center.on{background:rgba(30,201,138,.2)}
+  .over-nav{bottom:calc(58px + env(safe-area-inset-bottom))!important;}
 }
 </style></head><body>
 <div class="wrap">
@@ -543,7 +544,7 @@ select{color-scheme:dark}
 <div class="toast" id="toast"></div>
 
 <!-- BUSCAR / AVALIAR -->
-<div class="over" id="searchOver"><div class="oh"><h2>Buscar &amp; avaliar</h2><button class="icon-btn" id="searchClose">✕</button></div>
+<div class="over over-nav" id="searchOver"><div class="oh"><h2>Buscar &amp; avaliar</h2><button class="icon-btn" id="searchClose">✕</button></div>
   <input class="tin" id="searchIn" type="text" placeholder="nome do filme…" autocomplete="off"/>
   <div class="ob" id="searchRes"><div class="note">Digite o nome do filme. Toque no resultado para abrir a ficha e registrar nota + data.</div></div>
 </div>
@@ -620,7 +621,7 @@ select{color-scheme:dark}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <!-- RECOMENDAÇÕES (overlay) -->
-<div class="over" id="recoOver" style="justify-content:flex-start">
+<div class="over over-nav" id="recoOver" style="justify-content:flex-start">
   <div class="oh"><h2>Recomendar agora</h2><button class="icon-btn" id="recoOverClose">✕</button></div>
   <div class="ob" style="padding-bottom:24px">
     <div class="bio-reco-ctx" id="recoCtxLine" style="display:block;margin-bottom:8px"></div>
@@ -635,7 +636,7 @@ select{color-scheme:dark}
 <!-- BOTTOM NAV -->
 <nav class="bot-nav" id="botNav">
   <button class="bot-nav-item" id="bnTabs">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 9h20M2 15h20M7 4v5M17 4v5M7 15v5M17 15v5"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="4" width="6" height="16" rx="1.5"/><rect x="9" y="4" width="6" height="16" rx="1.5"/><rect x="16.5" y="4" width="6" height="16" rx="1.5"/></svg>
     <span>Páginas</span>
   </button>
   <button class="bot-nav-item" id="bnSearch">
@@ -646,7 +647,7 @@ select{color-scheme:dark}
     <svg viewBox="0 0 48 48" fill="none" style="width:26px;height:26px" aria-hidden="true"><path d="M25.5 24.0 L25.68 24.37 L25.76 24.81 L25.71 25.3 L25.53 25.8 L25.21 26.28 L24.75 26.7 L24.17 27.01 L23.48 27.19 L22.73 27.21 L21.95 27.04 L21.19 26.68 L20.49 26.12 L19.91 25.39 L19.49 24.51 L19.28 23.5 L19.29 22.43 L19.55 21.35 L20.06 20.3 L20.83 19.37 L21.81 18.59 L22.99 18.03 L24.31 17.74 L25.7 17.74 L27.1 18.06 L28.45 18.7 L29.65 19.65 L30.65 20.87 L31.38 22.32 L31.78 23.95 L31.83 25.66 L31.48 27.39 L30.75 29.05 L29.65 30.55 L28.22 31.8 L26.5 32.73 L24.58 33.28 L22.54 33.4 L20.48 33.07 L18.49 32.29 L16.69 31.06 L15.16 29.44 L13.99 27.49 L13.26 25.28 L13.02 22.92 L13.3 20.52 L14.11 18.2 L15.43 16.06 L17.21 14.23 L19.38 12.8 L21.86 11.85 L24.53 11.46 L27.26 11.66 L29.93 12.45 L32.41 13.83 L34.57 15.74 L36.29 18.11 L37.48 20.84 L38.07 23.8 L37.99 26.87 L37.25 29.9 L35.85 32.73 L33.84 35.24 L31.3 37.28 L28.34 38.74 L25.09 39.55 L21.69 39.63 L18.31 38.97 L15.11 37.58 L12.25 35.51 L9.87 32.83 L8.09 29.66 L7.03 26.14 L6.75 22.43 L7.29 18.7 L8.63 15.13 L10.73 11.89 L13.52 9.14 L16.87 7.04 L20.64 5.69 L24.66 5.18 L28.74 5.55 L32.69 6.8 L36.31 8.9 L39.44 11.76 L41.9 15.27 L43.57 19.27 L44.35 23.57 L44.17 27.99 L43.05 32.32 L40.99 36.34" stroke="var(--acc1)" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M25.5 24.0 L25.68 23.63 L25.76 23.19 L25.71 22.7 L25.53 22.2 L25.21 21.72 L24.75 21.3 L24.17 20.99 L23.48 20.81 L22.73 20.79 L21.95 20.96 L21.19 21.32 L20.49 21.88 L19.91 22.61 L19.49 23.49 L19.28 24.5 L19.29 25.57 L19.55 26.65 L20.06 27.7 L20.83 28.63 L21.81 29.41 L22.99 29.97 L24.31 30.26 L25.7 30.26 L27.1 29.94 L28.45 29.3 L29.65 28.35 L30.65 27.13 L31.38 25.68 L31.78 24.05 L31.83 22.34 L31.48 20.61 L30.75 18.95 L29.65 17.45 L28.22 16.2 L26.5 15.27 L24.58 14.72 L22.54 14.6 L20.48 14.93 L18.49 15.71 L16.69 16.94 L15.16 18.56 L13.99 20.51 L13.26 22.72 L13.02 25.08 L13.3 27.48 L14.11 29.8 L15.43 31.94 L17.21 33.77 L19.38 35.2 L21.86 36.15 L24.53 36.54 L27.26 36.34 L29.93 35.55 L32.41 34.17 L34.57 32.26 L36.29 29.89 L37.48 27.16 L38.07 24.2 L37.99 21.13 L37.25 18.1 L35.85 15.27 L33.84 12.76 L31.3 10.72 L28.34 9.26 L25.09 8.45 L21.69 8.37 L18.31 9.03 L15.11 10.42 L12.25 12.49 L9.87 15.17 L8.09 18.34 L7.03 21.86 L6.75 25.57 L7.29 29.3 L8.63 32.87 L10.73 36.11 L13.52 38.86 L16.87 40.96 L20.64 42.31 L24.66 42.82 L28.74 42.45 L32.69 41.2 L36.31 39.1 L39.44 36.24 L41.9 32.73 L43.57 28.73 L44.35 24.43 L44.17 20.01 L43.05 15.68 L40.99 11.66" stroke="var(--acc2)" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="24" cy="24" r="2.3" fill="var(--ink)" opacity="0.95"/></svg>
   </button>
   <button class="bot-nav-item" id="bnReco">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="13" rx="2"/><polyline points="2 8 6 3 18 3 22 8"/><line x1="7" y1="3" x2="9" y2="8"/><line x1="12" y1="3" x2="12" y2="8"/><line x1="17" y1="3" x2="15" y2="8"/><line x1="2" y1="14" x2="22" y2="14"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10.5 21h3"/><path d="M12 2C7.6 2 4 5.6 4 10c0 2.8 1.4 5.2 3.5 6.7L8 18h8l.5-1.3C18.6 15.2 20 12.8 20 10c0-4.4-3.6-8-8-8z"/></svg>
     <span>Recomendar agora</span>
   </button>
   <button class="bot-nav-item" id="bnBio">
@@ -856,7 +857,7 @@ const ICON_EYE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strok
 const ICON_SPARK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-3px;margin-right:5px"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 4v3M17 5.5h3"/></svg>';
 let KEY=null, cache={}, db=null, tab='stats', busy=false, PEOPLE=null;
 const _filmoCache={};
-let pSort='rt', pDec=null, rScope='all', rDec=null, rYr=null, gSort='count', expanded={};
+let pSort='rt', pDec=null, pYr=null, rScope='all', rDec=null, rYr=null, gSort='count', expanded={};
 let fView='list', rView='list', gView='list';  // 'list' or 'country'
 let fMode='all', fLang='', fTag='';  // filtros da aba Filmes
 let rankSort='count';                          // ranking: 'count' | 'avg'
@@ -1115,6 +1116,7 @@ function renderFilms(){
   let list=base.filter(r=>(!fLang||r.lang===fLang)&&(!fTag||(r.tags&&r.tags.includes(fTag)))).map(r=>({t:r.t,y:r.y,r:r.r,rec:r}));
   if(pDec==='unrated')list=list.filter(x=>x.r==null);
   else if(pDec!=null)list=list.filter(x=>Math.floor(x.y/10)*10===pDec);
+  if(pYr!=null)list=list.filter(x=>x.y===pYr);
   const tagCounts={};base.forEach(r=>(r.tags||[]).forEach(tg=>tagCounts[tg]=(tagCounts[tg]||0)+1));
   const tagOpts=Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,40);
   if(pSort==='rt')list.sort((a,b)=>(b.r||0)-(a.r||0)||b.y-a.y);
@@ -1127,12 +1129,14 @@ function renderFilms(){
   const wlCount=watchlist().length,rwCount=films().filter(r=>(r.rw||0)>=1).length;
   const modes=[['watchlist',`${ICON_EYE} Quero ver`,'chip-feat',wlCount],['rewatch',`<svg style="width:13px;height:13px;flex:none;margin-right:2px;vertical-align:-2px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Revistos`,'chip-feat',rwCount]];
 
-  const langSel=langOpts.length?`<select id="fLang"><option value="">Idioma: todos</option>${langOpts.map(([c,n])=>`<option value="${c}" ${fLang===c?'selected':''}>${LANGS[c]||c.toUpperCase()} · ${n}</option>`).join('')}</select>`:'';
-  const tagSel=tagOpts.length?`<select id="fTag"><option value="">Tags: todas (${fmt(Object.keys(tagCounts).length)})</option>${tagOpts.map(([t,n])=>`<option value="${t.replace(/"/g,'&quot;')}" ${fTag===t?'selected':''}>${t} · ${n}</option>`).join('')}</select>`:'';
-  const ctrl=`<div class="controls"><div class="seg" id="pSort">${[['rt','Nota'],['yr','Ano'],['az','A–Z']].map(([s,l])=>`<button data-s="${s}" class="${pSort===s?'on':''}">${l}</button>`).join('')}</div><button class="chip" id="fCPais">${GLOBE_SVG} País</button></div>`
+  const langSel=langOpts.length?`<select id="fLang"><option value="">Idioma: todos</option>${langOpts.map(([c,n])=>`<option value="${c}" ${fLang===c?'selected':''}>${LANGS[c]||c.toUpperCase()} · ${n}</option>`).join('')}</select>`:''
+  const tagSel=tagOpts.length?`<select id="fTag"><option value="">Tags: todas (${fmt(Object.keys(tagCounts).length)})</option>${tagOpts.map(([t,n])=>`<option value="${t.replace(/"/g,'&quot;')}" ${fTag===t?'selected':''}>${t} · ${n}</option>`).join('')}</select>`:''
+  const yearOpts=[...new Set(base.map(r=>r.y))].filter(Boolean).sort((a,b)=>b-a);
+  const yearSel=pSort==='yr'&&yearOpts.length?`<select id="pYr"><option value="">Todos os anos</option>${yearOpts.map(y=>`<option value="${y}" ${pYr===y?'selected':''}>${y}</option>`).join('')}</select>`:'';
+  const ctrl=`<div class="controls"><div class="seg" id="pSort">${[['rt','Nota'],['yr','Ano'],['az','A–Z']].map(([s,l])=>`<button data-s="${s}" class="${pSort===s?'on':''}">` +l+`</button>`).join('')}</div><button class="chip" id="fCPais">${GLOBE_SVG} País</button></div>`
     +`<div class="chips" id="fMode" style="margin:0 0 9px">${modes.map(([m,l,cls,cnt])=>`<button class="chip ${cls} ${fMode===m?'on':''}" data-m="${m}">${l}${cnt!=null?` <span class="feat-n">${fmt(cnt)}</span>`:''}</button>`).join('')}</div>`
-    +(decs.length?`<div class="chips" id="pDec" style="margin:0 0 9px"><button class="chip ${pDec==null?'on':''}" data-d="all">Todas</button>${decs.map(d=>`<button class="chip ${pDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}<button class="chip ${pDec==='unrated'?'on':''}" data-d="unrated">Sem nota</button></div>`:'')
-    +`<div class="controls" style="margin:0 0 11px">${langSel}${tagSel}</div>`;
+    +(decs.length?`<div class="chips" id="pDec" style="margin:0 0 9px"><button class="chip ${pDec==null&&pYr==null?'on':''}" data-d="all">Todas</button>${decs.map(d=>`<button class="chip ${pDec===d?'on':''}" data-d="${d}">${d}s</button>`).join('')}<button class="chip ${pDec==='unrated'?'on':''}" data-d="unrated">Sem nota</button></div>`:'')
+    +`<div class="controls" style="margin:0 0 11px">${langSel}${tagSel}${yearSel}</div>`;
   let body;
   if(!list.length){
     body=fMode==='watchlist'
@@ -1144,13 +1148,14 @@ function renderFilms(){
       const rwb=(r&&(r.rw||0)>=1)?`<span class="po-rw" title="revisto ${r.rw}×">↺${r.rw>1?r.rw:''}</span>`:'';
       // vseen removed
       return `<div class="po" data-k="${(x.t+'|'+x.y).replace(/"/g,'&quot;')}">${po}${badge}${rwb}</div>`;}).join('');
-    body=`<div class="grid">${cells}</div><div class="note">${fmt(list.length)} ${modeNote}${pDec!=null&&pDec!=='unrated'?' nos '+pDec+'s':pDec==='unrated'?' · sem nota':''}${fLang?' · '+(LANGS[fLang]||fLang.toUpperCase()):''}. Toque num pôster para detalhes.</div>`;
+    body=`<div class="grid">${cells}</div><div class="note">${fmt(list.length)} ${modeNote}${pYr!=null?' · '+pYr:pDec!=null&&pDec!=='unrated'?' nos '+pDec+'s':pDec==='unrated'?' · sem nota':''}${fLang?' · '+(LANGS[fLang]||fLang.toUpperCase()):''}. Toque num pôster para detalhes.</div>`;
   }
   $('#view').innerHTML=ctrl+body;
-  $('#pSort').onclick=e=>{const b=e.target.closest('button');if(b){pSort=b.dataset.s;renderFilms();}};
+  $('#pSort').onclick=e=>{const b=e.target.closest('button');if(b){if(b.dataset.s!=='yr')pYr=null;pSort=b.dataset.s;renderFilms();}};
   const pd=$('#pDec');if(pd)pd.onclick=e=>{const b=e.target.closest('button');if(b){pDec=b.dataset.d==='all'?null:b.dataset.d==='unrated'?'unrated':+b.dataset.d;renderFilms();}};
   $('#fMode').onclick=e=>{const b=e.target.closest('button');if(b){fMode=fMode===b.dataset.m?'all':b.dataset.m;pDec=null;fTag='';renderFilms();}};
 
+  const pys=$('#pYr');if(pys)pys.onchange=e=>{pYr=e.target.value?+e.target.value:null;renderFilms();};
   const fl2=$('#fLang');if(fl2)fl2.onchange=e=>{fLang=e.target.value;renderFilms();};
   const ftg=$('#fTag');if(ftg)ftg.onchange=e=>{fTag=e.target.value;renderFilms();};
   const fcp=$('#fCPais');if(fcp)fcp.onclick=()=>{fView='country';renderFilms();};
@@ -1634,7 +1639,7 @@ function openRecoModal(){
   }
   $('#recoOver').classList.add('show');
 }
-$('#recoOverClose').onclick=()=>{stopSpiralAnim();$('#recoOver').classList.remove('show');};
+$('#recoOverClose').onclick=()=>{stopSpiralAnim();$('#recoOver').classList.remove('show');$('#bnReco').classList.remove('on');_updateBotNav();};
 
 /* ── bottom nav ── */
 function _updateBotNav(){
@@ -1652,8 +1657,8 @@ function _setTab(t){$$('#tabs button').forEach(x=>x.classList.toggle('on',x.data
 $('#tabs').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b)return;_setTab(b.dataset.t);};
 $('#bnBio').onclick=()=>{document.body.classList.remove('tabs-mode');_setTab('bio');};
 $('#bnStats').onclick=()=>{document.body.classList.remove('tabs-mode');_setTab('stats');};
-$('#bnSearch').onclick=()=>{document.body.classList.remove('tabs-mode');$('#searchOver').classList.add('show');setTimeout(()=>$('#searchIn').focus(),100);};
-$('#bnReco').onclick=()=>{document.body.classList.remove('tabs-mode');openRecoModal();};
+$('#bnSearch').onclick=()=>{document.body.classList.remove('tabs-mode');$('#searchOver').classList.add('show');$('#bnSearch').classList.add('on');setTimeout(()=>$('#searchIn').focus(),100);};
+$('#bnReco').onclick=()=>{document.body.classList.remove('tabs-mode');openRecoModal();$('#bnReco').classList.add('on');};
 $('#bnTabs').onclick=()=>{
   const contentTabs=['films','dir','actor','actress'];
   document.body.classList.add('tabs-mode');
@@ -2976,7 +2981,7 @@ $('#searchRes').addEventListener('click',async e=>{
   await openFilm(k);
 });
 $('#search').onclick=()=>{$('#searchOver').classList.add('show');setTimeout(()=>$('#searchIn').focus(),100);};
-$('#searchClose').onclick=()=>{$('#searchOver').classList.remove('show');render();};
+$('#searchClose').onclick=()=>{$('#searchOver').classList.remove('show');$('#bnSearch').classList.remove('on');_updateBotNav();render();};
 $('#searchIn').oninput=e=>{clearTimeout(searchTimer);const q=e.target.value;searchTimer=setTimeout(()=>doSearch(q),350);};
 
 /* ---------- upload export ---------- */
