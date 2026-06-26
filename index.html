@@ -544,14 +544,14 @@ select{color-scheme:dark}
   .over-nav{bottom:calc(58px + env(safe-area-inset-bottom))!important;}
 }
 
-/* ── CURADORIA ── */
+/* ── REPERTÓRIO ── */
 .cura-tv{background:none;border:none;border-bottom:2px solid transparent;color:var(--mut);padding:10px 12px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:color .15s}
 .cura-tv.on{color:var(--ink);border-bottom-color:var(--acc1)}
 .cura-stat-card{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 4px;text-align:center}
 .cura-stat-n{font-size:20px;font-weight:800;color:var(--acc1);line-height:1}
 .cura-stat-l{font-size:9px;color:var(--dim);margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
-.cura-reco-hi{grid-column:1/-1;background:linear-gradient(135deg,#0d1a0d,#000814);border:1px solid #1ec98a40;border-radius:12px;padding:12px;display:flex;gap:12px;cursor:pointer}
-.cura-reco-hi-poster{width:68px;height:102px;border-radius:7px;flex-shrink:0;background:var(--p2);display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--dim);overflow:hidden}
+.cura-reco-hi{background:linear-gradient(135deg,#0d1a0d,#000814);border:1px solid #1ec98a40;border-radius:12px;padding:12px;display:flex;gap:12px;cursor:pointer;grid-column:1/-1}
+.cura-reco-hi-poster{width:68px;height:102px;border-radius:7px;flex-shrink:0;background:var(--p2);display:flex;align-items:center;justify-content:center;color:var(--dim);overflow:hidden}
 .cura-reco-hi-poster img{width:100%;height:100%;object-fit:cover}
 .cura-reco-hi-info{flex:1;min-width:0}
 .cura-list-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer}
@@ -562,13 +562,16 @@ select{color-scheme:dark}
 .cura-list-info{padding:8px 10px}
 .cura-list-name{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cura-list-sub{font-size:10.5px;color:var(--dim);margin-bottom:4px}
-.cura-list-prov{font-size:10px;color:var(--acc1);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cura-list-prov{font-size:10px;color:var(--acc1);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:3px}
 .cura-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-.cura-add-card{background:var(--panel);border:1px dashed var(--line);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:110px;cursor:pointer;gap:3px;color:var(--dim);font-size:13px;font-weight:700}
-.cura-save-btn{background:none;border:1px solid var(--line);color:var(--mut);border-radius:6px;padding:3px 9px;font-size:10.5px;font-weight:700;cursor:pointer;display:block;width:100%;margin-top:5px;text-align:left;transition:all .15s}
-.cura-save-btn.saved{border-color:var(--acc1);color:var(--acc1);background:#1ec98a18}
-.cura-ic-btn{font-size:20px;background:var(--p2);border:1px solid var(--line);border-radius:8px;width:38px;height:38px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .15s}
+.cura-section-lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700;margin:14px 0 8px;grid-column:1/-1}
+.cura-add-card{background:var(--panel);border:1px dashed var(--line);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:110px;cursor:pointer;gap:4px;color:var(--acc1)}
+.cura-save-btn{background:none;border:1px solid var(--line);color:var(--mut);border-radius:6px;padding:4px 9px;font-size:10.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;margin-top:6px;transition:all .15s}
+.cura-save-btn:hover,.cura-save-btn.saved{border-color:var(--acc1);color:var(--acc1)}
+.cura-ic-btn{background:var(--p2);border:1px solid var(--line);border-radius:8px;width:38px;height:38px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--mut);transition:all .15s}
+.cura-ic-btn.sel{border-color:var(--acc1);background:#1ec98a18;color:var(--acc1)}
 .cura-pick-item{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;border-bottom:1px solid var(--line);padding:12px 0;cursor:pointer;text-align:left}
+.cura-sf{flex-shrink:0;cursor:pointer;position:relative}
 </style>
 </head><body>
 <div class="wrap">
@@ -673,11 +676,11 @@ select{color-scheme:dark}
 <!-- RECOMENDAÇÕES (overlay) -->
 <div class="over over-nav" id="recoOver" style="justify-content:flex-start;padding:0;gap:0">
   <div class="oh" style="padding:calc(env(safe-area-inset-top) + 12px) 14px 0;margin-bottom:0;flex-shrink:0">
-    <h2 style="font-size:18px;flex:1;margin:0">Curadoria</h2>
+    <h2 style="font-size:18px;flex:1;margin:0">Repertório</h2>
   </div>
   <div id="curaStats" style="display:flex;gap:8px;padding:10px 14px 0;flex-shrink:0"></div>
   <div id="curaToggle" style="display:flex;border-bottom:1px solid var(--line);padding:0 14px;overflow-x:auto;flex-shrink:0;scrollbar-width:none">
-    <button class="cura-tv on" data-cv="all">Todas as listas</button>
+    <button class="cura-tv on" data-cv="all">Quero ver</button>
     <button class="cura-tv" data-cv="reco">Recomendações</button>
     <button class="cura-tv" data-cv="stream">Streaming</button>
   </div>
@@ -708,7 +711,7 @@ select{color-scheme:dark}
   </button>
   <button class="bot-nav-item" id="bnReco">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10.5 21h3"/><path d="M12 2C7.6 2 4 5.6 4 10c0 2.8 1.4 5.2 3.5 6.7L8 18h8l.5-1.3C18.6 15.2 20 12.8 20 10c0-4.4-3.6-8-8-8z"/></svg>
-    <span>Curadoria</span>
+    <span>Repertório</span>
   </button>
   <button class="bot-nav-item" id="bnBio">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
@@ -1679,309 +1682,235 @@ function renderBio(){
   $$('.blrow').forEach(el=>el.onclick=()=>openEntity(ents[+el.dataset.i]));
 }
 
-// ── CURADORIA: listas e streaming ───────────────────────────────────────────
+// ── REPERTÓRIO ─────────────────────────────────────────────────────────────
+const CURA_ICONS={
+  list:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4.5" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg>',
+  film:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 4v16M17 4v16M2 9h5M2 15h5M17 9h5M17 15h5"/></svg>',
+  horror:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M12 3a9 9 0 1 0 0 18A9 9 0 0 0 12 3z"/><circle cx="9" cy="10.5" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="10.5" r="1.5" fill="currentColor" stroke="none"/><path d="M9 15s1 2 3 2 3-2 3-2"/></svg>',
+  drama:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M21 17c0 2-4 4-9 4S3 19 3 17V7l9-4 9 4v10z"/><path d="M12 3v18M3 7l9 4 9-4"/></svg>',
+  scifi:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="12" cy="12" r="4"/><ellipse cx="12" cy="12" rx="10" ry="4.5"/><line x1="12" y1="2" x2="12" y2="7.5"/><line x1="12" y1="16.5" x2="12" y2="22"/></svg>',
+  crime:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+  doc:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>',
+  globe:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>',
+  star:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>',
+  moon:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
+  heart:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+  eye:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
+  bookmark:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>',
+  comedy:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9.5" x2="9.02" y2="9.5" stroke-width="3"/><line x1="15" y1="9.5" x2="15.02" y2="9.5" stroke-width="3"/></svg>',
+  romance: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M12 22c0 0-8-4.5-8-11.8A5 5 0 0 1 12 6.1 5 5 0 0 1 20 10.2C20 17.5 12 22 12 22z"/></svg>',
+  plus:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="20" height="20"><line x1="12" y1="4" x2="12" y2="20"/><line x1="4" y1="12" x2="20" y2="12"/></svg>',
+  settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+  check:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="20,6 9,17 4,12"/></svg>',
+  circle:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="14" height="14"><circle cx="12" cy="12" r="9"/></svg>',
+};
+const ICON_KEYS_PICKER=['film','horror','drama','scifi','crime','comedy','romance','doc','globe','star','moon','heart','eye','bookmark','list'];
+const SMART_LISTS_DEF=[
+  {id:'wl_terror', name:'Terror',        icon:'horror',  gids:[27]},
+  {id:'wl_drama',  name:'Drama',         icon:'drama',   gids:[18,36,9648]},
+  {id:'wl_scifi',  name:'Sci-fi',        icon:'scifi',   gids:[878,14]},
+  {id:'wl_crime',  name:'Crime & Noir',  icon:'crime',   gids:[80,53]},
+  {id:'wl_comedy', name:'Comédia',       icon:'comedy',  gids:[35]},
+  {id:'wl_doc',    name:'Documentário',  icon:'doc',     gids:[99]},
+  {id:'wl_romance',name:'Romance',       icon:'romance', gids:[10749]},
+  {id:'wl_anim',   name:'Animação',      icon:'star',    gids:[16]},
+  {id:'wl_brazil', name:'Cinema BR',     icon:'globe',   lang:'pt'},
+  {id:'wl_outros', name:'Outros',        icon:'bookmark',catch:true},
+];
+const BR_PROVIDERS=[
+  {name:'Netflix'},{name:'Prime Video'},{name:'Globoplay'},{name:'Disney+'},
+  {name:'Apple TV+'},{name:'Max'},{name:'Mubi'},{name:'Paramount+'},
+  {name:'Claro Video'},{name:'Star+'},{name:'Telecine'},{name:'Crunchyroll'},
+];
 const CS_LISTS_KEY='cs_lists';
 function _getLists(){try{return JSON.parse(localStorage.getItem(CS_LISTS_KEY)||'[]');}catch(e){return[];}}
-function _saveLists(lists){try{localStorage.setItem(CS_LISTS_KEY,JSON.stringify(lists));}catch(e){}}
-
+function _saveLists(l){try{localStorage.setItem(CS_LISTS_KEY,JSON.stringify(l));}catch(e){}}
+function _getMyProviders(){try{return JSON.parse(localStorage.getItem('cs_streaming')||'[]');}catch(e){return[];}}
+function _saveMyProviders(ps){try{localStorage.setItem('cs_streaming',JSON.stringify(ps));}catch(e){}}
+function _icon(k,sz){return (CURA_ICONS[k]||CURA_ICONS.list).replace(/width="20" height="20"/g,`width="${sz}" height="${sz}"`).replace(/width="16" height="16"/g,`width="${sz}" height="${sz}"`).replace(/width="14" height="14"/g,`width="${sz}" height="${sz}"`);}
+function _smartFilms(sl){
+  const wl=films().filter(r=>r.wl);
+  if(sl.lang)return wl.filter(r=>r.lang===sl.lang);
+  if(sl.catch){
+    const taken=new Set();
+    SMART_LISTS_DEF.filter(x=>!x.catch&&!x.lang).forEach(x=>_smartFilms(x).forEach(r=>taken.add(r)));
+    return wl.filter(r=>!taken.has(r));
+  }
+  return wl.filter(r=>(r.gids||[]).some(g=>sl.gids.includes(g)));
+}
 function _renderCuraStats(){
   const el=$('#curaStats');if(!el)return;
   const lists=_getLists();
-  const total=lists.reduce((a,l)=>a+(l.films||[]).length,0);
+  const wlCount=films().filter(r=>r.wl).length;
   el.innerHTML=
-    `<div class="cura-stat-card"><div class="cura-stat-n">${total}</div><div class="cura-stat-l">filmes salvos</div></div>`+
+    `<div class="cura-stat-card"><div class="cura-stat-n">${wlCount}</div><div class="cura-stat-l">quero ver</div></div>`+
     `<div class="cura-stat-card"><div class="cura-stat-n">${lists.length}</div><div class="cura-stat-l">listas</div></div>`+
-    `<div class="cura-stat-card" id="curaStatStream"><div class="cura-stat-n">·</div><div class="cura-stat-l">no streaming</div></div>`;
-  // async: count streaming films
-  const allKeys=[...new Set(lists.flatMap(l=>l.films||[]))];
-  const tmdbIds=allKeys.map(k=>cache[k]&&cache[k].id).filter(Boolean);
-  if(!tmdbIds.length)return;
-  Promise.all(tmdbIds.slice(0,30).map(id=>watchProviders(id).catch(()=>null))).then(()=>{
-    const n=tmdbIds.filter(id=>{const pv=_provCache[id];return pv&&pv.names&&pv.names.length;}).length;
-    const el2=$('#curaStatStream');if(el2)el2.innerHTML=`<div class="cura-stat-n">${n}</div><div class="cura-stat-l">no streaming</div>`;
+    `<div class="cura-stat-card" id="curaStatStream"><div class="cura-stat-n">·</div><div class="cura-stat-l">streaming</div></div>`;
+  const allIds=[...new Set([...Object.keys(cache).filter(k=>cache[k]&&cache[k].wl),...lists.flatMap(l=>l.films||[])].map(k=>cache[k]&&cache[k].id).filter(Boolean))];
+  if(!allIds.length)return;
+  Promise.all(allIds.slice(0,40).map(id=>watchProviders(id).catch(()=>null))).then(()=>{
+    const n=allIds.filter(id=>{const pv=_provCache[id];return pv&&pv.names&&pv.names.length;}).length;
+    const e2=$('#curaStatStream');if(e2)e2.innerHTML=`<div class="cura-stat-n">${n}</div><div class="cura-stat-l">streaming</div>`;
   });
 }
-
 function _renderCuraAll(){
   const el=$('#curaViewAll');if(!el)return;
   const lists=_getLists();
-
-  // Last reco highlight (full-width card)
+  // Smart lists
+  const smartCards=SMART_LISTS_DEF.map(sl=>{
+    const sf=_smartFilms(sl);if(!sf.length)return '';
+    const strips=sf.slice(0,3).map(r=>`<div>${r.po?`<img src="${IMG}/w92${r.po}" loading="lazy"/>`:''}` +'</div>');
+    while(strips.length<3)strips.push('<div></div>');
+    const ws=sf.filter(r=>r.id&&(_provCache[r.id]||{}).names&&_provCache[r.id].names.length);
+    const pTxt=ws.length?`<div class="cura-list-prov">${_icon('eye',11)} ${ws.length} no streaming</div>`:'';
+    return `<div class="cura-list-card" data-listid="${sl.id}"><div class="cura-list-strip">${strips.join('')}</div><div class="cura-list-info"><div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="color:var(--acc1)">${_icon(sl.icon,17)}</span><span class="cura-list-name" style="margin:0">${sl.name}</span></div><div class="cura-list-sub">${sf.length} filme${sf.length!==1?'s':''}</div>${pTxt}</div></div>`;
+  }).filter(Boolean).join('');
+  // Last reco
   let hiHtml='';
   if(_bioRecoMovies&&_bioRecoMovies.length){
-    const m=_bioRecoMovies[0];
-    const yr=(m.release_date||'').slice(0,4);
+    const m=_bioRecoMovies[0];const yr=(m.release_date||'').slice(0,4);
     const pv=_provCache[m.id];
-    const pvTxt=pv&&pv.names&&pv.names.length?`<div style="font-size:10px;color:var(--acc1);font-weight:600;margin-top:4px">📡 ${pv.names.slice(0,2).join(' · ')}</div>`:'';
-    const poster=m.poster_path
-      ?`<div class="cura-reco-hi-poster"><img src="${IMG}/w92${m.poster_path}" loading="lazy"/></div>`
-      :`<div class="cura-reco-hi-poster">${initials(m.original_title||m.title||'?')}</div>`;
-    const titleEsc=(m.original_title||m.title||'').replace(/"/g,'&quot;');
-    hiHtml=`<div class="cura-reco-hi" id="curaRecoHi" data-ckey="${key(m.title,yr)}">
-      ${poster}
-      <div class="cura-reco-hi-info">
-        <div style="font-size:10px;color:var(--acc1);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Última recomendação</div>
-        <div style="font-weight:800;font-size:15px;color:var(--ink);line-height:1.2;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.original_title||m.title}</div>
-        <div style="font-size:11.5px;color:var(--mut)">${yr}</div>
-        ${pvTxt}
-        <button class="cura-save-btn" id="curaRecoSave" data-ckey="${key(m.title,yr)}" data-tmdbid="${m.id||''}">📋 Salvar em lista</button>
-      </div>
-    </div>`;
+    const pvT=pv&&pv.names&&pv.names.length?`<div style="font-size:10px;color:var(--acc1);font-weight:600;margin-top:4px;display:flex;align-items:center;gap:3px">${_icon('eye',11)} ${pv.names.slice(0,2).join(' · ')}</div>`:'';
+    const poster=m.poster_path?`<div class="cura-reco-hi-poster"><img src="${IMG}/w92${m.poster_path}" loading="lazy"/></div>`:`<div class="cura-reco-hi-poster">${_icon('film',26)}</div>`;
+    hiHtml=`<div class="cura-reco-hi" id="curaRecoHi" data-ckey="${key(m.title,yr)}">${poster}<div class="cura-reco-hi-info"><div style="font-size:10px;color:var(--acc1);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;gap:4px">${_icon('star',11)} Última recomendação</div><div style="font-weight:800;font-size:15px;color:var(--ink);line-height:1.2;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.original_title||m.title}</div><div style="font-size:11.5px;color:var(--mut)">${yr}</div>${pvT}<button class="cura-save-btn" id="curaRecoSave" style="margin-top:6px">${_icon('bookmark',13)} Salvar em lista</button></div></div>`;
   }
-
-  // List cards
-  const listCards=lists.map(l=>{
-    const filmRecs=(l.films||[]).map(k=>cache[k]).filter(Boolean);
-    const stripDivs=filmRecs.slice(0,3).map(r=>{
-      const img=r.po?`<img src="${IMG}/w92${r.po}" loading="lazy"/>`:'<span style="font-size:16px;color:var(--dim)">🎬</span>';
-      return `<div>${img}</div>`;
-    });
-    while(stripDivs.length<3)stripDivs.push('<div><span style="color:var(--line);font-size:10px">·</span></div>');
-    const withStream=filmRecs.filter(r=>r.id&&_provCache[r.id]&&_provCache[r.id]!==null&&(_provCache[r.id].names||[]).length);
-    const provNames=[...new Set(withStream.flatMap(r=>(_provCache[r.id].names||[]).slice(0,1)))].slice(0,2);
-    const provTxt=provNames.length?`<div class="cura-list-prov">📡 ${provNames.join(' · ')}</div>`:'';
-    return `<div class="cura-list-card" data-listid="${l.id}">
-      <div class="cura-list-strip">${stripDivs.join('')}</div>
-      <div class="cura-list-info">
-        <div class="cura-list-name">${l.icon||'📋'} ${l.name}</div>
-        <div class="cura-list-sub">${(l.films||[]).length} filme${(l.films||[]).length!==1?'s':''}</div>
-        ${provTxt}
-      </div>
-    </div>`;
+  // Custom lists
+  const customCards=lists.map(l=>{
+    const fr=(l.films||[]).map(k=>cache[k]).filter(Boolean);
+    const strips=fr.slice(0,3).map(r=>`<div>${r.po?`<img src="${IMG}/w92${r.po}" loading="lazy"/>`:''}` +'</div>');
+    while(strips.length<3)strips.push('<div></div>');
+    const ws=fr.filter(r=>r.id&&(_provCache[r.id]||{}).names&&_provCache[r.id].names.length);
+    const pTxt=ws.length?`<div class="cura-list-prov">${_icon('eye',11)} ${ws.length} no streaming</div>`:'';
+    const ic=_icon(l.icon||'list',17);
+    return `<div class="cura-list-card" data-listid="${l.id}"><div class="cura-list-strip">${strips.join('')}</div><div class="cura-list-info"><div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="color:var(--mut)">${ic}</span><span class="cura-list-name" style="margin:0">${l.name}</span></div><div class="cura-list-sub">${(l.films||[]).length} filme${(l.films||[]).length!==1?'s':''}</div>${pTxt}</div></div>`;
   }).join('');
-
-  const addCard='<div class="cura-add-card" id="curaAddList"><div style="font-size:24px;opacity:.35">+</div><div>Nova lista</div></div>';
-
-  el.innerHTML=`<div class="cura-grid">${hiHtml}${listCards}${addCard}</div>`;
-
-  // Wire list cards
-  $$('#curaViewAll .cura-list-card').forEach(card=>{
-    card.onclick=()=>_curaOpenList(card.dataset.listid);
-  });
-  const addBtn=$('#curaAddList');if(addBtn)addBtn.onclick=()=>_curaCreateList(null);
+  const addCard=`<div class="cura-add-card" id="curaAddList">${_icon('plus',22)}<div style="font-size:12px;margin-top:2px">Nova lista</div></div>`;
+  const lbl=t=>`<div class="cura-section-lbl">${t}</div>`;
+  el.innerHTML=`<div class="cura-grid">${hiHtml}${smartCards.length?lbl('Quero ver · por estilo'):''}${smartCards}${lists.length?lbl('Minhas listas'):''}${customCards}${addCard}</div>`;
+  $$('#curaViewAll .cura-list-card').forEach(c=>c.onclick=()=>_curaOpenList(c.dataset.listid));
+  const ab=$('#curaAddList');if(ab)ab.onclick=()=>_curaCreateList(null);
   const hi=$('#curaRecoHi');
-  if(hi){
-    hi.onclick=e=>{
-      if(e.target.closest('#curaRecoSave'))return;
-      const k=hi.dataset.ckey;if(!k||!cache[k])return;
-      openFilm(k);
-    };
-  }
-  const saveBtn=$('#curaRecoSave');
-  if(saveBtn){
-    saveBtn.onclick=e=>{
-      e.stopPropagation();
-      // Ensure film in cache (may be a stub)
-      if(_bioRecoMovies&&_bioRecoMovies.length){
-        const m=_bioRecoMovies[0];
-        const yr=(m.release_date||'').slice(0,4);
-        const k=key(m.title,yr);
-        if(!cache[k])cache[k]={t:m.title,y:+yr||0,id:m.id,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null,ti:m.title,ot:m.original_title||m.title,ye:yr,src:'reco',_stub:1};
-        _curaPickList(k);
-      }
-    };
-  }
+  if(hi)hi.onclick=e=>{if(e.target.closest('#curaRecoSave'))return;const k=hi.dataset.ckey;if(k&&cache[k])openFilm(k);};
+  const sb=$('#curaRecoSave');
+  if(sb)sb.onclick=e=>{e.stopPropagation();if(!_bioRecoMovies||!_bioRecoMovies.length)return;const m=_bioRecoMovies[0];const yr=(m.release_date||'').slice(0,4);const k=key(m.title,yr);if(!cache[k])cache[k]={t:m.title,y:+yr||0,id:m.id,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null,ti:m.title,ot:m.original_title||m.title,ye:yr,src:'reco',_stub:1};_curaPickList(k);};
 }
-
 async function _renderCuraStream(){
   const el=$('#curaViewStream');if(!el)return;
-  const lists=_getLists();
-  if(!lists.length){
-    el.innerHTML='<div style="text-align:center;padding:30px;color:var(--dim);line-height:1.6">Crie listas na aba "Todas as listas" e salve filmes nelas para ver disponibilidade no streaming aqui.</div>';
-    return;
-  }
-  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--dim)">Verificando disponibilidade no streaming BR…</div>';
-  const allKeys=[...new Set(lists.flatMap(l=>l.films||[]))];
-  const tmdbFilms=allKeys.map(k=>({key:k,r:cache[k]})).filter(x=>x.r&&x.r.id);
-  await Promise.all(tmdbFilms.slice(0,30).map(({r})=>watchProviders(r.id).catch(()=>{})));
-  const withStream=tmdbFilms.filter(({r})=>{const pv=_provCache[r.id];return pv&&pv.names&&pv.names.length;});
-  if(!withStream.length){
-    el.innerHTML='<div style="text-align:center;padding:30px;color:var(--dim);line-height:1.5">Nenhum filme das suas listas localizado no streaming BR agora.<br><br><span style="font-size:11px">Dados via TMDB/JustWatch · atualização diária</span></div>';
-    return;
-  }
-  const byProv={};
-  withStream.forEach(({key:k,r})=>{
-    (_provCache[r.id].names||[]).forEach(pname=>{
-      if(!byProv[pname])byProv[pname]=[];
-      byProv[pname].push({key:k,r});
-    });
+  const lists=_getLists();const myP=_getMyProviders();
+  const provHdr=`<div style="background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:14px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700">Meus streamings</div><button id="curaProvEdit" style="background:none;border:1px solid var(--line);color:var(--acc1);border-radius:6px;padding:2px 8px;font-size:10.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px">${_icon('settings',13)} Configurar</button></div>${myP.length?`<div style="display:flex;gap:6px;flex-wrap:wrap">${myP.map(p=>`<div style="background:var(--p2);border:1px solid var(--acc1)30;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:700;color:var(--ink)">${p}</div>`).join('')}</div>`:'<div style="font-size:12px;color:var(--dim)">Toque em Configurar para selecionar seus serviços.</div>'}</div>`;
+  el.innerHTML=provHdr+'<div style="text-align:center;padding:16px;color:var(--dim)">Verificando disponibilidade…</div>';
+  const pb=$('#curaProvEdit');if(pb)pb.onclick=_curaSelectProviders;
+  const wlKeys=Object.keys(cache).filter(k=>cache[k]&&cache[k].wl);
+  const cKeys=[...new Set(lists.flatMap(l=>l.films||[]))];
+  const allKeys=[...new Set([...wlKeys,...cKeys])];
+  const tmdbF=allKeys.map(k=>({key:k,r:cache[k]})).filter(x=>x.r&&x.r.id);
+  await Promise.all(tmdbF.slice(0,40).map(({r})=>watchProviders(r.id).catch(()=>{})));
+  const withStr=tmdbF.filter(({r})=>{const pv=_provCache[r.id];return pv&&pv.names&&pv.names.length;});
+  if(!withStr.length){el.innerHTML=provHdr+'<div style="text-align:center;padding:24px;color:var(--dim);line-height:1.5">Nenhum filme do Repertório localizado no streaming BR agora.<br><span style="font-size:11px">Dados via TMDB / JustWatch</span></div>';const pb2=$('#curaProvEdit');if(pb2)pb2.onclick=_curaSelectProviders;return;}
+  const byP={};withStr.forEach(({key:k,r})=>{(_provCache[r.id].names||[]).forEach(pn=>{if(!byP[pn])byP[pn]=[];byP[pn].push({key:k,r});});});
+  const entries=Object.entries(byP).sort((a,b)=>{const as=myP.includes(a[0]),bs=myP.includes(b[0]);if(as!==bs)return bs-as;return b[1].length-a[1].length;});
+  let html='<div style="font-size:11.5px;color:var(--dim);line-height:1.4;margin-bottom:14px">Filmes do Repertório disponíveis no BR. Dados via TMDB / JustWatch.</div>';
+  entries.forEach(([pn,pf])=>{
+    const mine=myP.includes(pn);
+    if(myP.length&&!mine)return;
+    html+=`<div style="margin-bottom:18px"><div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:5px;color:${mine||!myP.length?'var(--ink)':'var(--dim)'}"><span style="color:var(--acc1)">${mine?_icon('check',13):''}</span>${pn} · ${pf.length}</div><div style="display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px">${pf.slice(0,12).map(({key:k,r})=>{const seen=r.r!=null&&!r.wl;return `<div class="cura-sf" data-filmkey="${k}">${r.po?`<img src="${IMG}/w92${r.po}" style="width:56px;height:84px;border-radius:6px;object-fit:cover;display:block" loading="lazy"/>`:`<div style="width:56px;height:84px;border-radius:6px;background:var(--p2);display:flex;align-items:center;justify-content:center;color:var(--dim)">${_icon('film',22)}</div>`}${seen?`<div style="position:absolute;left:2px;bottom:2px;background:rgba(0,0,0,.85);color:var(--acc1);font-size:8px;font-weight:800;border-radius:3px;padding:1px 4px">${r.r}★</div>`:''}</div>`;}).join('')}${pf.length>12?`<div style="flex-shrink:0;width:36px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:11px;font-weight:700">+${pf.length-12}</div>`:''}</div></div>`;
   });
-  let html='<div style="font-size:11.5px;color:var(--dim);line-height:1.4;margin-bottom:14px">Filmes das suas listas disponíveis no BR. Dados via TMDB / JustWatch · atualização diária.</div>';
-  Object.entries(byProv).sort((a,b)=>b[1].length-a[1].length).forEach(([pname,films])=>{
-    html+=`<div style="margin-bottom:18px">
-      <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700;margin-bottom:8px">${pname} · ${films.length} filme${films.length!==1?'s':''}</div>
-      <div style="display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px">
-        ${films.slice(0,12).map(({key:k,r})=>{
-          const seen=r.r!=null&&!r.wl;
-          return `<div style="flex-shrink:0;cursor:pointer;position:relative" class="cura-sf" data-filmkey="${k}">
-            ${r.po?`<img src="${IMG}/w92${r.po}" style="width:56px;height:84px;border-radius:6px;object-fit:cover;display:block" loading="lazy"/>`:'<div style="width:56px;height:84px;border-radius:6px;background:var(--p2);display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:22px">🎬</div>'}
-            ${seen?`<div style="position:absolute;left:2px;bottom:2px;background:rgba(0,0,0,.85);color:var(--acc1);font-size:8px;font-weight:800;border-radius:3px;padding:1px 4px">${r.r}★</div>`:''}
-          </div>`;
-        }).join('')}
-        ${films.length>12?`<div style="flex-shrink:0;width:40px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:11px;font-weight:700">+${films.length-12}</div>`:''}
-      </div>
-    </div>`;
-  });
-  el.innerHTML=html;
+  el.innerHTML=provHdr+html;
   $$('#curaViewStream .cura-sf').forEach(d=>d.onclick=()=>openFilm(d.dataset.filmkey));
+  const pb3=$('#curaProvEdit');if(pb3)pb3.onclick=_curaSelectProviders;
 }
-
-function _curaSetView(v){
-  ['All','Reco','Stream'].forEach(n=>{
-    const el=$('#curaView'+n);
-    if(el)el.style.display=n.toLowerCase()===v?'':'none';
+function _curaSelectProviders(){
+  const myP=_getMyProviders();
+  const items=BR_PROVIDERS.map(p=>`<button class="cura-pick-item" data-prov="${p.name}"><div style="flex:1;font-size:14px;font-weight:700;color:var(--ink)">${p.name}</div><span class="cpchk" style="color:${myP.includes(p.name)?'var(--acc1)':'var(--line)'}">${myP.includes(p.name)?_icon('check',14):_icon('circle',14)}</span></button>`).join('');
+  showSheet(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="color:var(--acc1)">${_icon('settings',18)}</span><h3 style="margin:0">Meus streamings</h3></div><div style="font-size:12px;color:var(--dim);margin-bottom:12px">Selecione os serviços que você assina.</div>${items}<button id="curaProvSave" style="width:100%;margin-top:10px;background:var(--acc1);border:none;color:#0a1a0a;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer">Salvar</button>`,null);
+  let sel=new Set(myP);
+  $$('#sheet .cura-pick-item').forEach(btn=>{
+    btn.onclick=()=>{const p=btn.dataset.prov;sel.has(p)?sel.delete(p):sel.add(p);const sp=btn.querySelector('.cpchk');if(sp){const s=sel.has(p);sp.innerHTML=s?_icon('check',14):_icon('circle',14);sp.style.color=s?'var(--acc1)':'var(--line)';}};
   });
+  const sv=$('#curaProvSave');if(sv)sv.onclick=()=>{_saveMyProviders([...sel]);$('#modal').classList.remove('show');_renderCuraStream();toast('Streamings atualizados');};
+}
+function _curaSetView(v){
+  ['All','Reco','Stream'].forEach(n=>{const el=$('#curaView'+n);if(el)el.style.display=n.toLowerCase()===v?'':'none';});
   $$('#curaToggle .cura-tv').forEach(b=>b.classList.toggle('on',b.dataset.cv===v));
   if(v==='reco'){
-    const ctx=_recoContext();
-    const ctxEl=$('#recoCtxLine');
+    const ctx=_recoContext();const ctxEl=$('#recoCtxLine');
     if(ctxEl){ctxEl.style.display='block';ctxEl.innerHTML=`<b>${ctx.dow}, ${ctx.periodo}</b> · ${ctx.dayNote}${ctx.season?` · <span class="season">${ctx.season}</span>`:''}`;}
     const vibeHtml=Object.entries(VIBE_CFG).map(([k,vb])=>`<button class="reco-vibe${_bioRecoVibe===k?' on':''}" data-v="${k}"><span class="ricon">${RICON[k]}</span>${vb.name}</button>`).join('');
-    const va=$('#bioVibeArea');
-    if(va){va.style.display='';va.innerHTML=vibeHtml;va.onclick=e=>{const b=e.target.closest('.reco-vibe');if(b)_runBioReco(b.dataset.v);};}
+    const va=$('#bioVibeArea');if(va){va.style.display='';va.innerHTML=vibeHtml;va.onclick=e=>{const b=e.target.closest('.reco-vibe');if(b)_runBioReco(b.dataset.v);};}
     const spiralEl=$('#spiral'),recoPanel=$('#bioRecoPanel'),sb=$('#spiralbox');
-    if(_bioRecoHTML&&recoPanel){
-      if(spiralEl){spiralEl.style.display='none';spiralEl.style.opacity='1';}
-      recoPanel.innerHTML=_bioRecoHTML;recoPanel.style.display='block';
-      if(sb)sb.classList.add('bio-results-mode');
-      requestAnimationFrame(()=>_wireRecoCardClicks(recoPanel));
-    }else{
-      if(spiralEl){spiralEl.style.display='';spiralEl.style.opacity='1';}
-      if(recoPanel)recoPanel.style.display='none';
-      if(sb){sb.classList.remove('bio-results-mode');sb.style.position='';}
-      requestAnimationFrame(()=>renderSpiral(_spiralRecoItems||[],bio.cat||'films'));
-    }
-  }else if(v==='all'){
-    _renderCuraAll();
-  }else if(v==='stream'){
-    _renderCuraStream();
-  }
+    if(_bioRecoHTML&&recoPanel){if(spiralEl){spiralEl.style.display='none';spiralEl.style.opacity='1';}recoPanel.innerHTML=_bioRecoHTML;recoPanel.style.display='block';if(sb)sb.classList.add('bio-results-mode');requestAnimationFrame(()=>_wireRecoCardClicks(recoPanel));}
+    else{if(spiralEl){spiralEl.style.display='';spiralEl.style.opacity='1';}if(recoPanel)recoPanel.style.display='none';if(sb){sb.classList.remove('bio-results-mode');sb.style.position='';}requestAnimationFrame(()=>renderSpiral(_spiralRecoItems||[],bio.cat||'films'));}
+  }else if(v==='all'){_renderCuraAll();}else if(v==='stream'){_renderCuraStream();}
 }
-
 function _curaOpenList(listId){
   const lists=_getLists();
+  // Smart list (wl_ prefix)
+  if(listId.startsWith('wl_')){
+    const sl=SMART_LISTS_DEF.find(x=>x.id===listId);if(!sl)return;
+    const sf=_smartFilms(sl);
+    const rows=sf.map(r=>{
+      const k=Object.keys(cache).find(k=>cache[k]===r);if(!k)return '';
+      const pv=r.id&&_provCache[r.id];const pvTxt=pv&&pv.names&&pv.names.length?`<span style="font-size:10px;color:var(--acc1);font-weight:600">${pv.names.slice(0,2).join(' · ')}</span>`:'';
+      const seen=r.r!=null&&!r.wl;
+      const poster=r.po?`<img src="${IMG}/w92${r.po}" style="width:46px;height:69px;border-radius:5px;object-fit:cover;flex-shrink:0;cursor:pointer" loading="lazy" class="cura-fl-o" data-filmkey="${k}"/>`:`<div style="width:46px;height:69px;border-radius:5px;background:var(--p2);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;color:var(--dim)" class="cura-fl-o" data-filmkey="${k}">${_icon('film',22)}</div>`;
+      return `<div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">${poster}<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.ot||r.t}</div><div style="font-size:11px;color:var(--dim)">${r.y||''}</div><div style="margin-top:3px">${pvTxt}</div>${seen?`<div style="font-size:10px;color:var(--acc1);margin-top:2px">★ ${r.r}</div>`:''}</div></div>`;
+    }).filter(Boolean).join('');
+    showSheet(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="color:var(--acc1)">${_icon(sl.icon,20)}</span><h3 style="margin:0;flex:1">${sl.name}</h3><span style="font-size:11px;color:var(--dim)">${sf.length} filmes</span></div>${rows||'<div style="color:var(--dim);text-align:center;padding:24px">Lista vazia.</div>'}`,null);
+    $$('#sheet .cura-fl-o').forEach(el=>el.onclick=()=>openFilm(el.dataset.filmkey));
+    return;
+  }
+  // Custom list
   const list=lists.find(l=>l.id===listId);if(!list)return;
-  const filmItems=(list.films||[]).map(k=>{
-    const r=cache[k];if(!r)return null;
-    const pv=r.id&&_provCache[r.id];
-    const pvTxt=pv&&pv.names&&pv.names.length?`<span style="font-size:10px;color:var(--acc1);font-weight:600">${pv.names.slice(0,2).join(' · ')}</span>`:'';
-    const poster=r.po?`<img src="${IMG}/w92${r.po}" style="width:46px;height:69px;border-radius:5px;object-fit:cover;flex-shrink:0;cursor:pointer" loading="lazy" class="cura-fl-open" data-filmkey="${k}"/>`:
-      `<div style="width:46px;height:69px;border-radius:5px;background:var(--p2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;color:var(--dim);cursor:pointer" class="cura-fl-open" data-filmkey="${k}">🎬</div>`;
-    const seen=r.r!=null&&!r.wl;
-    const titleDisp=r.ot&&r.ot!==r.t?r.ot:r.t||'';
-    const titlePt=r.tp&&r.tp!==titleDisp?`<div style="font-size:11.5px;color:var(--mut);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.tp}</div>`:'';
-    return `<div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">
-      ${poster}
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:700;font-size:13.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${titleDisp}</div>
-        ${titlePt}
-        <div style="font-size:11px;color:var(--dim)">${r.y||''}</div>
-        <div style="margin-top:3px">${pvTxt}</div>
-        ${seen?`<div style="font-size:10px;color:var(--acc1);margin-top:2px">★ ${r.r} · visto</div>`:''}
-      </div>
-      <button class="cura-fl-rem" data-filmkey="${k}" data-listid="${listId}" style="background:none;border:none;color:var(--dim);font-size:20px;padding:4px 8px;cursor:pointer;flex-shrink:0">×</button>
-    </div>`;
+  const rows=(list.films||[]).map(k=>{
+    const r=cache[k];if(!r)return '';
+    const pv=r.id&&_provCache[r.id];const pvTxt=pv&&pv.names&&pv.names.length?`<span style="font-size:10px;color:var(--acc1);font-weight:600">${pv.names.slice(0,2).join(' · ')}</span>`:'';
+    const seen=r.r!=null&&!r.wl;const titleD=r.ot&&r.ot!==r.t?r.ot:r.t||'';
+    const poster=r.po?`<img src="${IMG}/w92${r.po}" style="width:46px;height:69px;border-radius:5px;object-fit:cover;flex-shrink:0;cursor:pointer" loading="lazy" class="cura-fl-o" data-filmkey="${k}"/>`:`<div style="width:46px;height:69px;border-radius:5px;background:var(--p2);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;color:var(--dim)" class="cura-fl-o" data-filmkey="${k}">${_icon('film',22)}</div>`;
+    return `<div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">${poster}<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${titleD}</div><div style="font-size:11px;color:var(--dim)">${r.y||''}</div><div style="margin-top:3px">${pvTxt}</div>${seen?`<div style="font-size:10px;color:var(--acc1);margin-top:2px">★ ${r.r}</div>`:''}</div><button class="cura-fl-rem" data-filmkey="${k}" data-listid="${listId}" style="background:none;border:none;color:var(--dim);font-size:20px;padding:4px 8px;cursor:pointer;flex-shrink:0">×</button></div>`;
   }).filter(Boolean).join('');
-  const sheetHtml=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-    <span style="font-size:20px">${list.icon||'📋'}</span>
-    <h3 style="margin:0;flex:1">${list.name}</h3>
-    <button id="curaLDel" data-listid="${listId}" style="background:none;border:1px solid var(--line);color:var(--mut);border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer">Excluir</button>
-  </div>
-  ${filmItems||'<div style="color:var(--dim);text-align:center;padding:24px;line-height:1.5">Lista vazia.<br>Salve filmes das recomendações ou das fichas.</div>'}`;
-  showSheet(sheetHtml,null);
-  $$('#sheet .cura-fl-open').forEach(el=>el.onclick=()=>openFilm(el.dataset.filmkey));
-  $$('#sheet .cura-fl-rem').forEach(btn=>btn.onclick=()=>{
-    const ls=_getLists();const l=ls.find(x=>x.id===btn.dataset.listid);if(!l)return;
-    l.films=(l.films||[]).filter(k=>k!==btn.dataset.filmkey);
-    _saveLists(ls);toast('Removido da lista');_curaOpenList(btn.dataset.listid);
-  });
-  const delBtn=$('#curaLDel');
-  if(delBtn)delBtn.onclick=()=>{
-    if(!confirm('Excluir a lista "'+list.name+'"?'))return;
-    _saveLists(_getLists().filter(l=>l.id!==listId));
-    $('#modal').classList.remove('show');
-    _renderCuraAll();_renderCuraStats();toast('Lista excluída');
-  };
+  const ic=_icon(list.icon||'list',20);
+  showSheet(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="color:var(--acc1)">${ic}</span><h3 style="margin:0;flex:1">${list.name}</h3><button id="curaLDel" style="background:none;border:1px solid var(--line);color:var(--mut);border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer">Excluir</button></div>${rows||'<div style="color:var(--dim);text-align:center;padding:24px;line-height:1.5">Lista vazia.<br>Salve filmes das recomendações ou fichas.</div>'}`,null);
+  $$('#sheet .cura-fl-o').forEach(el=>el.onclick=()=>openFilm(el.dataset.filmkey));
+  $$('#sheet .cura-fl-rem').forEach(btn=>btn.onclick=()=>{const ls=_getLists();const l=ls.find(x=>x.id===btn.dataset.listid);if(!l)return;l.films=(l.films||[]).filter(k=>k!==btn.dataset.filmkey);_saveLists(ls);toast('Removido da lista');_curaOpenList(btn.dataset.listid);});
+  const dBtn=$('#curaLDel');if(dBtn)dBtn.onclick=()=>{if(!confirm('Excluir "'+list.name+'"?'))return;_saveLists(_getLists().filter(l=>l.id!==listId));$('#modal').classList.remove('show');_renderCuraAll();_renderCuraStats();toast('Lista excluída');};
 }
-
 function _curaPickList(filmKey){
-  const lists=_getLists();
-  const r=cache[filmKey];const titleDisp=r?r.ot||r.t:'';
+  const lists=_getLists();const r=cache[filmKey];const titleD=r?r.ot||r.t:'';
   if(!lists.length){_curaCreateList(filmKey);return;}
   const items=lists.map(l=>{
-    const inList=(l.films||[]).includes(filmKey);
-    return `<button class="cura-pick-item" data-listid="${l.id}" data-filmkey="${filmKey}" data-inlist="${inList?'1':'0'}">
-      <span style="font-size:18px">${l.icon||'📋'}</span>
-      <div style="flex:1;text-align:left">
-        <div style="font-size:13.5px;font-weight:700;color:var(--ink)">${l.name}</div>
-        <div style="font-size:11px;color:var(--dim)">${(l.films||[]).length} filmes</div>
-      </div>
-      <span style="font-size:20px;color:${inList?'var(--acc1)':'var(--line)'}">${inList?'✓':'○'}</span>
-    </button>`;
+    const inL=(l.films||[]).includes(filmKey);
+    return `<button class="cura-pick-item" data-listid="${l.id}" data-filmkey="${filmKey}"><span style="color:${inL?'var(--acc1)':'var(--mut)'}">${_icon(l.icon||'list',18)}</span><div style="flex:1;text-align:left"><div style="font-size:13.5px;font-weight:700;color:var(--ink)">${l.name}</div><div style="font-size:11px;color:var(--dim)">${(l.films||[]).length} filmes</div></div><span style="color:${inL?'var(--acc1)':'var(--line)'}">${inL?_icon('check',14):_icon('circle',14)}</span></button>`;
   }).join('');
-  showSheet(`<h3 style="margin:0 0 4px">Salvar em lista</h3>
-    <div style="font-size:12px;color:var(--mut);margin-bottom:12px">${titleDisp}</div>
-    ${items}
-    <button id="curaPLNew" style="width:100%;margin-top:10px;background:none;border:1px dashed var(--line);color:var(--acc1);border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">+ Nova lista</button>`,null);
+  showSheet(`<h3 style="margin:0 0 4px">Salvar em lista</h3><div style="font-size:12px;color:var(--mut);margin-bottom:12px">${titleD}</div>${items}<button id="curaPLNew" style="width:100%;margin-top:10px;background:none;border:1px dashed var(--line);color:var(--acc1);border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">${_icon('plus',14)} Nova lista</button>`,null);
   $$('#sheet .cura-pick-item').forEach(btn=>{
-    btn.onclick=()=>{
-      const ls=_getLists();const l=ls.find(x=>x.id===btn.dataset.listid);if(!l)return;
-      const k=btn.dataset.filmkey;
-      if((l.films||[]).includes(k)){l.films=l.films.filter(x=>x!==k);toast('Removido de "'+l.name+'"');}
-      else{if(!l.films)l.films=[];l.films.push(k);toast('Salvo em "'+l.name+'"');}
-      _saveLists(ls);_renderCuraAll();_renderCuraStats();$('#modal').classList.remove('show');
-    };
+    btn.onclick=()=>{const ls=_getLists();const l=ls.find(x=>x.id===btn.dataset.listid);if(!l)return;const k=btn.dataset.filmkey;if((l.films||[]).includes(k)){l.films=l.films.filter(x=>x!==k);toast('Removido de "'+l.name+'"');}else{if(!l.films)l.films=[];l.films.push(k);toast('Salvo em "'+l.name+'"');}
+    _saveLists(ls);_renderCuraAll();_renderCuraStats();$('#modal').classList.remove('show');};
   });
   const np=$('#curaPLNew');if(np)np.onclick=()=>{$('#modal').classList.remove('show');setTimeout(()=>_curaCreateList(filmKey),220);};
 }
-
 function _curaCreateList(filmKey){
-  const ICONS=['📋','🎬','🎃','🎭','🌙','⭐','🔥','🌿','👁','🎪','🌊','🎯'];
-  let selIc=ICONS[0];
-  showSheet(`<h3 style="margin:0 0 12px">Nova lista</h3>
-    <div style="margin-bottom:10px">
-      <label style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:5px">Nome</label>
-      <input id="curaLName" type="text" placeholder="Ex: Terror de outubro" maxlength="40"
-        style="width:100%;box-sizing:border-box;background:var(--p2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);font-size:14px;outline:none"/>
-    </div>
-    <div style="margin-bottom:14px">
-      <label style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px">Ícone</label>
-      <div id="curaIconGrid" style="display:flex;gap:6px;flex-wrap:wrap">
-        ${ICONS.map((ic,i)=>`<button class="cura-ic-btn${i===0?' ic-sel':''}" data-ic="${ic}" style="${i===0?'border-color:var(--acc1);background:#1ec98a18':''}">
-          ${ic}</button>`).join('')}
-      </div>
-    </div>
+  const r=cache[filmKey];const titleD=r?r.ot||r.t:'';
+  let selIc='list';
+  const picker=ICON_KEYS_PICKER.map((k,i)=>`<button class="cura-ic-btn${i===0?' sel':''}" data-ic="${k}">${_icon(k,18)}</button>`).join('');
+  showSheet(`<h3 style="margin:0 0 12px">Nova lista</h3>${filmKey&&titleD?`<div style="font-size:12px;color:var(--dim);margin-bottom:10px">Adicionando: ${titleD}</div>`:''}
+    <div style="margin-bottom:10px"><label style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:5px">Nome</label><input id="curaLName" type="text" placeholder="Ex: Terror de outubro" maxlength="40" style="width:100%;box-sizing:border-box;background:var(--p2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);font-size:14px;outline:none"/></div>
+    <div style="margin-bottom:14px"><label style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:7px">Ícone</label><div id="curaIconGrid" style="display:flex;gap:7px;flex-wrap:wrap">${picker}</div></div>
     <button id="curaLCreate" style="width:100%;background:var(--acc1);border:none;color:#0a1a0a;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer">Criar lista</button>`,null);
   $$('#sheet .cura-ic-btn').forEach(btn=>{
-    btn.onclick=()=>{
-      selIc=btn.dataset.ic;
-      $$('#sheet .cura-ic-btn').forEach(b=>{
-        const s=b.dataset.ic===selIc;
-        b.style.borderColor=s?'var(--acc1)':'var(--line)';
-        b.style.background=s?'#1ec98a18':'var(--p2)';
-      });
-    };
+    btn.onclick=()=>{selIc=btn.dataset.ic;$$('#sheet .cura-ic-btn').forEach(b=>{const s=b.dataset.ic===selIc;b.classList.toggle('sel',s);});};
   });
-  const createBtn=$('#curaLCreate');
-  if(createBtn)createBtn.onclick=()=>{
-    const nameEl=$('#curaLName');if(!nameEl)return;
-    const name=nameEl.value.trim();if(!name){toast('Dê um nome para a lista');return;}
-    const ls=_getLists();
-    const nl={id:'cl_'+Date.now(),name,icon:selIc,films:filmKey?[filmKey]:[],created:Date.now()};
-    ls.push(nl);_saveLists(ls);
-    toast('Lista "'+name+'" criada'+(filmKey?' · filme adicionado':''));
-    $('#modal').classList.remove('show');_renderCuraAll();_renderCuraStats();
+  const cBtn=$('#curaLCreate');if(cBtn)cBtn.onclick=()=>{
+    const nameEl=$('#curaLName');if(!nameEl)return;const name=nameEl.value.trim();if(!name){toast('Dê um nome para a lista');return;}
+    const ls=_getLists();const nl={id:'cl_'+Date.now(),name,icon:selIc,films:filmKey?[filmKey]:[],created:Date.now()};
+    ls.push(nl);_saveLists(ls);toast('Lista "'+name+'" criada'+(filmKey?' · filme adicionado':''));
+    $( '#modal').classList.remove('show');_renderCuraAll();_renderCuraStats();
   };
 }
 
 let _curaTogWired=false;
 function openRecoModal(){
-  if(!_curaTogWired){
-    const tog=$('#curaToggle');
-    if(tog){tog.onclick=e=>{const b=e.target.closest('.cura-tv');if(b)_curaSetView(b.dataset.cv);};_curaTogWired=true;}
-  }
-  _renderCuraStats();
-  _curaSetView('all');
+  if(!_curaTogWired){const tog=$('#curaToggle');if(tog){tog.onclick=e=>{const b=e.target.closest('.cura-tv');if(b)_curaSetView(b.dataset.cv);};_curaTogWired=true;}}
+  _renderCuraStats();_curaSetView('all');
   $('#recoOver').classList.add('show');
 }
 // recoOverClose removed — nav overlay fechada pela navegação inferior
@@ -2451,7 +2380,7 @@ function _recoCard(o){
   const _rejectBtn=o.tmdbId?'<button class="reco-reject" data-reject="'+o.tmdbId+'" title="Não mostrar mais">'+ICON_RECO_REJECT+'</button>':'';
   const _krec=cache[o.ckey||_rk];const _onWl=!!(_krec&&_krec.wl);const _seen=!!(_krec&&_krec.r!=null&&!_krec.wl);
   const wlBtn=_seen?'<div class="reco-score" style="color:var(--acc1)">'+ICON_CHECK+' Já visto</div>':'<button class="reco-wl-btn'+(_onWl?' on':'')+'" data-recowl="'+_matchKey+'">'+(_onWl?'✓ Na watchlist':'+ Quero ver')+'</button>';
-  const listSaveBtn='<button class="cura-save-btn" data-recsavelist="'+_matchKey+'" style="margin-top:5px">📋 Salvar em lista</button>';
+  const listSaveBtn='<button class="cura-save-btn" data-recsavelist="'+_matchKey+'" style="margin-top:5px">📋 Salvar no Repertório</button>';
   return '<div class="reco-card" data-cardid="'+(o.tmdbId||'')+'">'+po+'<div class="reco-info">'
     +'<div class="reco-title-row"><div class="reco-title">'+o.title+(o.year?' ('+o.year+')':'')+'</div>'+_rejectBtn+'</div>'
     +(meta?'<div class="reco-meta">'+meta+'</div>':'')
@@ -2656,8 +2585,7 @@ function _wireRecoCardClicks(panel){
     btn.onclick=e=>{
       e.stopPropagation();
       const m=_findRecoMovie(btn.dataset.recsavelist);if(!m)return;
-      const yr=(m.release_date||'').slice(0,4);
-      const k=key(m.title,yr);
+      const yr=(m.release_date||'').slice(0,4);const k=key(m.title,yr);
       if(!cache[k])cache[k]={t:m.title,y:+yr||0,id:m.id,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null,ti:m.title,ot:m.original_title||m.title,ye:yr,src:'reco',_stub:1};
       _curaPickList(k);
     };
@@ -3226,13 +3154,13 @@ function _filmExtrasHtml(r){
   const isWl=!!r.wl;
   const wlSection=isWl?`<div class="film-wl">${ICON_EYE} Está na sua <b>watchlist</b>. Toque nas estrelas acima para marcar como visto.</div><button class="btn sec" id="filmWlRemove" style="font-size:13px;margin-top:8px">Tirar da watchlist</button>`:'';
   const unmarkSection=(!isWl&&r.r!=null)?`<button class="btn sec" id="filmUnmarkSeen" style="font-size:12px;margin-top:6px;color:var(--dim);padding:10px">× Remover dos vistos</button>`:'';
+  const listSection=`<button class="btn sec" id="filmSaveList" style="font-size:12px;margin-top:6px;padding:10px">📋 Salvar no Repertório</button>`;
   // rewatch, date and share moved to openFilm rating row
 
   const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const noteSection=`<div class="lbl">Anotação / mini-review</div><textarea class="film-note" id="filmNote" placeholder="o que achou? (opcional)">${esc(r.note)}</textarea>`;
   const tags=(r.tags||[]);
   const tagsSection=`<div class="lbl">Tags</div><div class="film-tags" id="filmTags">${tags.map(t=>`<span class="ftag" data-t="${(t||'').replace(/"/g,'&quot;')}">${t} <i>×</i></span>`).join('')}<input class="ftag-in" id="filmTagIn" placeholder="+ tag" autocomplete="off"/></div>`;
-  const listSection=`<button class="btn sec" id="filmSaveList" style="font-size:12px;margin-top:6px;padding:10px">📋 Salvar em lista</button>`;
   return wlSection+unmarkSection+listSection+noteSection+tagsSection;
 }
 function _wireFilmExtras(k){
