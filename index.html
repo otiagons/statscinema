@@ -543,6 +543,32 @@ select{color-scheme:dark}
   .bot-nav-center.on{background:rgba(30,201,138,.2)}
   .over-nav{bottom:calc(58px + env(safe-area-inset-bottom))!important;}
 }
+
+/* ── CURADORIA ── */
+.cura-tv{background:none;border:none;border-bottom:2px solid transparent;color:var(--mut);padding:10px 12px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:color .15s}
+.cura-tv.on{color:var(--ink);border-bottom-color:var(--acc1)}
+.cura-stat-card{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 4px;text-align:center}
+.cura-stat-n{font-size:20px;font-weight:800;color:var(--acc1);line-height:1}
+.cura-stat-l{font-size:9px;color:var(--dim);margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
+.cura-reco-hi{grid-column:1/-1;background:linear-gradient(135deg,#0d1a0d,#000814);border:1px solid #1ec98a40;border-radius:12px;padding:12px;display:flex;gap:12px;cursor:pointer}
+.cura-reco-hi-poster{width:68px;height:102px;border-radius:7px;flex-shrink:0;background:var(--p2);display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--dim);overflow:hidden}
+.cura-reco-hi-poster img{width:100%;height:100%;object-fit:cover}
+.cura-reco-hi-info{flex:1;min-width:0}
+.cura-list-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer}
+.cura-list-card:active{border-color:var(--acc1)}
+.cura-list-strip{display:flex;height:64px;background:var(--p2);overflow:hidden}
+.cura-list-strip>div{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.cura-list-strip>div img{width:100%;height:100%;object-fit:cover}
+.cura-list-info{padding:8px 10px}
+.cura-list-name{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cura-list-sub{font-size:10.5px;color:var(--dim);margin-bottom:4px}
+.cura-list-prov{font-size:10px;color:var(--acc1);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cura-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.cura-add-card{background:var(--panel);border:1px dashed var(--line);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:110px;cursor:pointer;gap:3px;color:var(--dim);font-size:13px;font-weight:700}
+.cura-save-btn{background:none;border:1px solid var(--line);color:var(--mut);border-radius:6px;padding:3px 9px;font-size:10.5px;font-weight:700;cursor:pointer;display:block;width:100%;margin-top:5px;text-align:left;transition:all .15s}
+.cura-save-btn.saved{border-color:var(--acc1);color:var(--acc1);background:#1ec98a18}
+.cura-ic-btn{font-size:20px;background:var(--p2);border:1px solid var(--line);border-radius:8px;width:38px;height:38px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .15s}
+.cura-pick-item{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;border-bottom:1px solid var(--line);padding:12px 0;cursor:pointer;text-align:left}
 </style>
 </head><body>
 <div class="wrap">
@@ -645,17 +671,26 @@ select{color-scheme:dark}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <!-- RECOMENDAÇÕES (overlay) -->
-<div class="over over-nav" id="recoOver" style="justify-content:flex-start">
-  <div class="oh"><h2>Recomendar agora</h2></div>
-  <div class="ob" style="padding-bottom:24px">
-    <div class="bio-reco-ctx" id="recoCtxLine" style="display:none"></div>
+<div class="over over-nav" id="recoOver" style="justify-content:flex-start;padding:0;gap:0">
+  <div class="oh" style="padding:calc(env(safe-area-inset-top) + 12px) 14px 0;margin-bottom:0;flex-shrink:0">
+    <h2 style="font-size:18px;flex:1;margin:0">Curadoria</h2>
+  </div>
+  <div id="curaStats" style="display:flex;gap:8px;padding:10px 14px 0;flex-shrink:0"></div>
+  <div id="curaToggle" style="display:flex;border-bottom:1px solid var(--line);padding:0 14px;overflow-x:auto;flex-shrink:0;scrollbar-width:none">
+    <button class="cura-tv on" data-cv="all">Todas as listas</button>
+    <button class="cura-tv" data-cv="reco">Recomendações</button>
+    <button class="cura-tv" data-cv="stream">Streaming</button>
+  </div>
+  <div id="curaViewAll" class="ob" style="padding:12px 14px 24px"></div>
+  <div id="curaViewReco" class="ob" style="padding:12px 14px 24px;display:none">
+    <div class="bio-reco-ctx" id="recoCtxLine"></div>
     <div id="bioVibeArea" class="reco-vibes"></div>
     <div class="spiralbox" id="spiralbox" style="flex:none;width:100%;min-width:0">
       <div id="spiral"></div>
       <div id="bioRecoPanel" class="bio-reco-panel" style="display:none"></div>
     </div>
-    <div id="recoTrending"></div>
   </div>
+  <div id="curaViewStream" class="ob" style="padding:12px 14px 24px;display:none"></div>
 </div>
 
 <!-- BOTTOM NAV -->
@@ -673,7 +708,7 @@ select{color-scheme:dark}
   </button>
   <button class="bot-nav-item" id="bnReco">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10.5 21h3"/><path d="M12 2C7.6 2 4 5.6 4 10c0 2.8 1.4 5.2 3.5 6.7L8 18h8l.5-1.3C18.6 15.2 20 12.8 20 10c0-4.4-3.6-8-8-8z"/></svg>
-    <span>Recomendar agora</span>
+    <span>Curadoria</span>
   </button>
   <button class="bot-nav-item" id="bnBio">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
@@ -1643,34 +1678,318 @@ function renderBio(){
   $$('.favslot').forEach(el=>el.onclick=()=>{const i=+el.dataset.fav;const k=(bio.favs||[])[i];if(k&&cache[k])openFilm(k);else openFavPicker(i);});
   $$('.blrow').forEach(el=>el.onclick=()=>openEntity(ents[+el.dataset.i]));
 }
-function openRecoModal(){
-  const ctx=_recoContext();
-  const ctxLine=`<b>${ctx.dow}, ${ctx.periodo}</b> · ${ctx.dayNote}${ctx.season?`<br><span class="season">${ctx.season}</span>`:''}`;
-  const ctxEl=$('#recoCtxLine');if(ctxEl)ctxEl.innerHTML=ctxLine;
-  const vibeHtml=Object.entries(VIBE_CFG).map(([k,v])=>`<button class="reco-vibe${_bioRecoVibe===k?' on':''}" data-v="${k}"><span class="ricon">${RICON[k]}</span>${v.name}</button>`).join('');
-  const va=$('#bioVibeArea');
-  if(va){va.style.display='';va.innerHTML=vibeHtml;va.onclick=e=>{const b=e.target.closest('.reco-vibe');if(b)_runBioReco(b.dataset.v);};}
-  const spiralEl=$('#spiral'),recoPanel=$('#bioRecoPanel'),sb=$('#spiralbox');
-  if(_bioRecoHTML&&recoPanel){
-    if(spiralEl){spiralEl.style.display='none';spiralEl.style.opacity='1';}
-    recoPanel.innerHTML=_bioRecoHTML;recoPanel.style.display='';
-    if(sb)sb.classList.add('bio-results-mode');
-    requestAnimationFrame(()=>_wireRecoCardClicks(recoPanel));
-  }else{
-    if(spiralEl){spiralEl.style.display='';spiralEl.style.opacity='1';}
-    if(recoPanel)recoPanel.style.display='none';
-    if(sb){sb.classList.remove('bio-results-mode');sb.style.position='';}
-    requestAnimationFrame(()=>renderSpiral(_spiralRecoItems||[],bio.cat||'films'));
+
+// ── CURADORIA: listas e streaming ───────────────────────────────────────────
+const CS_LISTS_KEY='cs_lists';
+function _getLists(){try{return JSON.parse(localStorage.getItem(CS_LISTS_KEY)||'[]');}catch(e){return[];}}
+function _saveLists(lists){try{localStorage.setItem(CS_LISTS_KEY,JSON.stringify(lists));}catch(e){}}
+
+function _renderCuraStats(){
+  const el=$('#curaStats');if(!el)return;
+  const lists=_getLists();
+  const total=lists.reduce((a,l)=>a+(l.films||[]).length,0);
+  el.innerHTML=
+    `<div class="cura-stat-card"><div class="cura-stat-n">${total}</div><div class="cura-stat-l">filmes salvos</div></div>`+
+    `<div class="cura-stat-card"><div class="cura-stat-n">${lists.length}</div><div class="cura-stat-l">listas</div></div>`+
+    `<div class="cura-stat-card" id="curaStatStream"><div class="cura-stat-n">·</div><div class="cura-stat-l">no streaming</div></div>`;
+  // async: count streaming films
+  const allKeys=[...new Set(lists.flatMap(l=>l.films||[]))];
+  const tmdbIds=allKeys.map(k=>cache[k]&&cache[k].id).filter(Boolean);
+  if(!tmdbIds.length)return;
+  Promise.all(tmdbIds.slice(0,30).map(id=>watchProviders(id).catch(()=>null))).then(()=>{
+    const n=tmdbIds.filter(id=>{const pv=_provCache[id];return pv&&pv.names&&pv.names.length;}).length;
+    const el2=$('#curaStatStream');if(el2)el2.innerHTML=`<div class="cura-stat-n">${n}</div><div class="cura-stat-l">no streaming</div>`;
+  });
+}
+
+function _renderCuraAll(){
+  const el=$('#curaViewAll');if(!el)return;
+  const lists=_getLists();
+
+  // Last reco highlight (full-width card)
+  let hiHtml='';
+  if(_bioRecoMovies&&_bioRecoMovies.length){
+    const m=_bioRecoMovies[0];
+    const yr=(m.release_date||'').slice(0,4);
+    const pv=_provCache[m.id];
+    const pvTxt=pv&&pv.names&&pv.names.length?`<div style="font-size:10px;color:var(--acc1);font-weight:600;margin-top:4px">📡 ${pv.names.slice(0,2).join(' · ')}</div>`:'';
+    const poster=m.poster_path
+      ?`<div class="cura-reco-hi-poster"><img src="${IMG}/w92${m.poster_path}" loading="lazy"/></div>`
+      :`<div class="cura-reco-hi-poster">${initials(m.original_title||m.title||'?')}</div>`;
+    const titleEsc=(m.original_title||m.title||'').replace(/"/g,'&quot;');
+    hiHtml=`<div class="cura-reco-hi" id="curaRecoHi" data-ckey="${key(m.title,yr)}">
+      ${poster}
+      <div class="cura-reco-hi-info">
+        <div style="font-size:10px;color:var(--acc1);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Última recomendação</div>
+        <div style="font-weight:800;font-size:15px;color:var(--ink);line-height:1.2;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.original_title||m.title}</div>
+        <div style="font-size:11.5px;color:var(--mut)">${yr}</div>
+        ${pvTxt}
+        <button class="cura-save-btn" id="curaRecoSave" data-ckey="${key(m.title,yr)}" data-tmdbid="${m.id||''}">📋 Salvar em lista</button>
+      </div>
+    </div>`;
   }
+
+  // List cards
+  const listCards=lists.map(l=>{
+    const filmRecs=(l.films||[]).map(k=>cache[k]).filter(Boolean);
+    const stripDivs=filmRecs.slice(0,3).map(r=>{
+      const img=r.po?`<img src="${IMG}/w92${r.po}" loading="lazy"/>`:'<span style="font-size:16px;color:var(--dim)">🎬</span>';
+      return `<div>${img}</div>`;
+    });
+    while(stripDivs.length<3)stripDivs.push('<div><span style="color:var(--line);font-size:10px">·</span></div>');
+    const withStream=filmRecs.filter(r=>r.id&&_provCache[r.id]&&_provCache[r.id]!==null&&(_provCache[r.id].names||[]).length);
+    const provNames=[...new Set(withStream.flatMap(r=>(_provCache[r.id].names||[]).slice(0,1)))].slice(0,2);
+    const provTxt=provNames.length?`<div class="cura-list-prov">📡 ${provNames.join(' · ')}</div>`:'';
+    return `<div class="cura-list-card" data-listid="${l.id}">
+      <div class="cura-list-strip">${stripDivs.join('')}</div>
+      <div class="cura-list-info">
+        <div class="cura-list-name">${l.icon||'📋'} ${l.name}</div>
+        <div class="cura-list-sub">${(l.films||[]).length} filme${(l.films||[]).length!==1?'s':''}</div>
+        ${provTxt}
+      </div>
+    </div>`;
+  }).join('');
+
+  const addCard='<div class="cura-add-card" id="curaAddList"><div style="font-size:24px;opacity:.35">+</div><div>Nova lista</div></div>';
+
+  el.innerHTML=`<div class="cura-grid">${hiHtml}${listCards}${addCard}</div>`;
+
+  // Wire list cards
+  $$('#curaViewAll .cura-list-card').forEach(card=>{
+    card.onclick=()=>_curaOpenList(card.dataset.listid);
+  });
+  const addBtn=$('#curaAddList');if(addBtn)addBtn.onclick=()=>_curaCreateList(null);
+  const hi=$('#curaRecoHi');
+  if(hi){
+    hi.onclick=e=>{
+      if(e.target.closest('#curaRecoSave'))return;
+      const k=hi.dataset.ckey;if(!k||!cache[k])return;
+      openFilm(k);
+    };
+  }
+  const saveBtn=$('#curaRecoSave');
+  if(saveBtn){
+    saveBtn.onclick=e=>{
+      e.stopPropagation();
+      // Ensure film in cache (may be a stub)
+      if(_bioRecoMovies&&_bioRecoMovies.length){
+        const m=_bioRecoMovies[0];
+        const yr=(m.release_date||'').slice(0,4);
+        const k=key(m.title,yr);
+        if(!cache[k])cache[k]={t:m.title,y:+yr||0,id:m.id,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null,ti:m.title,ot:m.original_title||m.title,ye:yr,src:'reco',_stub:1};
+        _curaPickList(k);
+      }
+    };
+  }
+}
+
+async function _renderCuraStream(){
+  const el=$('#curaViewStream');if(!el)return;
+  const lists=_getLists();
+  if(!lists.length){
+    el.innerHTML='<div style="text-align:center;padding:30px;color:var(--dim);line-height:1.6">Crie listas na aba "Todas as listas" e salve filmes nelas para ver disponibilidade no streaming aqui.</div>';
+    return;
+  }
+  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--dim)">Verificando disponibilidade no streaming BR…</div>';
+  const allKeys=[...new Set(lists.flatMap(l=>l.films||[]))];
+  const tmdbFilms=allKeys.map(k=>({key:k,r:cache[k]})).filter(x=>x.r&&x.r.id);
+  await Promise.all(tmdbFilms.slice(0,30).map(({r})=>watchProviders(r.id).catch(()=>{})));
+  const withStream=tmdbFilms.filter(({r})=>{const pv=_provCache[r.id];return pv&&pv.names&&pv.names.length;});
+  if(!withStream.length){
+    el.innerHTML='<div style="text-align:center;padding:30px;color:var(--dim);line-height:1.5">Nenhum filme das suas listas localizado no streaming BR agora.<br><br><span style="font-size:11px">Dados via TMDB/JustWatch · atualização diária</span></div>';
+    return;
+  }
+  const byProv={};
+  withStream.forEach(({key:k,r})=>{
+    (_provCache[r.id].names||[]).forEach(pname=>{
+      if(!byProv[pname])byProv[pname]=[];
+      byProv[pname].push({key:k,r});
+    });
+  });
+  let html='<div style="font-size:11.5px;color:var(--dim);line-height:1.4;margin-bottom:14px">Filmes das suas listas disponíveis no BR. Dados via TMDB / JustWatch · atualização diária.</div>';
+  Object.entries(byProv).sort((a,b)=>b[1].length-a[1].length).forEach(([pname,films])=>{
+    html+=`<div style="margin-bottom:18px">
+      <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700;margin-bottom:8px">${pname} · ${films.length} filme${films.length!==1?'s':''}</div>
+      <div style="display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px">
+        ${films.slice(0,12).map(({key:k,r})=>{
+          const seen=r.r!=null&&!r.wl;
+          return `<div style="flex-shrink:0;cursor:pointer;position:relative" class="cura-sf" data-filmkey="${k}">
+            ${r.po?`<img src="${IMG}/w92${r.po}" style="width:56px;height:84px;border-radius:6px;object-fit:cover;display:block" loading="lazy"/>`:'<div style="width:56px;height:84px;border-radius:6px;background:var(--p2);display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:22px">🎬</div>'}
+            ${seen?`<div style="position:absolute;left:2px;bottom:2px;background:rgba(0,0,0,.85);color:var(--acc1);font-size:8px;font-weight:800;border-radius:3px;padding:1px 4px">${r.r}★</div>`:''}
+          </div>`;
+        }).join('')}
+        ${films.length>12?`<div style="flex-shrink:0;width:40px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:11px;font-weight:700">+${films.length-12}</div>`:''}
+      </div>
+    </div>`;
+  });
+  el.innerHTML=html;
+  $$('#curaViewStream .cura-sf').forEach(d=>d.onclick=()=>openFilm(d.dataset.filmkey));
+}
+
+function _curaSetView(v){
+  ['All','Reco','Stream'].forEach(n=>{
+    const el=$('#curaView'+n);
+    if(el)el.style.display=n.toLowerCase()===v?'':'none';
+  });
+  $$('#curaToggle .cura-tv').forEach(b=>b.classList.toggle('on',b.dataset.cv===v));
+  if(v==='reco'){
+    const ctx=_recoContext();
+    const ctxEl=$('#recoCtxLine');
+    if(ctxEl){ctxEl.style.display='block';ctxEl.innerHTML=`<b>${ctx.dow}, ${ctx.periodo}</b> · ${ctx.dayNote}${ctx.season?` · <span class="season">${ctx.season}</span>`:''}`;}
+    const vibeHtml=Object.entries(VIBE_CFG).map(([k,vb])=>`<button class="reco-vibe${_bioRecoVibe===k?' on':''}" data-v="${k}"><span class="ricon">${RICON[k]}</span>${vb.name}</button>`).join('');
+    const va=$('#bioVibeArea');
+    if(va){va.style.display='';va.innerHTML=vibeHtml;va.onclick=e=>{const b=e.target.closest('.reco-vibe');if(b)_runBioReco(b.dataset.v);};}
+    const spiralEl=$('#spiral'),recoPanel=$('#bioRecoPanel'),sb=$('#spiralbox');
+    if(_bioRecoHTML&&recoPanel){
+      if(spiralEl){spiralEl.style.display='none';spiralEl.style.opacity='1';}
+      recoPanel.innerHTML=_bioRecoHTML;recoPanel.style.display='block';
+      if(sb)sb.classList.add('bio-results-mode');
+      requestAnimationFrame(()=>_wireRecoCardClicks(recoPanel));
+    }else{
+      if(spiralEl){spiralEl.style.display='';spiralEl.style.opacity='1';}
+      if(recoPanel)recoPanel.style.display='none';
+      if(sb){sb.classList.remove('bio-results-mode');sb.style.position='';}
+      requestAnimationFrame(()=>renderSpiral(_spiralRecoItems||[],bio.cat||'films'));
+    }
+  }else if(v==='all'){
+    _renderCuraAll();
+  }else if(v==='stream'){
+    _renderCuraStream();
+  }
+}
+
+function _curaOpenList(listId){
+  const lists=_getLists();
+  const list=lists.find(l=>l.id===listId);if(!list)return;
+  const filmItems=(list.films||[]).map(k=>{
+    const r=cache[k];if(!r)return null;
+    const pv=r.id&&_provCache[r.id];
+    const pvTxt=pv&&pv.names&&pv.names.length?`<span style="font-size:10px;color:var(--acc1);font-weight:600">${pv.names.slice(0,2).join(' · ')}</span>`:'';
+    const poster=r.po?`<img src="${IMG}/w92${r.po}" style="width:46px;height:69px;border-radius:5px;object-fit:cover;flex-shrink:0;cursor:pointer" loading="lazy" class="cura-fl-open" data-filmkey="${k}"/>`:
+      `<div style="width:46px;height:69px;border-radius:5px;background:var(--p2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;color:var(--dim);cursor:pointer" class="cura-fl-open" data-filmkey="${k}">🎬</div>`;
+    const seen=r.r!=null&&!r.wl;
+    const titleDisp=r.ot&&r.ot!==r.t?r.ot:r.t||'';
+    const titlePt=r.tp&&r.tp!==titleDisp?`<div style="font-size:11.5px;color:var(--mut);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.tp}</div>`:'';
+    return `<div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">
+      ${poster}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:13.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${titleDisp}</div>
+        ${titlePt}
+        <div style="font-size:11px;color:var(--dim)">${r.y||''}</div>
+        <div style="margin-top:3px">${pvTxt}</div>
+        ${seen?`<div style="font-size:10px;color:var(--acc1);margin-top:2px">★ ${r.r} · visto</div>`:''}
+      </div>
+      <button class="cura-fl-rem" data-filmkey="${k}" data-listid="${listId}" style="background:none;border:none;color:var(--dim);font-size:20px;padding:4px 8px;cursor:pointer;flex-shrink:0">×</button>
+    </div>`;
+  }).filter(Boolean).join('');
+  const sheetHtml=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+    <span style="font-size:20px">${list.icon||'📋'}</span>
+    <h3 style="margin:0;flex:1">${list.name}</h3>
+    <button id="curaLDel" data-listid="${listId}" style="background:none;border:1px solid var(--line);color:var(--mut);border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer">Excluir</button>
+  </div>
+  ${filmItems||'<div style="color:var(--dim);text-align:center;padding:24px;line-height:1.5">Lista vazia.<br>Salve filmes das recomendações ou das fichas.</div>'}`;
+  showSheet(sheetHtml,null);
+  $$('#sheet .cura-fl-open').forEach(el=>el.onclick=()=>openFilm(el.dataset.filmkey));
+  $$('#sheet .cura-fl-rem').forEach(btn=>btn.onclick=()=>{
+    const ls=_getLists();const l=ls.find(x=>x.id===btn.dataset.listid);if(!l)return;
+    l.films=(l.films||[]).filter(k=>k!==btn.dataset.filmkey);
+    _saveLists(ls);toast('Removido da lista');_curaOpenList(btn.dataset.listid);
+  });
+  const delBtn=$('#curaLDel');
+  if(delBtn)delBtn.onclick=()=>{
+    if(!confirm('Excluir a lista "'+list.name+'"?'))return;
+    _saveLists(_getLists().filter(l=>l.id!==listId));
+    $('#modal').classList.remove('show');
+    _renderCuraAll();_renderCuraStats();toast('Lista excluída');
+  };
+}
+
+function _curaPickList(filmKey){
+  const lists=_getLists();
+  const r=cache[filmKey];const titleDisp=r?r.ot||r.t:'';
+  if(!lists.length){_curaCreateList(filmKey);return;}
+  const items=lists.map(l=>{
+    const inList=(l.films||[]).includes(filmKey);
+    return `<button class="cura-pick-item" data-listid="${l.id}" data-filmkey="${filmKey}" data-inlist="${inList?'1':'0'}">
+      <span style="font-size:18px">${l.icon||'📋'}</span>
+      <div style="flex:1;text-align:left">
+        <div style="font-size:13.5px;font-weight:700;color:var(--ink)">${l.name}</div>
+        <div style="font-size:11px;color:var(--dim)">${(l.films||[]).length} filmes</div>
+      </div>
+      <span style="font-size:20px;color:${inList?'var(--acc1)':'var(--line)'}">${inList?'✓':'○'}</span>
+    </button>`;
+  }).join('');
+  showSheet(`<h3 style="margin:0 0 4px">Salvar em lista</h3>
+    <div style="font-size:12px;color:var(--mut);margin-bottom:12px">${titleDisp}</div>
+    ${items}
+    <button id="curaPLNew" style="width:100%;margin-top:10px;background:none;border:1px dashed var(--line);color:var(--acc1);border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">+ Nova lista</button>`,null);
+  $$('#sheet .cura-pick-item').forEach(btn=>{
+    btn.onclick=()=>{
+      const ls=_getLists();const l=ls.find(x=>x.id===btn.dataset.listid);if(!l)return;
+      const k=btn.dataset.filmkey;
+      if((l.films||[]).includes(k)){l.films=l.films.filter(x=>x!==k);toast('Removido de "'+l.name+'"');}
+      else{if(!l.films)l.films=[];l.films.push(k);toast('Salvo em "'+l.name+'"');}
+      _saveLists(ls);_renderCuraAll();_renderCuraStats();$('#modal').classList.remove('show');
+    };
+  });
+  const np=$('#curaPLNew');if(np)np.onclick=()=>{$('#modal').classList.remove('show');setTimeout(()=>_curaCreateList(filmKey),220);};
+}
+
+function _curaCreateList(filmKey){
+  const ICONS=['📋','🎬','🎃','🎭','🌙','⭐','🔥','🌿','👁','🎪','🌊','🎯'];
+  let selIc=ICONS[0];
+  showSheet(`<h3 style="margin:0 0 12px">Nova lista</h3>
+    <div style="margin-bottom:10px">
+      <label style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:5px">Nome</label>
+      <input id="curaLName" type="text" placeholder="Ex: Terror de outubro" maxlength="40"
+        style="width:100%;box-sizing:border-box;background:var(--p2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);font-size:14px;outline:none"/>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px">Ícone</label>
+      <div id="curaIconGrid" style="display:flex;gap:6px;flex-wrap:wrap">
+        ${ICONS.map((ic,i)=>`<button class="cura-ic-btn${i===0?' ic-sel':''}" data-ic="${ic}" style="${i===0?'border-color:var(--acc1);background:#1ec98a18':''}">
+          ${ic}</button>`).join('')}
+      </div>
+    </div>
+    <button id="curaLCreate" style="width:100%;background:var(--acc1);border:none;color:#0a1a0a;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer">Criar lista</button>`,null);
+  $$('#sheet .cura-ic-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      selIc=btn.dataset.ic;
+      $$('#sheet .cura-ic-btn').forEach(b=>{
+        const s=b.dataset.ic===selIc;
+        b.style.borderColor=s?'var(--acc1)':'var(--line)';
+        b.style.background=s?'#1ec98a18':'var(--p2)';
+      });
+    };
+  });
+  const createBtn=$('#curaLCreate');
+  if(createBtn)createBtn.onclick=()=>{
+    const nameEl=$('#curaLName');if(!nameEl)return;
+    const name=nameEl.value.trim();if(!name){toast('Dê um nome para a lista');return;}
+    const ls=_getLists();
+    const nl={id:'cl_'+Date.now(),name,icon:selIc,films:filmKey?[filmKey]:[],created:Date.now()};
+    ls.push(nl);_saveLists(ls);
+    toast('Lista "'+name+'" criada'+(filmKey?' · filme adicionado':''));
+    $('#modal').classList.remove('show');_renderCuraAll();_renderCuraStats();
+  };
+}
+
+let _curaTogWired=false;
+function openRecoModal(){
+  if(!_curaTogWired){
+    const tog=$('#curaToggle');
+    if(tog){tog.onclick=e=>{const b=e.target.closest('.cura-tv');if(b)_curaSetView(b.dataset.cv);};_curaTogWired=true;}
+  }
+  _renderCuraStats();
+  _curaSetView('all');
   $('#recoOver').classList.add('show');
-  _loadRecoTrending();
 }
 // recoOverClose removed — nav overlay fechada pela navegação inferior
 
 /* ── Popular sections in reco tab ── */
 let _recoTrendCache=null;let _recoTrendTs=0;let _recoTrendLoading=false;
-async function _loadRecoTrending(){
-  const el=$('#recoTrending');if(!el)return;
+async function _loadTrending(el){
+  if(!el)return;
   if(!KEY){el.innerHTML='';return;}
   const now=Date.now();
   if(_recoTrendCache&&(now-_recoTrendTs)<600000){el.innerHTML=_recoTrendCache;_wireTrendClicks(el);return;}
@@ -1718,17 +2037,29 @@ function _updateBotNav(){
   // sync tabs-mode visibility with content tab state
   if(!contentTabs.includes(tab)){document.body.classList.remove('tabs-mode');}
 }
-function _setTab(t){$$('#tabs button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));tab=t;render();_updateBotNav();}
+function _updateHeaderBtns(t){
+  const s=$('#search'),g=$('#gear');
+  if(!s||!g)return;
+  if(['films','dir','actor','actress','genre','stats'].includes(t)){
+    s.style.display='none';g.style.display='none';
+  } else if(t==='bio'){
+    s.style.display='none';g.style.display='';
+  } else {
+    s.style.display='';g.style.display='';
+  }
+}
+function _setTab(t){$$('#tabs button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));tab=t;render();_updateBotNav();_updateHeaderBtns(t);}
 $('#tabs').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b)return;_setTab(b.dataset.t);};
 function _hideNavOverlays(){$('#searchOver').classList.remove('show');$('#recoOver').classList.remove('show');stopSpiralAnim();}
 $('#bnBio').onclick=()=>{_hideNavOverlays();document.body.classList.remove('tabs-mode');_setTab('bio');};
 $('#bnStats').onclick=()=>{_hideNavOverlays();document.body.classList.remove('tabs-mode');_setTab('stats');};
-$('#bnSearch').onclick=()=>{_hideNavOverlays();document.body.classList.remove('tabs-mode');$$('.bot-nav-item,.bot-nav-center').forEach(b=>b.classList.remove('on'));$('#searchOver').classList.add('show');$('#bnSearch').classList.add('on');setTimeout(()=>{$('#searchIn').focus();if(!$('#searchIn').value.trim())_showSearchExplore();},100);};
-$('#bnReco').onclick=()=>{_hideNavOverlays();document.body.classList.remove('tabs-mode');openRecoModal();$('#bnReco').classList.add('on');};
+$('#bnSearch').onclick=()=>{_hideNavOverlays();document.body.classList.remove('tabs-mode');_updateHeaderBtns('search');$$('.bot-nav-item,.bot-nav-center').forEach(b=>b.classList.remove('on'));$('#searchOver').classList.add('show');$('#bnSearch').classList.add('on');setTimeout(()=>{$('#searchIn').focus();if(!$('#searchIn').value.trim())_showSearchExplore();},100);};
+$('#bnReco').onclick=()=>{_hideNavOverlays();document.body.classList.remove('tabs-mode');_updateHeaderBtns('reco');$$('.bot-nav-item,.bot-nav-center').forEach(b=>b.classList.remove('on'));openRecoModal();$('#bnReco').classList.add('on');};
 $('#bnTabs').onclick=()=>{
   _hideNavOverlays();
   const contentTabs=['films','dir','actor','actress'];
   document.body.classList.add('tabs-mode');
+  _updateHeaderBtns(contentTabs.includes(tab)?tab:'films');
   if(!contentTabs.includes(tab)){_setTab('films');}else{_updateBotNav();}
   const tabsEl=$('#tabs');if(tabsEl)tabsEl.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
 };
@@ -2120,10 +2451,11 @@ function _recoCard(o){
   const _rejectBtn=o.tmdbId?'<button class="reco-reject" data-reject="'+o.tmdbId+'" title="Não mostrar mais">'+ICON_RECO_REJECT+'</button>':'';
   const _krec=cache[o.ckey||_rk];const _onWl=!!(_krec&&_krec.wl);const _seen=!!(_krec&&_krec.r!=null&&!_krec.wl);
   const wlBtn=_seen?'<div class="reco-score" style="color:var(--acc1)">'+ICON_CHECK+' Já visto</div>':'<button class="reco-wl-btn'+(_onWl?' on':'')+'" data-recowl="'+_matchKey+'">'+(_onWl?'✓ Na watchlist':'+ Quero ver')+'</button>';
+  const listSaveBtn='<button class="cura-save-btn" data-recsavelist="'+_matchKey+'" style="margin-top:5px">📋 Salvar em lista</button>';
   return '<div class="reco-card" data-cardid="'+(o.tmdbId||'')+'">'+po+'<div class="reco-info">'
     +'<div class="reco-title-row"><div class="reco-title">'+o.title+(o.year?' ('+o.year+')':'')+'</div>'+_rejectBtn+'</div>'
     +(meta?'<div class="reco-meta">'+meta+'</div>':'')
-    +scoreHtml+provHtml+wlBtn
+    +scoreHtml+provHtml+wlBtn+listSaveBtn
     +'</div></div>';
 }
 // Aviso curto quando a recomendação veio da alternativa paralela (populares), não do perfil.
@@ -2318,6 +2650,16 @@ function _wireRecoCardClicks(panel){
           _bioRecoHTML=p.innerHTML||null;
         }
       },300);
+    };
+  });
+  panel.querySelectorAll('[data-recsavelist]').forEach(btn=>{
+    btn.onclick=e=>{
+      e.stopPropagation();
+      const m=_findRecoMovie(btn.dataset.recsavelist);if(!m)return;
+      const yr=(m.release_date||'').slice(0,4);
+      const k=key(m.title,yr);
+      if(!cache[k])cache[k]={t:m.title,y:+yr||0,id:m.id,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null,ti:m.title,ot:m.original_title||m.title,ye:yr,src:'reco',_stub:1};
+      _curaPickList(k);
     };
   });
 }
@@ -2883,13 +3225,15 @@ async function openFilm(k){_curFilmKey=k;const r=cache[k];if(!r)return;const t=r
 function _filmExtrasHtml(r){
   const isWl=!!r.wl;
   const wlSection=isWl?`<div class="film-wl">${ICON_EYE} Está na sua <b>watchlist</b>. Toque nas estrelas acima para marcar como visto.</div><button class="btn sec" id="filmWlRemove" style="font-size:13px;margin-top:8px">Tirar da watchlist</button>`:'';
+  const unmarkSection=(!isWl&&r.r!=null)?`<button class="btn sec" id="filmUnmarkSeen" style="font-size:12px;margin-top:6px;color:var(--dim);padding:10px">× Remover dos vistos</button>`:'';
   // rewatch, date and share moved to openFilm rating row
 
   const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const noteSection=`<div class="lbl">Anotação / mini-review</div><textarea class="film-note" id="filmNote" placeholder="o que achou? (opcional)">${esc(r.note)}</textarea>`;
   const tags=(r.tags||[]);
   const tagsSection=`<div class="lbl">Tags</div><div class="film-tags" id="filmTags">${tags.map(t=>`<span class="ftag" data-t="${(t||'').replace(/"/g,'&quot;')}">${t} <i>×</i></span>`).join('')}<input class="ftag-in" id="filmTagIn" placeholder="+ tag" autocomplete="off"/></div>`;
-  return wlSection+noteSection+tagsSection;
+  const listSection=`<button class="btn sec" id="filmSaveList" style="font-size:12px;margin-top:6px;padding:10px">📋 Salvar em lista</button>`;
+  return wlSection+unmarkSection+listSection+noteSection+tagsSection;
 }
 function _wireFilmExtras(k){
   const nt=$('#filmNote');if(nt)nt.onblur=()=>{const rec=cache[k];if(!rec)return;const v=nt.value.trim();if(v)rec.note=v;else delete rec.note;put(k,rec);};
@@ -2946,6 +3290,8 @@ $('#sheet').addEventListener('click',e=>{
   // filmShareBtn handled by sheetShareBtn
   if(e.target.id==='rwPlus'||e.target.id==='rwMinus'){const rec=cache[_curFilmKey];if(!rec)return;rec.rw=Math.max(0,(rec.rw||0)+(e.target.id==='rwPlus'?1:-1));put(_curFilmKey,rec);const el=$('#rwN');if(el)el.textContent=rec.rw+' '+(rec.rw===1?'vez':'vezes');return;}
   if(e.target.id==='filmWlRemove'){del(_curFilmKey);$('#modal').classList.remove('show');PEOPLE=null;toast('Removido da watchlist');render();return;}
+  if(e.target.id==='filmUnmarkSeen'){const rec=cache[_curFilmKey];if(!rec)return;rec.r=null;rec.wl=1;delete rec.s;delete rec.ts;put(_curFilmKey,rec);PEOPLE=null;$('#modal').classList.remove('show');toast('Removido dos vistos: '+rec.t);render();return;}
+  if(e.target.id==='filmSaveList'){_curaPickList(_curFilmKey);return;}
   const fexp=e.target.closest('[data-filmo-expand]');
   if(fexp){const stKey=fexp.dataset.filmoExpand;const st=_filmoState[stKey];if(st){st.mode='all';_filmoRefresh(stKey);}return;}
   const fcol=e.target.closest('[data-filmo-collapse]');
@@ -2982,18 +3328,10 @@ function _previewStars(el,val){el.querySelectorAll('.s').forEach((s,idx)=>{const
 function starWidget(v,key){let h='';for(let i=1;i<=5;i++){const cls=v>=i?'full':(v>=i-0.5?'half':'');h+=`<span class="s ${cls}" data-key="${key}" data-i="${i}">${STAR_SVG}<span class="fg">${STAR_SVG}</span></span>`;}return `<div class="stars" data-key="${key}" data-orig="${v}">${h}</div>`;}
 function _showSearchExplore(){
   const sr=$('#searchRes');if(!sr)return;
-  const cats=[
-    {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 4v16M17 4v16M2 12h20M2 8h5M17 8h5M2 16h5M17 16h5"/></svg>',label:'Em cartaz',action:'playing'},
-    {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 2c0 6-6 8-6 13a6 6 0 0 0 12 0c0-5-6-7-6-13z"/><path d="M12 22v-4"/></svg>',label:'Populares agora',action:'popular'},
-    {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.869V15.13a1 1 0 0 1-1.447.9L15 14M4 6h9a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/></svg>',label:'Diretores',action:'dirs'},
-    {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>',label:'Atores & Atrizes',action:'actors'},
-    {icon:'<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style="color:var(--acc1)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',label:'Mais bem avaliados',action:'toprated'},
-    {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',label:'Por país',action:'country'}
-  ];
-  sr.innerHTML='<span class="srch-explore-title">Explorar</span><div class="srch-explore-grid">'
-    +cats.map(c=>'<button class="srch-cat-btn" data-explore="'+c.action+'"><span class="scat-icon">'+c.icon+'</span>'+c.label+'</button>').join('')+'</div>';
-  sr.onclick=e=>{const b=e.target.closest('.srch-cat-btn');if(b)_runExplore(b.dataset.explore);};
+  sr.innerHTML='';
+  _loadTrending(sr);
 }
+
 async function _runExplore(action){
   const sr=$('#searchRes');if(!sr)return;
   if(action==='dirs'||action==='actors'){
