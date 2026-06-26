@@ -1738,6 +1738,29 @@ function _smartFilms(sl){
   }
   return wl.filter(r=>(r.gids||[]).some(g=>sl.gids.includes(g)));
 }
+function _curaAutoMigrateWatchlist(){
+  if(localStorage.getItem('cs_wl_migrated'))return;
+  const wlEntries=Object.entries(cache).filter(([k,r])=>r&&r.wl);
+  localStorage.setItem('cs_wl_migrated','1');
+  if(!wlEntries.length)return;
+  const existing=_getLists();
+  const hasMigrated=existing.some(l=>l.id==='cl_geral');
+  if(hasMigrated)return;
+  // Geral list — all watchlist films
+  const geralFilms=wlEntries.map(([k])=>k);
+  const newLists=[{id:'cl_geral',name:'Geral',icon:'list',films:geralFilms,created:Date.now()}];
+  // Genre auto-lists
+  SMART_LISTS_DEF.filter(sl=>!sl.catch).forEach(sl=>{
+    const matching=wlEntries.filter(([k,r])=>{
+      if(sl.lang)return r.lang===sl.lang;
+      return(r.gids||[]).some(g=>sl.gids.includes(g));
+    });
+    if(!matching.length)return;
+    newLists.push({id:'cl_auto_'+sl.id,name:sl.name,icon:sl.icon,films:matching.map(([k])=>k),created:Date.now()});
+  });
+  _saveLists([...existing,...newLists]);
+  toast(fmt(wlEntries.length)+' filme'+( wlEntries.length!==1?'s':'')+' distribuídos em '+newLists.length+' lista'+( newLists.length!==1?'s':''));
+}
 function _renderCuraStats(){
   const el=$('#curaStats');if(!el)return;
   const lists=_getLists();
@@ -1754,6 +1777,7 @@ function _renderCuraStats(){
   });
 }
 function _renderCuraAll(){
+  _curaAutoMigrateWatchlist();
   const el=$('#curaViewAll');if(!el)return;
   const lists=_getLists();
   // Smart lists
@@ -1797,28 +1821,138 @@ function _renderCuraAll(){
 async function _renderCuraStream(){
   const el=$('#curaViewStream');if(!el)return;
   const lists=_getLists();const myP=_getMyProviders();
-  const provHdr=`<div style="background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:14px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700">Meus streamings</div><button id="curaProvEdit" style="background:none;border:1px solid var(--line);color:var(--acc1);border-radius:6px;padding:2px 8px;font-size:10.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px">${_icon('settings',13)} Configurar</button></div>${myP.length?`<div style="display:flex;gap:6px;flex-wrap:wrap">${myP.map(p=>`<div style="background:var(--p2);border:1px solid var(--acc1)30;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:700;color:var(--ink)">${p}</div>`).join('')}</div>`:'<div style="font-size:12px;color:var(--dim)">Toque em Configurar para selecionar seus serviços.</div>'}</div>`;
+
+  const provHdr=`<div style="background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700">Meus streamings</div>
+      <button id="curaProvEdit" style="background:none;border:1px solid var(--line);color:var(--acc1);border-radius:6px;padding:2px 8px;font-size:10.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px">${_icon('settings',13)} Configurar</button>
+    </div>
+    ${myP.length
+      ?`<div style="display:flex;gap:6px;flex-wrap:wrap">${myP.map(p=>`<div style="background:var(--p2);border:1px solid ${T1}30;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:700;color:var(--ink)">${p}</div>`).join('')}</div>`
+      :'<div style="font-size:12px;color:var(--dim)">Toque em Configurar para selecionar seus serviços.</div>'
+    }
+  </div>`;
+
+  const T1='#1ec98a';
   el.innerHTML=provHdr+'<div style="text-align:center;padding:16px;color:var(--dim)">Verificando disponibilidade…</div>';
   const pb=$('#curaProvEdit');if(pb)pb.onclick=_curaSelectProviders;
+
+  // Collect all films (custom lists + smart watchlist)
   const wlKeys=Object.keys(cache).filter(k=>cache[k]&&cache[k].wl);
   const cKeys=[...new Set(lists.flatMap(l=>l.films||[]))];
   const allKeys=[...new Set([...wlKeys,...cKeys])];
   const tmdbF=allKeys.map(k=>({key:k,r:cache[k]})).filter(x=>x.r&&x.r.id);
-  await Promise.all(tmdbF.slice(0,40).map(({r})=>watchProviders(r.id).catch(()=>{})));
+
+  await Promise.all(tmdbF.slice(0,50).map(({r})=>watchProviders(r.id).catch(()=>{})));
+
   const withStr=tmdbF.filter(({r})=>{const pv=_provCache[r.id];return pv&&pv.names&&pv.names.length;});
-  if(!withStr.length){el.innerHTML=provHdr+'<div style="text-align:center;padding:24px;color:var(--dim);line-height:1.5">Nenhum filme do Repertório localizado no streaming BR agora.<br><span style="font-size:11px">Dados via TMDB / JustWatch</span></div>';const pb2=$('#curaProvEdit');if(pb2)pb2.onclick=_curaSelectProviders;return;}
-  const byP={};withStr.forEach(({key:k,r})=>{(_provCache[r.id].names||[]).forEach(pn=>{if(!byP[pn])byP[pn]=[];byP[pn].push({key:k,r});});});
-  const entries=Object.entries(byP).sort((a,b)=>{const as=myP.includes(a[0]),bs=myP.includes(b[0]);if(as!==bs)return bs-as;return b[1].length-a[1].length;});
-  let html='<div style="font-size:11.5px;color:var(--dim);line-height:1.4;margin-bottom:14px">Filmes do Repertório disponíveis no BR. Dados via TMDB / JustWatch.</div>';
-  entries.forEach(([pn,pf])=>{
-    const mine=myP.includes(pn);
-    if(myP.length&&!mine)return;
-    html+=`<div style="margin-bottom:18px"><div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:5px;color:${mine||!myP.length?'var(--ink)':'var(--dim)'}"><span style="color:var(--acc1)">${mine?_icon('check',13):''}</span>${pn} · ${pf.length}</div><div style="display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px">${pf.slice(0,12).map(({key:k,r})=>{const seen=r.r!=null&&!r.wl;return `<div class="cura-sf" data-filmkey="${k}">${r.po?`<img src="${IMG}/w92${r.po}" style="width:56px;height:84px;border-radius:6px;object-fit:cover;display:block" loading="lazy"/>`:`<div style="width:56px;height:84px;border-radius:6px;background:var(--p2);display:flex;align-items:center;justify-content:center;color:var(--dim)">${_icon('film',22)}</div>`}${seen?`<div style="position:absolute;left:2px;bottom:2px;background:rgba(0,0,0,.85);color:var(--acc1);font-size:8px;font-weight:800;border-radius:3px;padding:1px 4px">${r.r}★</div>`:''}</div>`;}).join('')}${pf.length>12?`<div style="flex-shrink:0;width:36px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:11px;font-weight:700">+${pf.length-12}</div>`:''}</div></div>`;
+
+  if(!withStr.length){
+    el.innerHTML=provHdr+'<div style="text-align:center;padding:24px;color:var(--dim);line-height:1.5">Nenhum filme do Repertório no streaming BR agora.<br><span style="font-size:11px">Dados via TMDB · JustWatch</span></div>';
+    const pb2=$('#curaProvEdit');if(pb2)pb2.onclick=_curaSelectProviders;
+    return;
+  }
+
+  // Group by provider
+  const byP={};
+  withStr.forEach(({key:k,r})=>{
+    (_provCache[r.id].names||[]).forEach(pn=>{
+      if(!byP[pn])byP[pn]=[];
+      if(!byP[pn].find(x=>x.key===k))byP[pn].push({key:k,r});
+    });
   });
-  el.innerHTML=provHdr+html;
+
+  // Filter to subscribed providers if configured
+  const provEntries=Object.entries(byP)
+    .filter(([pn])=>!myP.length||myP.includes(pn))
+    .sort((a,b)=>b[1].length-a[1].length);
+
+  if(!provEntries.length){
+    el.innerHTML=provHdr+'<div style="text-align:center;padding:20px;color:var(--dim);line-height:1.5">Nenhum dos seus streamings tem filmes do Repertório disponíveis agora.</div>';
+    const pb3=$('#curaProvEdit');if(pb3)pb3.onclick=_curaSelectProviders;
+    return;
+  }
+
+  // Total count (unique films across all shown providers)
+  const totalUniq=new Set(provEntries.flatMap(([,pf])=>pf.map(x=>x.key))).size;
+
+  // Build filter chips HTML
+  const chipBar=`<div id="curaStreamChips" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:10px">
+    <button class="cura-stream-chip on" data-cprov="all" style="border:1px solid ${T1};background:${T1}18;color:${T1};border-radius:18px;padding:5px 12px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">Todos · ${totalUniq}</button>
+    ${provEntries.map(([pn,pf])=>`<button class="cura-stream-chip" data-cprov="${pn}" style="border:1px solid var(--line);background:var(--p2);color:var(--mut);border-radius:18px;padding:5px 12px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">${pn} · ${pf.length}</button>`).join('')}
+  </div>`;
+
+  // Build total counter
+  const totalBar=`<div id="curaStreamTotal" style="font-size:12px;color:var(--dim);margin-bottom:12px;line-height:1.5">
+    <span id="curaStreamTotalN" style="font-size:18px;font-weight:800;color:var(--acc1)">${totalUniq}</span>
+    <span style="margin-left:6px">filme${totalUniq!==1?'s':''} disponíveis${myP.length?' nos seus streamings':' no streaming BR'}</span>
+  </div>`;
+
+  // Build provider sections
+  let sectionsHtml='';
+  provEntries.forEach(([pn,pf])=>{
+    const isMine=myP.includes(pn)||!myP.length;
+    sectionsHtml+=`<div class="cura-prov-section" data-section="${pn}" style="margin-bottom:18px">
+      <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:5px;color:var(--ink)">
+        ${isMine?`<span style="color:${T1}">${_icon('check',12)}</span>`:''}
+        ${pn} · ${pf.length}
+      </div>
+      <div style="display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px">
+        ${pf.slice(0,16).map(({key:k,r})=>{
+          const seen=r.r!=null&&!r.wl;
+          return `<div class="cura-sf" data-filmkey="${k}" style="flex-shrink:0;cursor:pointer;position:relative">
+            ${r.po?`<img src="${IMG}/w92${r.po}" style="width:56px;height:84px;border-radius:6px;object-fit:cover;display:block" loading="lazy"/>`:`<div style="width:56px;height:84px;border-radius:6px;background:var(--p2);display:flex;align-items:center;justify-content:center;color:var(--dim)">${_icon('film',22)}</div>`}
+            ${seen?`<div style="position:absolute;left:2px;bottom:2px;background:rgba(0,0,0,.85);color:${T1};font-size:8px;font-weight:800;border-radius:3px;padding:1px 4px">${r.r}★</div>`:''}
+          </div>`;
+        }).join('')}
+        ${pf.length>16?`<div style="flex-shrink:0;width:36px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:11px;font-weight:700">+${pf.length-16}</div>`:''}
+      </div>
+    </div>`;
+  });
+
+  const disclaimer='<div style="font-size:11px;color:var(--dim);margin-top:8px">Dados via TMDB · JustWatch · atualização diária</div>';
+
+  el.innerHTML=provHdr+totalBar+chipBar+sectionsHtml+disclaimer;
+
+  // Wire poster clicks
   $$('#curaViewStream .cura-sf').forEach(d=>d.onclick=()=>openFilm(d.dataset.filmkey));
-  const pb3=$('#curaProvEdit');if(pb3)pb3.onclick=_curaSelectProviders;
+
+  // Wire provider config button
+  const pb4=$('#curaProvEdit');if(pb4)pb4.onclick=_curaSelectProviders;
+
+  // Wire filter chips
+  $$('#curaStreamChips .cura-stream-chip').forEach(chip=>{
+    chip.onclick=()=>{
+      const prov=chip.dataset.cprov;
+      // Update chip styles
+      $$('#curaStreamChips .cura-stream-chip').forEach(c2=>{
+        const isThis=c2===chip;
+        c2.style.borderColor=isThis?T1:'var(--line)';
+        c2.style.background=isThis?T1+'18':'var(--p2)';
+        c2.style.color=isThis?T1:'var(--mut)';
+      });
+      // Filter sections
+      $$('#curaViewStream .cura-prov-section').forEach(sec=>{
+        sec.style.display=(prov==='all'||sec.dataset.section===prov)?'':'none';
+      });
+      // Update total counter
+      const totalEl=$('#curaStreamTotalN');
+      if(totalEl){
+        if(prov==='all'){
+          totalEl.textContent=String(totalUniq);
+          const parent=totalEl.parentElement;
+          if(parent){const span=parent.querySelectorAll('span')[1];if(span)span.textContent=' filme'+( totalUniq!==1?'s':'')+' disponíveis'+(myP.length?' nos seus streamings':' no streaming BR');}
+        } else {
+          const pf=byP[prov]||[];
+          totalEl.textContent=String(pf.length);
+          const parent=totalEl.parentElement;
+          if(parent){const span=parent.querySelectorAll('span')[1];if(span)span.textContent=' filme'+(pf.length!==1?'s':'')+' em '+prov;}
+        }
+      }
+    };
+  });
 }
+
 function _curaSelectProviders(){
   const myP=_getMyProviders();
   const items=BR_PROVIDERS.map(p=>`<button class="cura-pick-item" data-prov="${p.name}"><div style="flex:1;font-size:14px;font-weight:700;color:var(--ink)">${p.name}</div><span class="cpchk" style="color:${myP.includes(p.name)?'var(--acc1)':'var(--line)'}">${myP.includes(p.name)?_icon('check',14):_icon('circle',14)}</span></button>`).join('');
@@ -2378,8 +2512,8 @@ function _recoCard(o){
     scoreHtml='<div class="reco-score" style="color:var(--acc1)">'+o.status+'</div>';
   const provHtml=(o.providers&&o.providers.length)?'<div class="reco-prov">'+ICON_PLAY+'Streaming BR: <b>'+o.providers.join(' · ')+'</b></div>':'';
   const _rejectBtn=o.tmdbId?'<button class="reco-reject" data-reject="'+o.tmdbId+'" title="Não mostrar mais">'+ICON_RECO_REJECT+'</button>':'';
-  const _krec=cache[o.ckey||_rk];const _onWl=!!(_krec&&_krec.wl);const _seen=!!(_krec&&_krec.r!=null&&!_krec.wl);
-  const wlBtn=_seen?'<div class="reco-score" style="color:var(--acc1)">'+ICON_CHECK+' Já visto</div>':'<button class="reco-wl-btn'+(_onWl?' on':'')+'" data-recowl="'+_matchKey+'">'+(_onWl?'✓ Na watchlist':'+ Quero ver')+'</button>';
+  const _krec=cache[o.ckey||_rk];const _seen=!!(_krec&&_krec.r!=null&&!_krec.wl);
+  const wlBtn=_seen?'<div class="reco-score" style="color:var(--acc1)">'+ICON_CHECK+' Já visto</div>':'';
   const listSaveBtn='<button class="cura-save-btn" data-recsavelist="'+_matchKey+'" style="margin-top:5px">📋 Salvar no Repertório</button>';
   return '<div class="reco-card" data-cardid="'+(o.tmdbId||'')+'">'+po+'<div class="reco-info">'
     +'<div class="reco-title-row"><div class="reco-title">'+o.title+(o.year?' ('+o.year+')':'')+'</div>'+_rejectBtn+'</div>'
@@ -2531,33 +2665,6 @@ function _wireRecoCardClicks(panel){
         gids:m.genre_ids||[],lang:m.original_language||null,ti:m.title,
         ot:m.original_title||m.title,ye:yr,src:'reco',_stub:1};
       openFilm(k);
-    };
-  });
-  panel.querySelectorAll('.reco-wl-btn').forEach(btn=>{
-    btn.onclick=e=>{
-      e.stopPropagation();
-      const m=_bioRecoMovies&&_findRecoMovie(btn.dataset.recowl);if(!m)return;
-      const yr=(m.release_date||'').slice(0,4);
-      const k=key(m.title,yr);
-      let rec=cache[k];
-      if(rec&&rec.wl){delete rec.wl;put(k,rec);toast('Tirado da watchlist');}
-      else if(rec&&rec.r!=null){toast('Esse você já assistiu');return;}
-      else{
-        rec=rec||{t:m.title,y:+yr||0};
-        rec.wl=1;rec.r=null;rec.id=m.id;rec.po=m.poster_path||null;
-        rec.gids=m.genre_ids||[];rec.lang=m.original_language||null;
-        rec.ti=m.title;rec.ot=m.original_title||m.title;rec.ye=String(yr);rec.src='reco';
-        cache[k]=rec;put(k,rec);toast('Quero ver: '+m.title);
-        if(rec.id&&!rec.cc){
-          credits(rec.id).then(c=>{
-            if(c){rec.ca=c.ca;rec.di=c.di;rec.co=c.co;if(c.rt)rec.rt=c.rt;rec.lang=c.lang;}
-            rec.cc=1;put(k,rec);PEOPLE=null;
-          });
-        }
-      }
-      PEOPLE=null;
-      btn.classList.toggle('on',!!cache[k].wl);
-      btn.textContent=cache[k].wl?'✓ Na watchlist':'+ Quero ver';
     };
   });
   panel.querySelectorAll('.reco-reject').forEach(btn=>{
@@ -3141,9 +3248,9 @@ async function openFilm(k){_curFilmKey=k;const r=cache[k];if(!r)return;const t=r
   const cast=(r.ca||[]).map(c=>{const ph=c[3]?`<img src="${IMG}/w185${c[3]}" data-pid="${c[0]}" data-pname="${(c[1]||'').replace(/"/g,'&quot;')}" data-ppic="${c[3]}" style="cursor:pointer;border-radius:inherit"/>` :`<div class="ini" data-pid="${c[0]}" data-pname="${(c[1]||'').replace(/"/g,'&quot;')}" style="cursor:pointer">${initials(c[1])}</div>`;return `<div class="c">${ph}<div class="cn">${c[1]}</div>${c[4]?`<div class="cc">${c[4]}</div>`:''}</div>`;}).join('');
   if(r.id&&(r.ov===undefined||r.tp===undefined)){const d=await movieDetails(r.id);if(d){r.ov=d.ov;r.rt=d.rt;r.tg=d.tg;if(d.tp)r.tp=d.tp;put(k,r);}}
   const runtime=r.rt?`${Math.floor(r.rt/60)}h ${r.rt%60}min`:'';
-  const tagline=r.tg?`<div class="yr" style="margin-top:4px;font-style:italic;color:var(--dim)">"${r.tg}"</div>`:'';
+
   const overview=r.ov?`<div class="lbl">Sinopse</div><p id="filmOv" style="font-size:13px;color:var(--mut);line-height:1.6;margin:0 0 4px"></p>`:'';
-  showSheet(`<div class="top">${poster}<div><h3>${_titleHtml(r)}</h3><div class="yr">${y}${runtime?' · <b>'+runtime+'</b>':''}${r.r!=null?` · sua nota <b>${star(r.r)}</b>`:''}</div>${tagline}${gn?`<div class="yr" style="margin-top:6px">${gn}</div>`:''}${dirs?`<div class="yr" style="margin-top:6px">Direção: <b>${dirs}</b></div>`:''}</div></div>
+  showSheet(`<div class="top">${poster}<div><h3>${_titleHtml(r)}</h3><div class="yr">${y}${runtime?' · <b>'+runtime+'</b>':''}${r.r!=null?` · sua nota <b>${star(r.r)}</b>`:''}</div>${gn?`<div class="yr" style="margin-top:6px">${gn}</div>`:''}${dirs?`<div class="yr" style="margin-top:6px">Direção: <b>${dirs}</b></div>`:''}</div></div>
     ${overview}
     <div class="lbl">Sua nota</div><div class="rating-row">${starWidget(r.r||0,k)}${!r.wl?`<div class="rw-ctl"><button class="rw-b" id="rwMinus">−</button><span class="rw-n" id="rwN">${r.rw||0} ${(r.rw||0)===1?'vez':'vezes'}</span><button class="rw-b" id="rwPlus">+</button></div>`:''}</div>${!r.wl?`<div class="date-share-row"><input type="date" id="filmDate" class="film-date-mini" value="${r.ts?new Date(r.ts).toISOString().slice(0,10):''}" title="Data que assisti"/><button class="rw-b" id="filmDateClear" title="Limpar data" style="padding:0 8px;font-size:16px">×</button></div>`:''}<div class="rate-hint">Deslize sobre as estrelas · metade esquerda = ,5 · arraste antes da 1ª estrela para apagar nota</div>
     ${_filmExtrasHtml(r)}
@@ -3152,9 +3259,9 @@ async function openFilm(k){_curFilmKey=k;const r=cache[k];if(!r)return;const t=r
   _wireFilmExtras(k);}
 function _filmExtrasHtml(r){
   const isWl=!!r.wl;
-  const wlSection=isWl?`<div class="film-wl">${ICON_EYE} Está na sua <b>watchlist</b>. Toque nas estrelas acima para marcar como visto.</div><button class="btn sec" id="filmWlRemove" style="font-size:13px;margin-top:8px">Tirar da watchlist</button>`:'';
+  const wlSection='';
   const unmarkSection=(!isWl&&r.r!=null)?`<button class="btn sec" id="filmUnmarkSeen" style="font-size:12px;margin-top:6px;color:var(--dim);padding:10px">× Remover dos vistos</button>`:'';
-  const listSection=`<button class="btn sec" id="filmSaveList" style="font-size:12px;margin-top:6px;padding:10px">📋 Salvar no Repertório</button>`;
+  const listSection=`<button class="btn sec" id="filmSaveList" style="font-size:12px;margin-top:6px;padding:10px;display:flex;align-items:center;gap:6px">${_icon('bookmark',13)} Salvar no Repertório</button>`;
   // rewatch, date and share moved to openFilm rating row
 
   const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
