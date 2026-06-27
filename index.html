@@ -403,7 +403,7 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .rating-row{display:flex;align-items:center;gap:12px;margin-top:2px}
 .rating-row .stars{flex:1}
 .film-date-mini{background:var(--panel);border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:5px 8px;font-size:12px;flex:1;min-width:0;cursor:pointer}
-.date-share-row{display:flex;align-items:center;gap:10px;margin-top:8px}.date-action-row{display:flex;align-items:center;gap:7px;margin-top:8px}.film-action-icon{width:34px;height:34px;flex:none;border-radius:8px;border:1px solid var(--line);background:var(--panel);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--mut);transition:border-color .15s,color .15s;padding:0}.film-action-icon:hover{border-color:var(--acc1);color:var(--acc1)}.film-action-icon.danger:hover{border-color:var(--acc2);color:var(--acc2)}.film-action-icon.danger.confirming{border-color:var(--acc2);color:var(--acc2);background:rgba(255,46,67,.12)}.film-action-icon svg{width:14px;height:14px;pointer-events:none}
+.date-share-row{display:flex;align-items:center;gap:10px;margin-top:8px}.date-action-row{display:flex;align-items:center;gap:7px;margin-top:8px}.film-action-icon{width:34px;height:34px;flex:none;border-radius:8px;border:1px solid var(--line);background:var(--panel);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--mut);transition:border-color .15s,color .15s;padding:0}.film-action-icon:hover{border-color:var(--acc1);color:var(--acc1)}.film-action-icon.danger{color:rgba(255,46,67,.55);border-color:rgba(255,46,67,.35)}.film-action-icon.danger:hover{border-color:var(--acc2);color:var(--acc2)}.film-action-icon.danger.confirming{border-color:var(--acc2);color:var(--acc2);background:rgba(255,46,67,.14)}.film-action-icon svg{width:14px;height:14px;pointer-events:none}
 .spiral-placeholder{display:flex;align-items:center;justify-content:center;width:100%;border-radius:12px;background:radial-gradient(circle at 50%,rgba(30,201,138,.07) 0%,transparent 70%);border:1px dashed var(--line)}
 .spiral-ph-inner{text-align:center;padding:28px 16px;color:var(--dim)}
 .spiral-ph-txt{font-size:12px;line-height:1.5;margin:6px 0 0}
@@ -1049,7 +1049,7 @@ async function watchProviders(id){
 }
 async function movieDetails(id){
   const j=await tmdb('/movie/'+id,{language:'pt-BR'}); if(!j)return null;
-  return {ov:(j.overview||'').trim(),rt:j.runtime||null,tg:(j.tagline||'').slice(0,120),tp:j.title||null};
+  return {ov:(j.overview||'').trim(),rt:j.runtime||null,tg:(j.tagline||'').slice(0,120),tp:j.title||null,gids:(j.genres||[]).map(g=>g.id)};
 }
 async function personBio(id){
   const j=await tmdb('/person/'+id,{language:'pt-BR'}); if(!j)return null;
@@ -3258,7 +3258,7 @@ async function openFilm(k){_curFilmKey=k;const r=cache[k];if(!r)return;const t=r
   const dirs=(r.di||[]).map(d=>d[1]).join(', ');
   const gn=(r.gids||[]).map(id=>GENRES[id]).filter(Boolean).join(' · ');
   const cast=(r.ca||[]).map(c=>{const ph=c[3]?`<img src="${IMG}/w185${c[3]}" data-pid="${c[0]}" data-pname="${(c[1]||'').replace(/"/g,'&quot;')}" data-ppic="${c[3]}" style="cursor:pointer;border-radius:inherit"/>` :`<div class="ini" data-pid="${c[0]}" data-pname="${(c[1]||'').replace(/"/g,'&quot;')}" style="cursor:pointer">${initials(c[1])}</div>`;return `<div class="c">${ph}<div class="cn">${c[1]}</div>${c[4]?`<div class="cc">${c[4]}</div>`:''}</div>`;}).join('');
-  if(r.id&&(r.ov===undefined||r.tp===undefined)){const d=await movieDetails(r.id);if(d){r.ov=d.ov;r.rt=d.rt;r.tg=d.tg;if(d.tp)r.tp=d.tp;put(k,r);}}
+  if(r.id&&(r.ov===undefined||r.tp===undefined||!r.gids||!r.gids.length)){const d=await movieDetails(r.id);if(d){r.ov=d.ov;r.rt=d.rt;r.tg=d.tg;if(d.tp)r.tp=d.tp;if(d.gids&&d.gids.length&&(!r.gids||!r.gids.length))r.gids=d.gids;put(k,r);}}
   const runtime=r.rt?`${Math.floor(r.rt/60)}h ${r.rt%60}min`:'';
 
   const overview=r.ov?`<div class="lbl">Sinopse</div><p id="filmOv" style="font-size:13px;color:var(--mut);line-height:1.6;margin:0 0 4px"></p>`:'';
@@ -3268,7 +3268,10 @@ async function openFilm(k){_curFilmKey=k;const r=cache[k];if(!r)return;const t=r
     ${_filmExtrasHtml(r)}
     ${cast?`<div class="lbl">Elenco principal</div><div class="cast">${cast}</div>`:(r.id?'<div class="note">Elenco ainda sendo baixado…</div>':'')}`,k);
   if(r.ov){const ovEl=$('#filmOv');if(ovEl)renderExpandable(ovEl,r.ov,200);}
-  _wireFilmExtras(k);}
+  _wireFilmExtras(k);
+  // lazy-load credits (directors, cast, runtime) if not yet cached
+  if(r.id&&!r.cc){credits(r.id).then(c=>{if(_curFilmKey!==k||!$('#modal').classList.contains('show'))return;if(c){r.ca=c.ca;r.di=c.di;r.co=c.co;if(c.rt&&!r.rt)r.rt=c.rt;r.lang=c.lang;}r.cc=1;put(k,r);PEOPLE=null;openFilm(k);});}
+}
 function _filmExtrasHtml(r){
   const isWl=!!r.wl;
   // seen-film actions (unmark + save) live in the date-action-row; watchlist only gets the bookmark
