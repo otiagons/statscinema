@@ -1819,6 +1819,7 @@ function _renderCuraAll(){
   if(sb)sb.onclick=e=>{e.stopPropagation();if(!_bioRecoMovies||!_bioRecoMovies.length)return;const m=_bioRecoMovies[0];const yr=(m.release_date||'').slice(0,4);const k=key(m.title,yr);if(!cache[k])cache[k]={t:m.title,y:+yr||0,id:m.id,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null,ti:m.title,ot:m.original_title||m.title,ye:yr,src:'reco',_stub:1};_curaPickList(k);};
 }
 async function _renderCuraStream(){
+  const T1='#1ec98a';
   const el=$('#curaViewStream');if(!el)return;
   const lists=_getLists();const myP=_getMyProviders();
 
@@ -1833,7 +1834,6 @@ async function _renderCuraStream(){
     }
   </div>`;
 
-  const T1='#1ec98a';
   el.innerHTML=provHdr+'<div style="text-align:center;padding:16px;color:var(--dim)">Verificando disponibilidade…</div>';
   const pb=$('#curaProvEdit');if(pb)pb.onclick=_curaSelectProviders;
 
@@ -1955,7 +1955,10 @@ async function _renderCuraStream(){
 
 function _curaSelectProviders(){
   const myP=_getMyProviders();
-  const items=BR_PROVIDERS.map(p=>`<button class="cura-pick-item" data-prov="${p.name}"><div style="flex:1;font-size:14px;font-weight:700;color:var(--ink)">${p.name}</div><span class="cpchk" style="color:${myP.includes(p.name)?'var(--acc1)':'var(--line)'}">${myP.includes(p.name)?_icon('check',14):_icon('circle',14)}</span></button>`).join('');
+  // Use actual provider names from TMDB cache — ensures exact name match when filtering
+  const cacheProvs=[...new Set(Object.values(_provCache).filter(pv=>pv&&pv.names).flatMap(pv=>pv.names))].sort();
+  const provList=cacheProvs.length?cacheProvs:BR_PROVIDERS.map(p=>p.name);
+  const items=provList.map(pname=>`<button class="cura-pick-item" data-prov="${pname}"><div style="flex:1;font-size:14px;font-weight:700;color:var(--ink)">${pname}</div><span class="cpchk" style="color:${myP.includes(pname)?'var(--acc1)':'var(--line)'}">${myP.includes(pname)?_icon('check',14):_icon('circle',14)}</span></button>`).join('');
   showSheet(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="color:var(--acc1)">${_icon('settings',18)}</span><h3 style="margin:0">Meus streamings</h3></div><div style="font-size:12px;color:var(--dim);margin-bottom:12px">Selecione os serviços que você assina.</div>${items}<button id="curaProvSave" style="width:100%;margin-top:10px;background:var(--acc1);border:none;color:#0a1a0a;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer">Salvar</button>`,null);
   let sel=new Set(myP);
   $$('#sheet .cura-pick-item').forEach(btn=>{
@@ -2044,7 +2047,7 @@ function _curaCreateList(filmKey){
 let _curaTogWired=false;
 function openRecoModal(){
   if(!_curaTogWired){const tog=$('#curaToggle');if(tog){tog.onclick=e=>{const b=e.target.closest('.cura-tv');if(b)_curaSetView(b.dataset.cv);};_curaTogWired=true;}}
-  _renderCuraStats();_curaSetView('all');
+  _curaAutoMigrateWatchlist();_renderCuraStats();_curaSetView('all');
   $('#recoOver').classList.add('show');
 }
 // recoOverClose removed — nav overlay fechada pela navegação inferior
