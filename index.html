@@ -1172,7 +1172,7 @@ function renderFilms(){
   }
   // base conforme o modo de filtro
   let base,modeNote;
-  if(fMode==='watchlist'){base=watchlist();modeNote='na watchlist';}
+  if(fMode==='watchlist'){fMode='list';base=films();modeNote='filmes';}
   else if(fMode==='rewatch'){base=films().filter(r=>(r.rw||0)>=1);modeNote='revisto(s)';}
   else if(fMode==='unrated'){base=films().filter(r=>r.r==null);modeNote='sem nota';}
   else{base=films();modeNote='filmes';}
@@ -1190,7 +1190,7 @@ function renderFilms(){
   const langCounts={};base.forEach(r=>{if(r.lang)langCounts[r.lang]=(langCounts[r.lang]||0)+1;});
   const langOpts=Object.entries(langCounts).sort((a,b)=>b[1]-a[1]).slice(0,18);
   const wlCount=watchlist().length,rwCount=films().filter(r=>(r.rw||0)>=1).length;
-  const modes=[['watchlist',`${ICON_EYE} Quero ver`,'chip-feat',wlCount],['rewatch',`<svg style="width:13px;height:13px;flex:none;margin-right:2px;vertical-align:-2px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Revistos`,'chip-feat',rwCount]];
+  const modes=[['rewatch',`<svg style="width:13px;height:13px;flex:none;margin-right:2px;vertical-align:-2px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Revistos`,'chip-feat',rwCount]];
 
   const langSel=langOpts.length?`<select id="fLang"><option value="">Idioma: todos</option>${langOpts.map(([c,n])=>`<option value="${c}" ${fLang===c?'selected':''}>${LANGS[c]||c.toUpperCase()} · ${n}</option>`).join('')}</select>`:''
   const tagSel=tagOpts.length?`<select id="fTag"><option value="">Tags: todas (${fmt(Object.keys(tagCounts).length)})</option>${tagOpts.map(([t,n])=>`<option value="${t.replace(/"/g,'&quot;')}" ${fTag===t?'selected':''}>${t} · ${n}</option>`).join('')}</select>`:''
@@ -1448,7 +1448,7 @@ function _filmoRow(m){
   const dk=mk.replace(/"/g,'&quot;');
   const po=m.poster_path?`<img loading="lazy" src="${IMG}/w92${m.poster_path}" data-k="${dk}" data-tmdbid="${m.id}" data-ptitle="${(m.title||'').replace(/"/g,'&quot;')}" data-ppo="${m.poster_path}" class="" style="cursor:pointer"/>` :'<div class="pp"></div>';
   const ratingTxt=myR!=null?' · sua nota '+star(myR):(m.vote_average?' · '+m.vote_average.toFixed(1)+'★ TMDB':'');
-  const wlBtn=seen?'':`<button class="wl-btn${inWl?' on':''}" data-t="${(m.title||'').replace(/"/g,'&quot;')}" data-y="${y}" data-id="${m.id}" data-po="${m.poster_path||''}">${inWl?'✓ ver depois':'+ ver depois'}</button>`;
+  const wlBtn='';
   const rateBtn=seen?'':`<button class="filmo-rate-btn" data-filmoopen="${dk}" data-tmdbid="${m.id}" data-ptitle="${(m.title||'').replace(/"/g,'&quot;')}" data-ppo="${m.poster_path||''}">★ Avaliar</button>`;
   return `<div class="sr${seen?' seen':''}"><div class="sr-poster">${po}</div><div class="si"><div class="st">${_titlePair(m.original_title||m.title,m.original_title&&m.original_title!==m.title?m.title:null)}</div><div class="sy">${y||'—'}${m.vote_count?' · '+fmt(m.vote_count)+' votos':''}${ratingTxt}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${wlBtn}${rateBtn}</div></div></div>`;
 }
@@ -1764,15 +1764,18 @@ function _curaAutoMigrateWatchlist(){
 function _renderCuraStats(){
   const el=$('#curaStats');if(!el)return;
   const lists=_getLists();
-  const wlCount=films().filter(r=>r.wl).length;
+  const wlKeys=new Set(Object.keys(cache).filter(k=>cache[k]&&cache[k].wl));
+  const listKeys=new Set(lists.flatMap(l=>l.films||[]));
+  const totalRepertorio=new Set([...wlKeys,...listKeys]).size;
   el.innerHTML=
-    `<div class="cura-stat-card"><div class="cura-stat-n">${wlCount}</div><div class="cura-stat-l">quero ver</div></div>`+
+    `<div class="cura-stat-card"><div class="cura-stat-n">${totalRepertorio}</div><div class="cura-stat-l">quero ver</div></div>`+
     `<div class="cura-stat-card"><div class="cura-stat-n">${lists.length}</div><div class="cura-stat-l">listas</div></div>`+
     `<div class="cura-stat-card" id="curaStatStream"><div class="cura-stat-n">·</div><div class="cura-stat-l">streaming</div></div>`;
   const allIds=[...new Set([...Object.keys(cache).filter(k=>cache[k]&&cache[k].wl),...lists.flatMap(l=>l.films||[])].map(k=>cache[k]&&cache[k].id).filter(Boolean))];
   if(!allIds.length)return;
   Promise.all(allIds.slice(0,40).map(id=>watchProviders(id).catch(()=>null))).then(()=>{
-    const n=allIds.filter(id=>{const pv=_provCache[id];return pv&&pv.names&&pv.names.length;}).length;
+    const sMyP=_getMyProviders();
+    const n=allIds.filter(id=>{const pv=_provCache[id];if(!pv||!pv.names||!pv.names.length)return false;return!sMyP.length||pv.names.some(p=>sMyP.includes(p));}).length;
     const e2=$('#curaStatStream');if(e2)e2.innerHTML=`<div class="cura-stat-n">${n}</div><div class="cura-stat-l">streaming</div>`;
   });
 }
@@ -1863,8 +1866,12 @@ async function _renderCuraStream(){
   });
 
   // Filter to subscribed providers if configured
+  // Auto-validate: if saved provider names don't match TMDB names, clear them
+  const actualProvNames=new Set(Object.keys(byP));
+  const effectiveMyP=myP.filter(p=>actualProvNames.has(p));
+  if(myP.length>0&&effectiveMyP.length===0){_saveMyProviders([]);} // clear invalid names
   const provEntries=Object.entries(byP)
-    .filter(([pn])=>!myP.length||myP.includes(pn))
+    .filter(([pn])=>!effectiveMyP.length||effectiveMyP.includes(pn))
     .sort((a,b)=>b[1].length-a[1].length);
 
   if(!provEntries.length){
@@ -1877,9 +1884,11 @@ async function _renderCuraStream(){
   const totalUniq=new Set(provEntries.flatMap(([,pf])=>pf.map(x=>x.key))).size;
 
   // Build filter chips HTML
+  // When services are configured, "Todos" shows only those; if single service no "Todos" chip
+  const showTodos=provEntries.length>1;
   const chipBar=`<div id="curaStreamChips" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:10px">
-    <button class="cura-stream-chip on" data-cprov="all" style="border:1px solid ${T1};background:${T1}18;color:${T1};border-radius:18px;padding:5px 12px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">Todos · ${totalUniq}</button>
-    ${provEntries.map(([pn,pf])=>`<button class="cura-stream-chip" data-cprov="${pn}" style="border:1px solid var(--line);background:var(--p2);color:var(--mut);border-radius:18px;padding:5px 12px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">${pn} · ${pf.length}</button>`).join('')}
+    ${showTodos?`<button class="cura-stream-chip on" data-cprov="all" style="border:1px solid ${T1};background:${T1}18;color:${T1};border-radius:18px;padding:5px 12px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">Todos · ${totalUniq}</button>`:''}
+    ${provEntries.map(([pn,pf])=>`<button class="cura-stream-chip${!showTodos?' on':''}" data-cprov="${pn}" style="border:1px solid ${!showTodos?T1:'var(--line)'};background:${!showTodos?T1+'18':'var(--p2)'};color:${!showTodos?T1:'var(--mut)'};border-radius:18px;padding:5px 12px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">${pn} · ${pf.length}</button>`).join('')}
   </div>`;
 
   // Build total counter
@@ -1891,7 +1900,7 @@ async function _renderCuraStream(){
   // Build provider sections
   let sectionsHtml='';
   provEntries.forEach(([pn,pf])=>{
-    const isMine=myP.includes(pn)||!myP.length;
+    const isMine=effectiveMyP.includes(pn)||!effectiveMyP.length;
     sectionsHtml+=`<div class="cura-prov-section" data-section="${pn}" style="margin-bottom:18px">
       <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:5px;color:var(--ink)">
         ${isMine?`<span style="color:${T1}">${_icon('check',12)}</span>`:''}
