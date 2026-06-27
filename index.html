@@ -403,7 +403,7 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .rating-row{display:flex;align-items:center;gap:12px;margin-top:2px}
 .rating-row .stars{flex:1}
 .film-date-mini{background:var(--panel);border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:5px 8px;font-size:12px;flex:1;min-width:0;cursor:pointer}
-.date-share-row{display:flex;align-items:center;gap:10px;margin-top:8px}.date-action-row{display:flex;align-items:center;gap:7px;margin-top:8px}.film-action-icon{width:34px;height:34px;flex:none;border-radius:8px;border:1px solid var(--line);background:var(--panel);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--mut);transition:border-color .15s,color .15s,background-color .15s;padding:0}.film-action-icon:hover{border-color:var(--acc1);color:var(--acc1)}.film-action-icon.danger{color:rgba(255,46,67,.55);border-color:rgba(255,46,67,.35)}.film-action-icon.danger:hover{border-color:var(--acc2);color:var(--acc2)}.film-action-icon.danger.confirming{border-color:var(--acc2)!important;color:var(--acc2)!important;background-color:rgba(255,46,67,.12)!important}.film-action-icon svg{width:14px;height:14px;pointer-events:none}
+.date-share-row{display:flex;align-items:center;gap:10px;margin-top:8px}.date-action-row{display:flex;align-items:center;gap:7px;margin-top:8px}.film-action-icon{width:34px;height:34px;flex:none;border-radius:8px;border:1px solid var(--line);background:var(--panel);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--mut);transition:border-color .15s,color .15s,background-color .15s;padding:0}.film-action-icon:hover{border-color:var(--acc1);color:var(--acc1)}.film-action-icon.danger:hover{border-color:var(--acc2);color:var(--acc2)}.film-action-icon.danger.confirming{border-color:var(--acc2)!important;color:var(--acc2)!important;background-color:rgba(255,46,67,.12)!important}.film-action-icon svg{width:14px;height:14px;pointer-events:none}
 .spiral-placeholder{display:flex;align-items:center;justify-content:center;width:100%;border-radius:12px;background:radial-gradient(circle at 50%,rgba(30,201,138,.07) 0%,transparent 70%);border:1px dashed var(--line)}
 .spiral-ph-inner{text-align:center;padding:28px 16px;color:var(--dim)}
 .spiral-ph-txt{font-size:12px;line-height:1.5;margin:6px 0 0}
@@ -3193,14 +3193,13 @@ function renderStats(){
   const dec=_decadeStats().filter(d=>d.n>=1);
   const DEC_PREVIEW=5;
   if(dec.length){
-    const byAvg=dec.filter(d=>d.rc>=3&&d.avg!=null).sort((a,b)=>b.avg-a.avg);
-    const list=(byAvg.length?byAvg:dec.slice().sort((a,b)=>b.n-a.n));
+    const list=dec.slice().sort((a,b)=>b.d-a.d);
     {const showDec=_decExpanded?list:list.slice(0,DEC_PREVIEW);const hasMoreDec=list.length>DEC_PREVIEW;
-    html+='<span class="eyb" style="margin:16px 0 9px;display:block">Décadas '+(byAvg.length?'por nota média':'por quantidade')+'</span>'
+    html+='<span class="eyb" style="margin:16px 0 9px;display:block">Décadas</span>'
       +'<div class="drag-panel" id="decPanel"><div class="bars">'
       +showDec.map(d=>{const w=d.avg!=null?d.avg/5*100:0;return '<div class="barrow"><div class="bn">'+d.d+'s</div><div class="track"><div class="fill" style="width:'+w+'%"></div></div><div class="bmeta">'+(d.avg!=null?'<span class="g">'+star(+d.avg.toFixed(2))+'</span> · ':'')+fmt(d.n)+'f</div></div>';}).join('')
       +'</div>'+(hasMoreDec?'<div class="drag-knob'+(_decExpanded?' expanded':'')+'" id="decKnob"><span class="drag-knob-arrow">'+(_decExpanded?'▲ menos':'▼ mais')+'</span></div>':'')
-      +'</div><div class="note" style="margin-top:2px">'+(byAvg.length?'Décadas com 3+ filmes avaliados, ordenadas pela sua nota média.':'Ordenado por quantidade.')+'</div>';}
+      +'</div><div class="note" style="margin-top:2px">Ordenado da década mais recente para a mais antiga.</div>';}
   }
   // conquistas — catálogo de cinema (movimentos, trilogias, diretores, atores, panorama)
   const ach=_achievements();
