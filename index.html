@@ -292,16 +292,18 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .reco-vibe:active,.reco-vibe.on{border-color:var(--acc1);color:var(--acc1);background:rgba(30,201,138,.08)}
 .reco-title-row{display:flex;align-items:flex-start;gap:4px}
 .reco-title-row .reco-title{flex:1}
-.reco-reject{background:none;border:none;color:var(--dim);cursor:pointer;padding:2px;opacity:.4;flex:none;transition:opacity .15s,color .15s;line-height:1;border-radius:4px;margin-top:2px}
+.reco-reject,.reco-save{background:none;border:none;color:var(--dim);cursor:pointer;padding:2px;opacity:.4;flex:none;transition:opacity .15s,color .15s;line-height:1;border-radius:4px;margin-top:2px}
 .reco-reject:hover,.reco-reject:active{opacity:1;color:var(--acc2)}
-.reco-reject svg{width:13px;height:13px;display:block}
+.reco-save:hover,.reco-save:active{opacity:1;color:var(--acc1)}
+.reco-reject svg,.reco-save svg{width:13px;height:13px;display:block}
 .reco-card{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
 .reco-card:last-child{border-bottom:none}
 .reco-title-row{display:flex;align-items:flex-start;gap:4px}
 .reco-title-row .reco-title{flex:1}
-.reco-reject{background:none;border:none;color:var(--dim);cursor:pointer;padding:2px;opacity:.4;flex:none;transition:opacity .15s,color .15s;line-height:1;border-radius:4px;margin-top:2px}
+.reco-reject,.reco-save{background:none;border:none;color:var(--dim);cursor:pointer;padding:2px;opacity:.4;flex:none;transition:opacity .15s,color .15s;line-height:1;border-radius:4px;margin-top:2px}
 .reco-reject:hover,.reco-reject:active{opacity:1;color:var(--acc2)}
-.reco-reject svg{width:13px;height:13px;display:block}
+.reco-save:hover,.reco-save:active{opacity:1;color:var(--acc1)}
+.reco-reject svg,.reco-save svg{width:13px;height:13px;display:block}
 .reco-card img,.reco-card .reco-ph{width:56px;height:84px;border-radius:6px;object-fit:cover;background:var(--p2);flex:none;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:11px;font-weight:700}
 .reco-info{flex:1;min-width:0}
 .reco-title{font-weight:800;font-size:14px;margin:0 0 2px;line-height:1.2}
@@ -2562,14 +2564,15 @@ function _recoCard(o){
   else if(o.status)
     scoreHtml='<div class="reco-score" style="color:var(--acc1)">'+o.status+'</div>';
   const provHtml=(o.providers&&o.providers.length)?'<div class="reco-prov">'+ICON_PLAY+'Streaming BR: <b>'+o.providers.join(' · ')+'</b></div>':'';
+  const ICON_SAVE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
+  const _saveBtn='<button class="reco-save" data-recsavelist="'+_matchKey+'" title="Salvar no Repertório">'+ICON_SAVE+'</button>';
   const _rejectBtn=o.tmdbId?'<button class="reco-reject" data-reject="'+o.tmdbId+'" title="Não mostrar mais">'+ICON_RECO_REJECT+'</button>':'';
   const _krec=cache[o.ckey||_rk];const _seen=!!(_krec&&_krec.r!=null&&!_krec.wl);
   const wlBtn=_seen?'<div class="reco-score" style="color:var(--acc1)">'+ICON_CHECK+' Já visto</div>':'';
-  const listSaveBtn='<button class="cura-save-btn" data-recsavelist="'+_matchKey+'" style="margin-top:5px">📋 Salvar no Repertório</button>';
   return '<div class="reco-card" data-cardid="'+(o.tmdbId||'')+'">'+po+'<div class="reco-info">'
-    +'<div class="reco-title-row"><div class="reco-title">'+o.title+(o.year?' ('+o.year+')':'')+'</div>'+_rejectBtn+'</div>'
+    +'<div class="reco-title-row"><div class="reco-title">'+o.title+(o.year?' ('+o.year+')':'')+'</div>'+_saveBtn+_rejectBtn+'</div>'
     +(meta?'<div class="reco-meta">'+meta+'</div>':'')
-    +scoreHtml+provHtml+wlBtn+listSaveBtn
+    +scoreHtml+provHtml+wlBtn
     +'</div></div>';
 }
 // Aviso curto quando a recomendação veio da alternativa paralela (populares), não do perfil.
