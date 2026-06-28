@@ -2740,7 +2740,7 @@ function _renderShareOb(){
   const recapYears=_statsYears();
   if(_sfType==='recap'&&(_recapYear==null||!recapYears.includes(_recapYear)))_recapYear=recapYears[0]||new Date().getFullYear();
   const recapSel=(_sfType==='recap'&&recapYears.length)?'<div class="scard-types" id="_recapYears">'+recapYears.slice(0,10).map(y=>'<button class="chip '+(y===_recapYear?'on':'')+'" data-y="'+y+'">'+y+'</button>').join('')+'</div>':'';
-  const vitrineSel=(_sfType==='vitrine')?'<div class="scard-types" id="_vitrineTypes">'+[['filmes','Filmes'],['diretores','Diretores'],['atores','Atores'],['atrizes','Atrizes']].map(([t,l])=>'<button class="chip '+(_vitrineType===t?'on':'')+" data-vt='"+t+"'>"+l+'</button>').join('')+'</div>':'';
+  const vitrineSel=(_sfType==='vitrine')?'<div class="scard-types" id="_vitrineTypes">'+[['filmes','Filmes'],['diretores','Diretores'],['atores','Atores'],['atrizes','Atrizes']].map(([t,l])=>'<button class="chip '+(_vitrineType===t?'on':'')+'" data-vt="'+t+'">'+l+'</button>').join('')+'</div>':'';
   ob.innerHTML='<p style="color:var(--mut);font-size:12px;margin:0 0 8px">Cards 9:16 para Stories \u2014 toque Compartilhar.</p>'
     +'<div class="scard-types" id="_ctypes">'+types.map(([t,l])=>'<button class="chip '+(t===_sfType?'on':'')+'" data-t="'+t+'">'+l+'</button>').join('')+'</div>'
     +recapSel+vitrineSel
@@ -2805,6 +2805,16 @@ function _clogo(ctx,c1,c2,y){
   ctx.fillStyle=c1;ctx.fillText('Cine',_CW/2-_CW*0.06,y);
   ctx.fillStyle=c2;ctx.fillText('Stats',_CW/2+_CW*0.14,y);
 }
+function _fillStar(ctx,cx,cy,r,color){
+  const pts=5,inner=r*0.382;
+  ctx.beginPath();
+  for(let i=0;i<pts*2;i++){
+    const a=i*Math.PI/pts-Math.PI/2;
+    const d=i%2===0?r:inner;
+    i===0?ctx.moveTo(cx+d*Math.cos(a),cy+d*Math.sin(a)):ctx.lineTo(cx+d*Math.cos(a),cy+d*Math.sin(a));
+  }
+  ctx.closePath();ctx.fillStyle=color;ctx.fill();
+}
 function _cfooter(ctx,s1){
   ctx.fillStyle='rgba('+s1+',0.10)';ctx.fillRect(0,_CH*0.93,_CW,_CH);
   ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=Math.round(_CW*0.026)+'px -apple-system,sans-serif';
@@ -2818,74 +2828,96 @@ function _cwrap(ctx,text,cx,y,maxW,lh){
 function _crr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
 
 /* ─ TOP5 FAVORITOS ─ */
+/* ─ VITRINE (Neon Split) ─ */
 async function _cVitrine(ctx,c1,c2,s1,s2){
-  if(_vitrineType==='filmes')await _cTop5Favs(ctx,c1,c2,s1,s2);
-  else await _cTop5People(ctx,c1,c2,s1,s2,_vitrineType==='diretores'?'top5dir':_vitrineType==='atores'?'top5actor':'top5actress');
-}
-async function _cTop5Favs(ctx,c1,c2,s1,s2){
-  _cbg(ctx,s1,s2);ctx.fillStyle=c1;ctx.fillRect(0,0,_CW,5);
-  _clogo(ctx,c1,c2,_CH*0.08);
+  const splitY=_CH*0.31;
+  _cbg(ctx,s1,s2);
+  ctx.fillStyle=c1;ctx.fillRect(0,0,_CW,splitY);
+  const _vgb=ctx.createLinearGradient(0,splitY-2,0,splitY+20);
+  _vgb.addColorStop(0,c1);_vgb.addColorStop(1,'rgba('+s2+',0)');
+  ctx.fillStyle=_vgb;ctx.fillRect(0,splitY-2,_CW,22);
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.font='800 '+Math.round(_CW*0.062)+'px -apple-system,sans-serif';
-  ctx.fillStyle='#f4f0e6';ctx.fillText('5',_CW*0.37,_CH*0.15);ctx.fillStyle=c1;ctx.fillText('Favoritos',_CW*0.62,_CH*0.15);
-  const n=bio.name||'';if(n){ctx.font=Math.round(_CW*0.029)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.3)';ctx.fillText(n,_CW/2,_CH*0.198);}
-  const favKeys=(bio.favs||[]).slice(0,5);
-  const pH=_CH*0.23,pW=pH*2/3;
-  const pos=[{x:_CW*0.19,y:_CH*0.36},{x:_CW*0.50,y:_CH*0.36},{x:_CW*0.81,y:_CH*0.36},{x:_CW*0.34,y:_CH*0.62},{x:_CW*0.66,y:_CH*0.62}];
-  for(let i=0;i<5;i++){
-    const {x,y}=pos[i];const px=x-pW/2,py=y-pH/2;const k=favKeys[i];const r=k?cache[k]:null;
-    ctx.strokeStyle='rgba('+s1+',0.25)';ctx.lineWidth=1.5;_crr(ctx,px,py,pW,pH,6);ctx.stroke();
-    if(r&&r.po){await new Promise(res=>{const img=new Image();img.crossOrigin='anonymous';img.onload=()=>{ctx.save();_crr(ctx,px,py,pW,pH,6);ctx.clip();const sc=Math.max(pW/img.width,pH/img.height);ctx.drawImage(img,px+(pW-img.width*sc)/2,py+(pH-img.height*sc)/2,img.width*sc,img.height*sc);ctx.restore();res();};img.onerror=res;setTimeout(res,3000);img.src=IMG+'/w342'+(r.po||'');});}
-    else{ctx.fillStyle='rgba('+s1+',0.07)';_crr(ctx,px,py,pW,pH,6);ctx.fill();if(r){ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=Math.round(pW*0.10)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.35)';const tt=(r.ti||r.t||'');_cwrap(ctx,tt.length>14?tt.slice(0,14)+'\u2026':tt,px+pW/2,py+pH/2,pW*0.85,14);}}
-    ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='800 '+Math.round(pW*0.24)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillText(String(i+1),px+pW*0.2,py+pH*0.18);ctx.fillStyle=c1;ctx.fillText(String(i+1),px+pW*0.2-1,py+pH*0.18-1);
+  ctx.font='700 '+Math.round(_CW*0.027)+'px -apple-system,sans-serif';
+  ctx.fillStyle='rgba(0,0,0,0.42)';ctx.fillText('CINESTATS',_CW/2,_CH*0.058);
+  ctx.font='800 '+Math.round(_CW*0.13)+'px -apple-system,sans-serif';
+  ctx.fillStyle='rgba(0,0,0,0.80)';ctx.fillText('VITRINE',_CW/2,_CH*0.168);
+  const _vLbl=_vitrineType==='filmes'?'Filmes':_vitrineType==='diretores'?'Diretores':_vitrineType==='atores'?'Atores':'Atrizes';
+  ctx.font='700 '+Math.round(_CW*0.038)+'px -apple-system,sans-serif';
+  ctx.fillStyle='rgba(0,0,0,0.52)';ctx.fillText(_vLbl,_CW/2,_CH*0.244);
+  const _vnm=bio.name||'';
+  ctx.textAlign='left';ctx.textBaseline='middle';
+  if(_vnm){ctx.font='800 '+Math.round(_CW*0.048)+'px -apple-system,sans-serif';ctx.fillStyle='#f4f0e6';ctx.fillText(_vnm.length>21?_vnm.slice(0,21)+'\u2026':_vnm,_CW*0.07,_CH*0.362);}
+  ctx.font=Math.round(_CW*0.025)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.28)';ctx.fillText('top 5 '+_vLbl.toLowerCase(),_CW*0.07,_CH*0.400);
+  const _vRowStart=_CH*0.437,_vRowH=_CH*0.098;
+  function _vRow(i,leftTop,leftBot,rightVal,hi){
+    const y=_vRowStart+i*_vRowH;
+    ctx.strokeStyle='rgba(244,240,230,0.07)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(_CW*0.07,y-_vRowH*0.44);ctx.lineTo(_CW*0.93,y-_vRowH*0.44);ctx.stroke();
+    ctx.textAlign='left';ctx.textBaseline='middle';
+    ctx.font='800 '+Math.round(_CW*0.034)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.18)';
+    ctx.fillText(String(i+1),_CW*0.07,y);
+    ctx.font='700 '+Math.round(_CW*0.030)+'px -apple-system,sans-serif';ctx.fillStyle='#f4f0e6';
+    ctx.fillText(leftTop,_CW*0.155,y-_vRowH*0.17);
+    ctx.font=Math.round(_CW*0.023)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.36)';
+    ctx.fillText(leftBot,_CW*0.155,y+_vRowH*0.28);
+    ctx.textAlign='right';ctx.font='700 '+Math.round(_CW*0.030)+'px -apple-system,sans-serif';
+    ctx.fillStyle=hi?c1:'rgba(244,240,230,0.55)';
+    ctx.fillText(rightVal,_CW*0.93,y);
   }
-  _cfooter(ctx,s1);
-}
-/* ─ TOP5 PESSOAS (dir/atores/atrizes) ─ */
-async function _cTop5People(ctx,c1,c2,s1,s2,type){
-  const P=people();let arr;const lbl=type==='top5dir'?'Diretores':type==='top5actor'?'Atores':'Atrizes';
-  if(type==='top5dir')arr=P.D;else if(type==='top5actor')arr=P.A.filter(p=>p.g===2);else arr=P.A.filter(p=>p.g===1);
-  arr=[...arr].sort((a,b)=>b.f.length-a.f.length).slice(0,5);
-  _cbg(ctx,s1,s2);ctx.fillStyle=type==='top5dir'?c2:c1;ctx.fillRect(0,0,_CW,5);
-  _clogo(ctx,c1,c2,_CH*0.08);
-  ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='800 '+Math.round(_CW*0.058)+'px -apple-system,sans-serif';
-  ctx.fillStyle='#f4f0e6';ctx.fillText('Top 5',_CW*0.34,_CH*0.148);ctx.fillStyle=c1;ctx.fillText(lbl,_CW*0.66,_CH*0.148);
-  const faceD=_CW*0.155,rowH=_CH*0.135,startY=_CH*0.265;
-  for(let i=0;i<arr.length;i++){
-    const person=arr[i];const y=startY+i*rowH;const midY=y+faceD/2;const fcx=_CW*0.135;
-    if(person.pic){await new Promise(res=>{const img=new Image();img.crossOrigin='anonymous';img.onload=()=>{ctx.save();ctx.beginPath();ctx.arc(fcx,midY,faceD/2,0,Math.PI*2);ctx.clip();ctx.drawImage(img,fcx-faceD/2,midY-faceD/2,faceD,faceD);ctx.restore();ctx.strokeStyle='rgba('+s1+',0.4)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(fcx,midY,faceD/2,0,Math.PI*2);ctx.stroke();res();};img.onerror=()=>{ctx.fillStyle='rgba('+s1+',0.12)';ctx.beginPath();ctx.arc(fcx,midY,faceD/2,0,Math.PI*2);ctx.fill();ctx.fillStyle=c1;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='800 '+Math.round(faceD*0.38)+'px -apple-system,sans-serif';ctx.fillText(initials(person.n),fcx,midY);res();};setTimeout(res,3000);img.src=IMG+'/w185'+person.pic;});}
-    else{ctx.fillStyle='rgba('+s1+',0.12)';ctx.beginPath();ctx.arc(fcx,midY,faceD/2,0,Math.PI*2);ctx.fill();ctx.fillStyle=c1;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='800 '+Math.round(faceD*0.38)+'px -apple-system,sans-serif';ctx.fillText(initials(person.n),fcx,midY);}
-    ctx.textAlign='right';ctx.textBaseline='middle';ctx.font='800 '+Math.round(_CW*0.065)+'px -apple-system,sans-serif';ctx.fillStyle='rgba('+s1+',0.18)';ctx.fillText(String(i+1),_CW*0.075,midY);
-    const nm=person.n.length>22?person.n.slice(0,22)+'\u2026':person.n;ctx.textAlign='left';ctx.textBaseline='middle';ctx.font='700 '+Math.round(_CW*0.045)+'px -apple-system,sans-serif';ctx.fillStyle='#f4f0e6';ctx.fillText(nm,_CW*0.225,midY-rowH*0.14);
-    const rd=person.f.filter(f=>f.r!=null);const avg=rd.length?rd.reduce((s,f)=>s+f.r,0)/rd.length:null;ctx.font=Math.round(_CW*0.030)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.4)';ctx.fillText(person.f.length+' filme'+(person.f.length>1?'s':'')+(avg!=null?' \u00b7 '+star(+avg.toFixed(1)):''),_CW*0.225,midY+rowH*0.2);
-    if(i<4){ctx.strokeStyle='rgba(244,240,230,0.05)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(_CW*0.05,y+rowH-1);ctx.lineTo(_CW*0.95,y+rowH-1);ctx.stroke();}
+  if(_vitrineType==='filmes'){
+    // Filmes: usa bio.favs; fallback para filmes mais bem avaliados
+    const _vFavKeys=(bio.favs||[]).slice(0,5);
+    const _vAllF=films();
+    // Tenta resolver cada key do bio: cache directo, depois busca em films()
+    const _vFavList=_vFavKeys.map(k=>{
+      if(!k)return null;
+      if(cache[k])return cache[k];
+      return _vAllF.find(f=>(key(f.t,f.y||f.ye||0)===k||key(f.t,f.ye||f.y||0)===k))||null;
+    });
+    // Se não há nenhum favorito configurado ou resolvido, cai para top-rated
+    const _vHasFavs=_vFavList.some(r=>r!=null);
+    const _vItems=_vHasFavs?_vFavList
+      :[..._vAllF].filter(r=>r.r!=null).sort((a,b)=>b.r-a.r||(+(b.ye||b.y))-(+(a.ye||a.y))).slice(0,5);
+    for(let i=0;i<5;i++){
+      const r=_vItems[i]||null;
+      if(r){
+        const ti=(r.ti||r.t||'');const ti2=ti.length>22?ti.slice(0,22)+'\u2026':ti;
+        const rStr=r.r!=null?String(r.r).replace('.',',')+'\u2605':'';
+        _vRow(i,ti2,String(r.ye||r.y||''),rStr,true);
+      }else{
+        _vRow(i,'\u2014','','',false);
+      }
+    }
+  }else{
+    const _vP=people();
+    let _vArr;
+    if(_vitrineType==='diretores'){
+      _vArr=_vP.D;
+    }else if(_vitrineType==='atores'){
+      // Tenta g===2 (masculino TMDB); fallback: qualquer actor em _vP.A
+      _vArr=_vP.A.filter(p=>p.g===2);
+      if(!_vArr.length)_vArr=_vP.A.filter(p=>p.g!==1);
+      if(!_vArr.length)_vArr=_vP.A;
+    }else{
+      // Atrizes: g===1 (feminino TMDB); fallback: qualquer pessoa em _vP.A
+      _vArr=_vP.A.filter(p=>p.g===1);
+      if(!_vArr.length)_vArr=_vP.A;
+    }
+    _vArr=[..._vArr].sort((a,b)=>b.f.length-a.f.length).slice(0,5);
+    if(!_vArr.length){
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.font=Math.round(_CW*0.032)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.28)';
+      ctx.fillText('Sincronize o TMDB primeiro',_CW/2,_CH*0.65);
+    }else{
+      _vArr.forEach((person,i)=>{
+        const _pnm=person.n.length>22?person.n.slice(0,22)+'\u2026':person.n;
+        const _prd=person.f.filter(f=>f.r!=null);
+        const _pavg=_prd.length?_prd.reduce((s,f)=>s+f.r,0)/_prd.length:null;
+        const _psub=person.f.length+' filme'+(person.f.length>1?'s':'')+((_pavg!=null)?' \u00b7 '+star(+_pavg.toFixed(1)):'');
+        _vRow(i,_pnm,_psub,fmt(person.f.length)+'f',false);
+      });
+    }
   }
-  if(!arr.length){ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=Math.round(_CW*0.036)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.25)';ctx.fillText('Sincronize o TMDB primeiro',_CW/2,_CH*0.5);}
-  const n=bio.name||'';if(n){ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=Math.round(_CW*0.028)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.25)';ctx.fillText(n,_CW/2,_CH*0.928);}
-  _cfooter(ctx,s1);
-}
-/* ─ TOP5 GÊNEROS ─ */
-function _cTop5Genre(ctx,c1,c2,s1,s2){
-  _cbg(ctx,s1,s2);ctx.fillStyle=c1;ctx.fillRect(0,0,_CW,5);
-  _clogo(ctx,c1,c2,_CH*0.08);
-  ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='800 '+Math.round(_CW*0.058)+'px -apple-system,sans-serif';
-  ctx.fillStyle='#f4f0e6';ctx.fillText('Top 5',_CW*0.34,_CH*0.148);ctx.fillStyle=c1;ctx.fillText('G\u00eaneros',_CW*0.645,_CH*0.148);
-  const fl=films().filter(r=>r.gids&&r.gids.length);
-  const agg={};fl.forEach(r=>r.gids.forEach(id=>{const g=GENRES[id];if(g)agg[g]=(agg[g]||0)+1;}));
-  const arr=Object.entries(agg).sort((a,b)=>b[1]-a[1]).slice(0,5);const maxN=arr[0]?arr[0][1]:1;
-  const startY=_CH*0.265,rowH=_CH*0.13;
-  arr.forEach(([g,n],i)=>{
-    const y=startY+i*rowH;const midY=y+rowH*0.42;
-    ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='800 '+Math.round(_CW*0.058)+'px -apple-system,sans-serif';ctx.fillStyle='rgba('+s1+',0.14)';ctx.fillText(String(i+1),_CW*0.075,midY);
-    ctx.textAlign='left';ctx.font='700 '+Math.round(_CW*0.044)+'px -apple-system,sans-serif';ctx.fillStyle='#f4f0e6';ctx.fillText(g,_CW*0.135,midY-rowH*0.14);
-    ctx.textAlign='right';ctx.font='700 '+Math.round(_CW*0.038)+'px -apple-system,sans-serif';ctx.fillStyle=c1;ctx.fillText(fmt(n)+'f',_CW*0.95,midY-rowH*0.14);
-    const barX=_CW*0.135,barY=y+rowH*0.58,barH=rowH*0.19,barMaxW=_CW*0.73;
-    ctx.fillStyle='rgba(244,240,230,0.05)';ctx.fillRect(barX,barY,barMaxW,barH);
-    const bw=Math.max(8,n/maxN*barMaxW);const gb=ctx.createLinearGradient(barX,0,barX+bw,0);gb.addColorStop(0,'rgba('+s2+',0.8)');gb.addColorStop(1,'rgba('+s1+',0.95)');ctx.fillStyle=gb;ctx.fillRect(barX,barY,bw,barH);
-    if(i<4){ctx.strokeStyle='rgba(244,240,230,0.05)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(_CW*0.05,y+rowH-1);ctx.lineTo(_CW*0.95,y+rowH-1);ctx.stroke();}
-  });
-  if(!arr.length){ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=Math.round(_CW*0.036)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.25)';ctx.fillText('Sincronize o TMDB primeiro',_CW/2,_CH*0.5);}
-  const n=bio.name||'';if(n){ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=Math.round(_CW*0.028)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.25)';ctx.fillText(n,_CW/2,_CH*0.928);}
   _cfooter(ctx,s1);
 }
 
@@ -2928,39 +2960,50 @@ function _cRetrato(ctx,c1,c2,s1,s2,st){
     ctx.font='700 '+Math.round(_CW*0.031)+'px -apple-system,sans-serif';ctx.fillStyle=hi?c1:'#f4f0e6';
     const v=String(val);ctx.fillText(v.length>23?v.slice(0,23)+'\u2026':v,_CW*0.93,y);
   });
-  _cQR(ctx,CS_SITE,_CW*0.5-_CW*0.06,_CH*0.875,_CW*0.12);
   _cfooter(ctx,s1);
 }
 
-/* \u2500 RECAP DO ANO ("Seu ano no cinema") \u2500 */
+/* ─ ANO NO CINEMA (Neon Split) ─ */
 function _cRecap(ctx,c1,c2,s1,s2){
-  /* Anu\u00e1rio: big count + stat rows g\u00eanero/dir/ator/atriz */
   const yr=_recapYear||new Date().getFullYear();const st=_recapStats(yr);
-  _cbg(ctx,s1,s2);ctx.fillStyle=c1;ctx.fillRect(0,0,_CW,5);
-  _clogo(ctx,c1,c2,_CH*0.07);
+  const splitY=_CH*0.41;
+  _cbg(ctx,s1,s2);
+  ctx.fillStyle=c1;ctx.fillRect(0,0,_CW,splitY);
+  const _rgb=ctx.createLinearGradient(0,splitY-2,0,splitY+20);
+  _rgb.addColorStop(0,c1);_rgb.addColorStop(1,'rgba('+s2+',0)');
+  ctx.fillStyle=_rgb;ctx.fillRect(0,splitY-2,_CW,22);
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.font=Math.round(_CW*0.032)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.5)';ctx.fillText('SEU ANO NO CINEMA',_CW/2,_CH*0.125);
-  ctx.font='800 '+Math.round(_CW*0.15)+'px -apple-system,sans-serif';ctx.fillStyle=c1;ctx.fillText(String(yr),_CW/2,_CH*0.205);
-  const nm=bio.name||'';if(nm){ctx.font=Math.round(_CW*0.03)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.35)';ctx.fillText(nm.length>26?nm.slice(0,26)+'\u2026':nm,_CW/2,_CH*0.262);}
-  if(!st.n){ctx.font=Math.round(_CW*0.038)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.4)';_cwrap(ctx,'Sem filmes com data registrada em '+yr,_CW/2,_CH*0.5,_CW*0.8,_CW*0.05);_cfooter(ctx,s1);return;}
-  ctx.font='800 '+Math.round(_CW*0.17)+'px -apple-system,sans-serif';ctx.fillStyle='#f4f0e6';ctx.fillText(fmt(st.n),_CW/2,_CH*0.355);
-  ctx.font=Math.round(_CW*0.036)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.45)';ctx.fillText('filmes vistos',_CW/2,_CH*0.4);
-  const avgStr=st.avg!=null?st.avg.toFixed(1).replace('.',',')+'\u2605':'\u2014';
-  ctx.font=Math.round(_CW*0.028)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.36)';
-  ctx.fillText(fmt(st.hours)+'h \u00b7 m\u00e9dia '+avgStr,_CW/2,_CH*0.438);
-  ctx.strokeStyle='rgba(244,240,230,0.09)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(_CW*0.07,_CH*0.468);ctx.lineTo(_CW*0.93,_CH*0.468);ctx.stroke();
-  const rows=[['G\u00caNERO',st.topGenre?st.topGenre[0]:'\u2014',true],['DIRETOR',st.topDir?st.topDir[0]:'\u2014',false],['ATOR',st.topActor?st.topActor[0]:'\u2014',false],['ATRIZ',st.topActress?st.topActress[0]:'\u2014',false]];
-  const rowStart=_CH*0.515,rowH=_CH*0.086;
-  rows.forEach(([lbl,val,hi],i)=>{
-    const y=rowStart+i*rowH;
-    if(i>0){ctx.strokeStyle='rgba(244,240,230,0.07)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(_CW*0.07,y-rowH*0.42);ctx.lineTo(_CW*0.93,y-rowH*0.42);ctx.stroke();}
+  ctx.font='700 '+Math.round(_CW*0.027)+'px -apple-system,sans-serif';
+  ctx.fillStyle='rgba(0,0,0,0.42)';ctx.fillText('CINESTATS',_CW/2,_CH*0.066);
+  ctx.font='800 '+Math.round(_CW*0.22)+'px -apple-system,sans-serif';
+  ctx.fillStyle='rgba(0,0,0,0.82)';ctx.fillText(String(yr),_CW/2,_CH*0.210);
+  ctx.font=Math.round(_CW*0.034)+'px -apple-system,sans-serif';
+  ctx.fillStyle='rgba(0,0,0,0.38)';ctx.fillText('ano no cinema',_CW/2,_CH*0.285);
+  ctx.font='700 '+Math.round(_CW*0.042)+'px -apple-system,sans-serif';
+  ctx.fillStyle='rgba(0,0,0,0.58)';ctx.fillText(fmt(st.n)+' filmes \u00b7 '+fmt(st.hours)+'h',_CW/2,_CH*0.355);
+  const _rnm=bio.name||'';
+  ctx.textAlign='left';ctx.textBaseline='middle';
+  if(_rnm){ctx.font='800 '+Math.round(_CW*0.054)+'px -apple-system,sans-serif';ctx.fillStyle='#f4f0e6';ctx.fillText(_rnm.length>19?_rnm.slice(0,19)+'\u2026':_rnm,_CW*0.07,_CH*0.475);}
+  ctx.font=Math.round(_CW*0.026)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.28)';ctx.fillText('seu ano no cinema',_CW*0.07,_CH*0.517);
+  if(!st.n){
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.font=Math.round(_CW*0.034)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.35)';
+    _cwrap(ctx,'Sem filmes registrados em '+yr,_CW/2,_CH*0.68,_CW*0.8,_CW*0.05);
+    _cfooter(ctx,s1);return;
+  }
+  const _rrows=[['G\u00caNERO',st.topGenre?st.topGenre[0]:'\u2014',true],['DIRETOR',st.topDir?st.topDir[0]:'\u2014',false],['ATOR',st.topActor?st.topActor[0]:'\u2014',false],['ATRIZ',st.topActress?st.topActress[0]:'\u2014',false]];
+  const _rRowStart=_CH*0.558,_rRowH=_CH*0.085;
+  _rrows.forEach(([lbl,val,hi],i)=>{
+    const y=_rRowStart+i*_rRowH;
+    ctx.strokeStyle='rgba(244,240,230,0.07)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(_CW*0.07,y-_rRowH*0.42);ctx.lineTo(_CW*0.93,y-_rRowH*0.42);ctx.stroke();
     ctx.textAlign='left';ctx.textBaseline='middle';
-    ctx.font=Math.round(_CW*0.023)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.32)';ctx.fillText(lbl,_CW*0.07,y);
-    ctx.textAlign='right';ctx.font='700 '+Math.round(_CW*0.031)+'px -apple-system,sans-serif';ctx.fillStyle=hi?c1:'#f4f0e6';
+    ctx.font=Math.round(_CW*0.023)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.32)';
+    ctx.fillText(lbl,_CW*0.07,y);
+    ctx.textAlign='right';
+    ctx.font='700 '+Math.round(_CW*0.031)+'px -apple-system,sans-serif';ctx.fillStyle=hi?c1:'#f4f0e6';
     const v=String(val);ctx.fillText(v.length>24?v.slice(0,24)+'\u2026':v,_CW*0.93,y);
   });
-  const qrSz=_CW*0.12;if(_cQR(ctx,CS_SITE,_CW/2-qrSz/2,_CH*0.875,qrSz)){ctx.textAlign='center';ctx.font=Math.round(_CW*0.024)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.3)';ctx.fillText('aponte a c\u00e2mera',_CW/2,_CH*0.93);}
   _cfooter(ctx,s1);
 }
 
@@ -3017,18 +3060,26 @@ async function _cDestaque(ctx,c1,c2,s1,s2){
   ctx.fillText('\u00b7 agora \u00b7',_CW*0.93,_CH*0.068);
   let infoY=belowY+_CH*0.022;
   if(r.r!=null){
-    const rStr=String(r.r).replace('.',',');
-    ctx.font='800 '+Math.round(_CW*0.075)+'px -apple-system,sans-serif';
-    const w1=ctx.measureText(rStr).width;
-    ctx.font='600 '+Math.round(_CW*0.036)+'px -apple-system,sans-serif';
-    const w2=ctx.measureText('/ 5').width;
-    const gap=_CW*0.016,totalW=w1+gap+w2,rx=(_CW-totalW)/2;
-    ctx.textAlign='left';ctx.textBaseline='middle';
-    ctx.font='800 '+Math.round(_CW*0.075)+'px -apple-system,sans-serif';ctx.fillStyle=c1;
-    ctx.fillText(rStr,rx,infoY+_CH*0.024);
-    ctx.font='600 '+Math.round(_CW*0.036)+'px -apple-system,sans-serif';ctx.fillStyle='rgba(244,240,230,0.45)';
-    ctx.fillText('/ 5',rx+w1+gap,infoY+_CH*0.032);
-    infoY+=_CH*0.064;
+    const _drStr=String(r.r).replace('.',',');
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.font='800 '+Math.round(_CW*0.095)+'px -apple-system,sans-serif';ctx.fillStyle=c1;
+    ctx.fillText(_drStr,_CW/2,infoY+_CH*0.032);
+    infoY+=_CH*0.074;
+    const _dnFull=Math.floor(r.r),_dHalf=(r.r%1)>=0.25;
+    const _dsr=_CW*0.030,_dsg=_CW*0.015;
+    const _dstW=5*(_dsr*2)+4*_dsg;
+    let _dstX=(_CW-_dstW)/2+_dsr;
+    for(let _dsi=0;_dsi<5;_dsi++){
+      _fillStar(ctx,_dstX,infoY,_dsr,'rgba(244,240,230,0.12)');
+      if(_dsi<_dnFull){
+        _fillStar(ctx,_dstX,infoY,_dsr,c1);
+      }else if(_dsi===_dnFull&&_dHalf){
+        ctx.save();ctx.beginPath();ctx.rect(_dstX-_dsr,infoY-_dsr*1.4,_dsr,_dsr*2.8);ctx.clip();
+        _fillStar(ctx,_dstX,infoY,_dsr,c1);ctx.restore();
+      }
+      _dstX+=_dsr*2+_dsg;
+    }
+    infoY+=_CH*0.050;
   }
   const genres=(r.gids||[]).map(id=>GENRES[id]).filter(Boolean).slice(0,3).join(' \u00b7 ');
   if(genres){
