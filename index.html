@@ -2433,9 +2433,11 @@ async function _fetchRecos(vibe){
       'vote_count.gte':100,'without_genres':'10751,16'};
     if(cfg.lang)p['with_original_language']=cfg.lang;
     if(vibe==='brasil')delete p['without_genres'];
-    if(vibe==='surpresa'&&ctx.d===0&&ctx.h<18)delete p['without_genres'];
-    if(ctx.d>=1&&ctx.d<=5)p['with_runtime.lte']=115;
-    if(ctx.m<=2&&genreIds.indexOf(18)>=0)p['primary_release_date.gte']='2019-01-01';
+    if(vibe==='surpresa'){
+      if(ctx.d===0&&ctx.h<18)delete p['without_genres'];
+      if(ctx.d>=1&&ctx.d<=5)p['with_runtime.lte']=115;
+      if(ctx.m<=2&&genreIds.indexOf(18)>=0)p['primary_release_date.gte']='2019-01-01';
+    }
     const j=await tmdb('/discover/movie',p);if(!j||!j.results)break;
     for(const mv of j.results){
       if(seenIds.has(mv.id)||rejectedIds.has(mv.id))continue;
@@ -2455,6 +2457,40 @@ async function _fetchRecos(vibe){
   if(enriched.length>=2)return enriched.slice(0,5);
   if(pool.length>=2)return pool.slice(0,5);
   return [];// vibe sem resultados → mensagem específica, sem fallback genérico
+}
+// ── OMDb fetch helpers (title-based e tmdbId-based) ──
+const _omdbCache={};
+async function omdbFetch(title,year,ptTitle){
+  const ck=(title+'|'+(year||'')).toLowerCase();
+  if(_omdbCache[ck]!==undefined)return _omdbCache[ck];
+  const k=getOmdbKey();
+  if(!k){_omdbCache[ck]=null;return null;}
+  try{
+    const r=await fetch('https://www.omdbapi.com/?t='+encodeURIComponent(title)+(year?'&y='+year:'')+'&apikey='+k);
+    if(r.ok){const d=await r.json();if(d&&d.Response!=='False'){_omdbCache[ck]=d;return d;}}
+    if(ptTitle&&ptTitle!==title){
+      const r2=await fetch('https://www.omdbapi.com/?t='+encodeURIComponent(ptTitle)+(year?'&y='+year:'')+'&apikey='+k);
+      if(r2.ok){const d2=await r2.json();if(d2&&d2.Response!=='False'){_omdbCache[ck]=d2;return d2;}}
+    }
+    _omdbCache[ck]=null;return null;
+  }catch(e){_omdbCache[ck]=null;return null;}
+}
+const _omdbTmdbCache={};
+async function _omdbByTmdbId(tmdbId,title,originalTitle,year){
+  const ck=String(tmdbId);
+  if(_omdbTmdbCache[ck]!==undefined)return _omdbTmdbCache[ck];
+  const k=getOmdbKey();
+  if(!k){_omdbTmdbCache[ck]=null;return null;}
+  try{
+    const ext=await tmdb('/movie/'+tmdbId+'/external_ids');
+    const imdbId=ext&&ext.imdb_id;
+    if(imdbId){
+      const r=await fetch('https://www.omdbapi.com/?i='+imdbId+'&apikey='+k);
+      if(r.ok){const d=await r.json();if(d&&d.Response!=='False'){_omdbTmdbCache[ck]=d;return d;}}
+    }
+    const d=await omdbFetch(originalTitle||title,year);
+    _omdbTmdbCache[ck]=d;return d;
+  }catch(e){_omdbTmdbCache[ck]=null;return null;}
 }
 async function _enrichImdb(movies,opts){
   opts=opts||{};
@@ -2551,7 +2587,12 @@ async function _runRecoHeuristic(vibe){
   const res=ob.querySelector('#recoResults');
   const hasOmdb=!!getOmdbKey();
   res.innerHTML='<div class="reco-spin"><div class="reco-loader"></div>'+(hasOmdb?'Filtrando com nota IMDb real…':'Buscando via TMDB…')+'</div>';
-  const movies=await _fetchRecos(vibe);
+  let movies=[];
+  try{movies=await _fetchRecos(vibe);}catch(e){console.warn('[reco] _fetchRecos error:',e);}
+  if(!movies.length){
+    res.innerHTML='<div class="reco-spin"><div class="reco-loader"></div>Buscando alternativas…</div>';
+    try{movies=await _fetchPopularReco(vibe);}catch(e){console.warn('[reco] _fetchPopularReco error:',e);}
+  }
   if(!movies.length){res.innerHTML='<div class="reco-empty">Não encontrei títulos novos. Tente outra vibe!</div>';return;}
   const fbKind=(movies[0]&&movies[0]._fallbackKind)||null;
   const cards=[];
@@ -2616,6 +2657,9 @@ async function _runBioReco(vibe){
   // Fase 2: busca
   let movies=[];
   try{movies=await _fetchRecos(vibe);}catch(e){console.warn('_fetchRecos error:',e);}
+  if(!movies.length){
+    try{movies=await _fetchPopularReco(vibe);}catch(e){console.warn('[reco] _fetchPopularReco error:',e);}
+  }
   if(!movies.length){
     stopSpiralAnim();
     if(spiralEl)spiralEl.innerHTML='<div class="reco-empty">Nenhum título novo para esta vibe. Tente outra!</div>';
