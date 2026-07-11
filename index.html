@@ -2267,7 +2267,7 @@ function _recapStats(year){
   const d={};fl.forEach(r=>(r.di||[]).forEach(x=>{d[x[1]]=(d[x[1]]||0)+1;}));
   const co=new Set();fl.forEach(r=>{const c=r.co&&(Array.isArray(r.co)?r.co[0]:r.co);if(c)co.add(normalizeKey(c)||c);});
   const mon=Array(12).fill(0);fl.forEach(r=>mon[new Date(r.ts).getMonth()]++);
-  const ac={},at={};fl.forEach(r=>(r.ca||[]).forEach(c=>{if(c[2]===2)ac[c[1]]=(ac[c[1]]||0)+1;else if(c[2]===1)at[c[1]]=(at[c[1]]||0)+1;}));
+  const ac={},at={};fl.forEach(r=>(r.ca||[]).filter((c,i,arr)=>arr.findIndex(x=>x[0]===c[0])===i).forEach(c=>{if(c[2]===2)ac[c[1]]=(ac[c[1]]||0)+1;else if(c[2]===1)at[c[1]]=(at[c[1]]||0)+1;}));
   return {year,n:fl.length,avg,hours:Math.round(mins/60),
     topGenre:Object.entries(g).sort((a,b)=>b[1]-a[1])[0],
     topDir:Object.entries(d).sort((a,b)=>b[1]-a[1])[0],
@@ -3368,7 +3368,7 @@ async function openFilm(k){_curFilmKey=k;const r=cache[k];if(!r)return;const t=r
   const poster=(r.po)?`<div class="poster-wrap"><img id="filmPosterImg" src="${IMG}/w342${r.po}"/>${r.id?`<button id="filmSwapPoster" class="swap-poster-btn">⊙ trocar</button>`:''}</div>`:'';
   const dirs=(r.di||[]).map(d=>d[1]).join(', ');
   const gn=(r.gids||[]).map(id=>GENRES[id]).filter(Boolean).join(' · ');
-  const cast=(r.ca||[]).map(c=>{const ph=c[3]?`<img src="${IMG}/w185${c[3]}" data-pid="${c[0]}" data-pname="${(c[1]||'').replace(/"/g,'&quot;')}" data-ppic="${c[3]}" style="cursor:pointer;border-radius:inherit"/>` :`<div class="ini" data-pid="${c[0]}" data-pname="${(c[1]||'').replace(/"/g,'&quot;')}" style="cursor:pointer">${initials(c[1])}</div>`;return `<div class="c">${ph}<div class="cn">${c[1]}</div>${c[4]?`<div class="cc">${c[4]}</div>`:''}</div>`;}).join('');
+  const cast=(r.ca||[]).filter((c,i,arr)=>arr.findIndex(x=>x[0]===c[0])===i).map(c=>{const ph=c[3]?`<img src="${IMG}/w185${c[3]}" data-pid="${c[0]}" data-pname="${(c[1]||'').replace(/"/g,'&quot;')}" data-ppic="${c[3]}" style="cursor:pointer;border-radius:inherit"/>` :`<div class="ini" data-pid="${c[0]}" data-pname="${(c[1]||'').replace(/"/g,'&quot;')}" style="cursor:pointer">${initials(c[1])}</div>`;return `<div class="c">${ph}<div class="cn">${c[1]}</div>${c[4]?`<div class="cc">${c[4]}</div>`:''}</div>`;}).join('');
   if(r.id&&(r.ov===undefined||r.tp===undefined||!r.gids||!r.gids.length)){const d=await movieDetails(r.id);if(d){r.ov=d.ov;r.rt=d.rt;r.tg=d.tg;if(d.tp)r.tp=d.tp;if(d.gids&&d.gids.length&&(!r.gids||!r.gids.length))r.gids=d.gids;put(k,r);}}
   const runtime=r.rt?`${Math.floor(r.rt/60)}h ${r.rt%60}min`:'';
 
