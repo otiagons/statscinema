@@ -292,18 +292,16 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .reco-vibe:active,.reco-vibe.on{border-color:var(--acc1);color:var(--acc1);background:rgba(30,201,138,.08)}
 .reco-title-row{display:flex;align-items:flex-start;gap:4px}
 .reco-title-row .reco-title{flex:1}
-.reco-reject,.reco-save{background:none;border:none;color:var(--dim);cursor:pointer;padding:2px;opacity:.4;flex:none;transition:opacity .15s,color .15s;line-height:1;border-radius:4px;margin-top:2px}
+.reco-reject{background:none;border:none;color:var(--dim);cursor:pointer;padding:2px;opacity:.4;flex:none;transition:opacity .15s,color .15s;line-height:1;border-radius:4px;margin-top:2px}
 .reco-reject:hover,.reco-reject:active{opacity:1;color:var(--acc2)}
-.reco-save:hover,.reco-save:active{opacity:1;color:var(--acc1)}
-.reco-reject svg,.reco-save svg{width:13px;height:13px;display:block}
+.reco-reject svg{width:13px;height:13px;display:block}
 .reco-card{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
 .reco-card:last-child{border-bottom:none}
 .reco-title-row{display:flex;align-items:flex-start;gap:4px}
 .reco-title-row .reco-title{flex:1}
-.reco-reject,.reco-save{background:none;border:none;color:var(--dim);cursor:pointer;padding:2px;opacity:.4;flex:none;transition:opacity .15s,color .15s;line-height:1;border-radius:4px;margin-top:2px}
+.reco-reject{background:none;border:none;color:var(--dim);cursor:pointer;padding:2px;opacity:.4;flex:none;transition:opacity .15s,color .15s;line-height:1;border-radius:4px;margin-top:2px}
 .reco-reject:hover,.reco-reject:active{opacity:1;color:var(--acc2)}
-.reco-save:hover,.reco-save:active{opacity:1;color:var(--acc1)}
-.reco-reject svg,.reco-save svg{width:13px;height:13px;display:block}
+.reco-reject svg{width:13px;height:13px;display:block}
 .reco-card img,.reco-card .reco-ph{width:56px;height:84px;border-radius:6px;object-fit:cover;background:var(--p2);flex:none;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:11px;font-weight:700}
 .reco-info{flex:1;min-width:0}
 .reco-title{font-weight:800;font-size:14px;margin:0 0 2px;line-height:1.2}
@@ -1033,7 +1031,7 @@ async function searchFilm(t,y){
 async function credits(id){
   const j=await tmdb('/movie/'+id,{append_to_response:'credits'}); if(!j)return null;
   const cr=j.credits||{};
-  const ca=(cr.cast||[]).slice().sort((a,b)=>(a.order??999)-(b.order??999)).slice(0,8).map(c=>[c.id,c.name,c.gender||0,c.profile_path||null,c.character||'']);
+  const ca=(cr.cast||[]).slice().sort((a,b)=>(a.order??999)-(b.order??999)).filter((c,i,arr)=>arr.findIndex(x=>x.id===c.id)===i).slice(0,8).map(c=>[c.id,c.name,c.gender||0,c.profile_path||null,c.character||'']);
   const di=(cr.crew||[]).filter(c=>c.job==='Director').map(c=>[c.id,c.name,c.profile_path||null]);
   const co=(j.production_countries||[]).map(c=>c.iso_3166_1);
   return {ca,di,co,rt:j.runtime||null,lang:j.original_language||null};
@@ -2435,11 +2433,9 @@ async function _fetchRecos(vibe){
       'vote_count.gte':100,'without_genres':'10751,16'};
     if(cfg.lang)p['with_original_language']=cfg.lang;
     if(vibe==='brasil')delete p['without_genres'];
-    if(vibe==='surpresa'){
-      if(ctx.d===0&&ctx.h<18)delete p['without_genres'];
-      if(ctx.d>=1&&ctx.d<=5)p['with_runtime.lte']=115;
-      if(ctx.m<=2&&genreIds.indexOf(18)>=0)p['primary_release_date.gte']='2019-01-01';
-    }
+    if(vibe==='surpresa'&&ctx.d===0&&ctx.h<18)delete p['without_genres'];
+    if(ctx.d>=1&&ctx.d<=5)p['with_runtime.lte']=115;
+    if(ctx.m<=2&&genreIds.indexOf(18)>=0)p['primary_release_date.gte']='2019-01-01';
     const j=await tmdb('/discover/movie',p);if(!j||!j.results)break;
     for(const mv of j.results){
       if(seenIds.has(mv.id)||rejectedIds.has(mv.id))continue;
@@ -2459,40 +2455,6 @@ async function _fetchRecos(vibe){
   if(enriched.length>=2)return enriched.slice(0,5);
   if(pool.length>=2)return pool.slice(0,5);
   return [];// vibe sem resultados → mensagem específica, sem fallback genérico
-}
-// ── OMDb fetch helpers (title-based e tmdbId-based) ──
-const _omdbCache={};
-async function omdbFetch(title,year,ptTitle){
-  const ck=(title+'|'+(year||'')).toLowerCase();
-  if(_omdbCache[ck]!==undefined)return _omdbCache[ck];
-  const k=getOmdbKey();
-  if(!k){_omdbCache[ck]=null;return null;}
-  try{
-    const r=await fetch('https://www.omdbapi.com/?t='+encodeURIComponent(title)+(year?'&y='+year:'')+'&apikey='+k);
-    if(r.ok){const d=await r.json();if(d&&d.Response!=='False'){_omdbCache[ck]=d;return d;}}
-    if(ptTitle&&ptTitle!==title){
-      const r2=await fetch('https://www.omdbapi.com/?t='+encodeURIComponent(ptTitle)+(year?'&y='+year:'')+'&apikey='+k);
-      if(r2.ok){const d2=await r2.json();if(d2&&d2.Response!=='False'){_omdbCache[ck]=d2;return d2;}}
-    }
-    _omdbCache[ck]=null;return null;
-  }catch(e){_omdbCache[ck]=null;return null;}
-}
-const _omdbTmdbCache={};
-async function _omdbByTmdbId(tmdbId,title,originalTitle,year){
-  const ck=String(tmdbId);
-  if(_omdbTmdbCache[ck]!==undefined)return _omdbTmdbCache[ck];
-  const k=getOmdbKey();
-  if(!k){_omdbTmdbCache[ck]=null;return null;}
-  try{
-    const ext=await tmdb('/movie/'+tmdbId+'/external_ids');
-    const imdbId=ext&&ext.imdb_id;
-    if(imdbId){
-      const r=await fetch('https://www.omdbapi.com/?i='+imdbId+'&apikey='+k);
-      if(r.ok){const d=await r.json();if(d&&d.Response!=='False'){_omdbTmdbCache[ck]=d;return d;}}
-    }
-    const d=await omdbFetch(originalTitle||title,year);
-    _omdbTmdbCache[ck]=d;return d;
-  }catch(e){_omdbTmdbCache[ck]=null;return null;}
 }
 async function _enrichImdb(movies,opts){
   opts=opts||{};
@@ -2564,15 +2526,14 @@ function _recoCard(o){
   else if(o.status)
     scoreHtml='<div class="reco-score" style="color:var(--acc1)">'+o.status+'</div>';
   const provHtml=(o.providers&&o.providers.length)?'<div class="reco-prov">'+ICON_PLAY+'Streaming BR: <b>'+o.providers.join(' · ')+'</b></div>':'';
-  const ICON_SAVE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
-  const _saveBtn='<button class="reco-save" data-recsavelist="'+_matchKey+'" title="Salvar no Repertório">'+ICON_SAVE+'</button>';
   const _rejectBtn=o.tmdbId?'<button class="reco-reject" data-reject="'+o.tmdbId+'" title="Não mostrar mais">'+ICON_RECO_REJECT+'</button>':'';
   const _krec=cache[o.ckey||_rk];const _seen=!!(_krec&&_krec.r!=null&&!_krec.wl);
   const wlBtn=_seen?'<div class="reco-score" style="color:var(--acc1)">'+ICON_CHECK+' Já visto</div>':'';
+  const listSaveBtn='<button class="cura-save-btn" data-recsavelist="'+_matchKey+'" style="margin-top:5px">📋 Salvar no Repertório</button>';
   return '<div class="reco-card" data-cardid="'+(o.tmdbId||'')+'">'+po+'<div class="reco-info">'
-    +'<div class="reco-title-row"><div class="reco-title">'+o.title+(o.year?' ('+o.year+')':'')+'</div>'+_saveBtn+_rejectBtn+'</div>'
+    +'<div class="reco-title-row"><div class="reco-title">'+o.title+(o.year?' ('+o.year+')':'')+'</div>'+_rejectBtn+'</div>'
     +(meta?'<div class="reco-meta">'+meta+'</div>':'')
-    +scoreHtml+provHtml+wlBtn
+    +scoreHtml+provHtml+wlBtn+listSaveBtn
     +'</div></div>';
 }
 // Aviso curto quando a recomendação veio da alternativa paralela (populares), não do perfil.
@@ -2590,12 +2551,7 @@ async function _runRecoHeuristic(vibe){
   const res=ob.querySelector('#recoResults');
   const hasOmdb=!!getOmdbKey();
   res.innerHTML='<div class="reco-spin"><div class="reco-loader"></div>'+(hasOmdb?'Filtrando com nota IMDb real…':'Buscando via TMDB…')+'</div>';
-  let movies=[];
-  try{movies=await _fetchRecos(vibe);}catch(e){console.warn('[reco] _fetchRecos error:',e);}
-  if(!movies.length){
-    res.innerHTML='<div class="reco-spin"><div class="reco-loader"></div>Buscando alternativas…</div>';
-    try{movies=await _fetchPopularReco(vibe);}catch(e){console.warn('[reco] _fetchPopularReco error:',e);}
-  }
+  const movies=await _fetchRecos(vibe);
   if(!movies.length){res.innerHTML='<div class="reco-empty">Não encontrei títulos novos. Tente outra vibe!</div>';return;}
   const fbKind=(movies[0]&&movies[0]._fallbackKind)||null;
   const cards=[];
@@ -2660,9 +2616,6 @@ async function _runBioReco(vibe){
   // Fase 2: busca
   let movies=[];
   try{movies=await _fetchRecos(vibe);}catch(e){console.warn('_fetchRecos error:',e);}
-  if(!movies.length){
-    try{movies=await _fetchPopularReco(vibe);}catch(e){console.warn('[reco] _fetchPopularReco error:',e);}
-  }
   if(!movies.length){
     stopSpiralAnim();
     if(spiralEl)spiralEl.innerHTML='<div class="reco-empty">Nenhum título novo para esta vibe. Tente outra!</div>';
@@ -3214,7 +3167,7 @@ const ACH_SETS=[
   {cat:'Trilogias',icon:'trilogy',name:'As Três Cores (Kieślowski)',films:[['Three Colours: Blue',1993],['Three Colours: White',1994],['Three Colours: Red',1994]]},
   {cat:'Trilogias',icon:'trilogy',name:'Trilogia Apu (Ray)',films:[['Pather Panchali',1955],['Aparajito',1956],['The World of Apu',1959]]},
   {cat:'Trilogias',icon:'trilogy',name:'Trilogia dos Dólares (Leone)',films:[['A Fistful of Dollars',1964],['For a Few Dollars More',1965],['The Good, the Bad and the Ugly',1966]]},
-  {cat:'Trilogias',icon:'trilogy',name:'Trilogia da Vingança (Park)',films:[['Sympathy for Mr. Vengeance',2002],['Oldboy',2003],['Sympathy for Lady Vengeance',2005]]},
+  {cat:'Trilogias',icon:'trilogy',name:'Trilogia da Vingança (Park)',films:[['Sympathy for Mr. Vengeance',2002],['Oldboy',2003],['Lady Vengeance',2005]]},
   {cat:'Trilogias',icon:'trilogy',name:'Trilogia Cornetto (Wright)',films:[['Shaun of the Dead',2004],['Hot Fuzz',2007],['The World\'s End',2013]]},
   {cat:'Trilogias',icon:'trilogy',name:'Trilogia Qatsi (Reggio)',films:[['Koyaanisqatsi',1982],['Powaqqatsi',1988],['Naqoyqatsi',2002]]},
   {cat:'Trilogias',icon:'trilogy',name:'O Poderoso Chefão (Coppola)',films:[['The Godfather',1972],['The Godfather Part II',1974],['The Godfather Part III',1990]]},
@@ -3222,8 +3175,8 @@ const ACH_SETS=[
   {cat:'Trilogias',icon:'trilogy',name:'Trilogia da Morte (Iñárritu)',films:[['Amores Perros',2000],['21 Grams',2003],['Babel',2006]]},
   {cat:'Trilogias',icon:'trilogy',name:'Trilogia Toy Story (Pixar)',films:[['Toy Story',1995],['Toy Story 2',1999],['Toy Story 3',2010]]},
   // Diretores (filmografia de longas)
-  {cat:'Diretores',icon:'director',name:'Tarkovsky completo',goal:7,films:[['Ivan\'s Childhood',1962],['Andrei Rublev',1966],['Solaris',1972],['Mirror',1975],['Stalker',1979],['Nostalghia',1983],['The Sacrifice',1986]]},
-  {cat:'Diretores',icon:'director',name:'Kubrick completo',goal:12,films:[['Fear and Desire',1953],['Killer\'s Kiss',1955],['The Killing',1956],['Paths of Glory',1957],['Spartacus',1960],['Lolita',1962],['Dr. Strangelove',1964],['2001: A Space Odyssey',1968],['A Clockwork Orange',1971],['Barry Lyndon',1975],['The Shining',1980],['Full Metal Jacket',1987],['Eyes Wide Shut',1999]]},
+  {cat:'Diretores',icon:'director',name:'Tarkovsky completo',goal:7,films:[['Ivan\'s Childhood',1962],['Andrei Rublev',1966],['Solaris',1972],['Mirror',1975],['Stalker',1979],['Nostalgia',1983],['The Sacrifice',1986]]},
+  {cat:'Diretores',icon:'director',name:'Kubrick completo',goal:12,films:[['Fear and Desire',1953],['Killer\'s Kiss',1955],['The Killing',1956],['Paths of Glory',1957],['Spartacus',1960],['Lolita',1962],['Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb',1964],['2001: A Space Odyssey',1968],['A Clockwork Orange',1971],['Barry Lyndon',1975],['The Shining',1980],['Full Metal Jacket',1987],['Eyes Wide Shut',1999]]},
   {cat:'Diretores',icon:'director',name:'Lynch completo',goal:10,films:[['Eraserhead',1977],['The Elephant Man',1980],['Dune',1984],['Blue Velvet',1986],['Wild at Heart',1990],['Twin Peaks: Fire Walk with Me',1992],['Lost Highway',1997],['The Straight Story',1999],['Mulholland Drive',2001],['Inland Empire',2006]]},
   {cat:'Diretores',icon:'director',name:'Bong Joon-ho completo',goal:7,films:[['Barking Dogs Never Bite',2000],['Memories of Murder',2003],['The Host',2006],['Mother',2009],['Snowpiercer',2013],['Okja',2017],['Parasite',2019]]},
   {cat:'Diretores',icon:'director',name:'Lanthimos completo',goal:6,films:[['Dogtooth',2009],['Alps',2011],['The Lobster',2015],['The Killing of a Sacred Deer',2017],['The Favourite',2018],['Poor Things',2023],['Kinds of Kindness',2024]]},
@@ -3231,8 +3184,8 @@ const ACH_SETS=[
   {cat:'Diretores',icon:'director',name:'Ari Aster completo',goal:3,films:[['Hereditary',2018],['Midsommar',2019],['Beau Is Afraid',2023]]},
   {cat:'Diretores',icon:'director',name:'Jordan Peele completo',goal:3,films:[['Get Out',2017],['Us',2019],['Nope',2022]]},
   {cat:'Diretores',icon:'director',name:'Charlie Kaufman completo',goal:3,films:[['Synecdoche, New York',2008],['Anomalisa',2015],['I\'m Thinking of Ending Things',2020]]},
-  {cat:'Diretores',icon:'director',name:'David Fincher completo',goal:12,films:[['Alien 3',1992],['Se7en',1995],['The Game',1997],['Fight Club',1999],['Panic Room',2002],['Zodiac',2007],['The Curious Case of Benjamin Button',2008],['The Social Network',2010],['The Girl with the Dragon Tattoo',2011],['Gone Girl',2014],['Mank',2020],['The Killer',2023]]},
-  {cat:'Diretores',icon:'director',name:'Park Chan-wook completo',goal:9,films:[['Joint Security Area',2000],['Sympathy for Mr. Vengeance',2002],['Oldboy',2003],['Sympathy for Lady Vengeance',2005],['I\'m a Cyborg, But That\'s OK',2006],['Thirst',2009],['Stoker',2013],['The Handmaiden',2016],['Decision to Leave',2022]]},
+  {cat:'Diretores',icon:'director',name:'David Fincher completo',goal:12,films:[['Alien³',1992],['Se7en',1995],['The Game',1997],['Fight Club',1999],['Panic Room',2002],['Zodiac',2007],['The Curious Case of Benjamin Button',2008],['The Social Network',2010],['The Girl with the Dragon Tattoo',2011],['Gone Girl',2014],['Mank',2020],['The Killer',2023]]},
+  {cat:'Diretores',icon:'director',name:'Park Chan-wook completo',goal:9,films:[['Joint Security Area',2000],['Sympathy for Mr. Vengeance',2002],['Oldboy',2003],['Lady Vengeance',2005],['I\'m a Cyborg, But That\'s OK',2006],['Thirst',2009],['Stoker',2013],['The Handmaiden',2016],['Decision to Leave',2022]]},
   {cat:'Diretores',icon:'director',name:'Alain Guiraudie completo',goal:5,films:[['No Rest for the Brave',2003],['The King of Escape',2009],['Stranger by the Lake',2013],['Staying Vertical',2016],['Misericordia',2024]]},
   {cat:'Diretores',icon:'director',name:'Wong Kar-wai completo',goal:8,films:[['As Tears Go By',1988],['Days of Being Wild',1990],['Chungking Express',1994],['Ashes of Time',1994],['Fallen Angels',1995],['Happy Together',1997],['In the Mood for Love',2000],['2046',2004],['My Blueberry Nights',2007],['The Grandmaster',2013]]},
   {cat:'Diretores',icon:'director',name:'Almodóvar essencial',goal:6,films:[['Women on the Verge of a Nervous Breakdown',1988],['All About My Mother',1999],['Talk to Her',2002],['Volver',2006],['Broken Embraces',2009],['The Skin I Live In',2011],['Julieta',2016],['Pain and Glory',2019],['Parallel Mothers',2021]]},
