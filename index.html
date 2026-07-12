@@ -633,6 +633,7 @@ select{color-scheme:dark}
   <div id="ghIconArea" style="margin-top:8px"></div>
   <button class="btn danger" id="setClear">Apagar cache (TMDB)</button>
   <button class="btn sec" id="setDupCheck">Verificar filmes duplicados (mesmo ID TMDB)</button>
+  <div id="dupList" style="margin-top:8px"></div>
   <button class="btn sec" id="setClose">Fechar página</button>
   <p class="note" style="margin-top:16px">Dados e imagens via TMDB; produto não endossado pelo TMDB. Atualizar filmes mescla o novo export com o que já existe (não apaga histórico).<br><br>"Salvar HTML" gera um novo arquivo com todos os seus dados embutidos — faça commit no GitHub para garantir backup permanente.<br><br>Avaliações e dados ficam no IndexedDB do navegador. Ao salvar o HTML e fazer commit, os dados ficam gravados no próprio arquivo — nada se perde ao abrir em nova aba ou novo aparelho.</p>
 </div></div>
@@ -3745,10 +3746,17 @@ $('#setKey').onclick=()=>{$('#settings').classList.remove('show');$('#keyIn').va
 $('#setClear').onclick=()=>{$('#settings').classList.remove('show');clearCredits();PEOPLE=null;toast('Cache do TMDB limpo');render();sync();};
 $('#setDupCheck').onclick=()=>{
   const dups=findDupIds();
-  if(!dups.length){toast('Nenhum ID do TMDB duplicado encontrado.');return;}
-  const msg=dups.map(({id,arr})=>'TMDB #'+id+':\n'+arr.map(x=>'  • "'+x.t+'" ('+x.y+')'+(x.r!=null?' ★'+x.r:'')+(x.ts?' — visto em '+new Date(x.ts).toLocaleDateString('pt-BR'):'')+'  [chave: '+x.k+']').join('\n')).join('\n\n');
+  const box=$('#dupList');
+  if(!dups.length){box.innerHTML='';toast('Nenhum ID do TMDB duplicado encontrado.');return;}
   console.log('Duplicados por ID TMDB:',dups);
-  alert('Encontrado(s) '+dups.length+' filme(s) com registros duplicados (mesmo ID do TMDB, chaves diferentes):\n\n'+msg+'\n\nAbra cada um pela busca e use "Remover dos vistos" no que não quiser manter. Detalhe completo também no console (F12).');
+  box.innerHTML=dups.map(({id,arr})=>`<div style="margin-bottom:10px;padding:10px;border:1px solid var(--line);border-radius:10px">
+    <div style="font-size:11px;color:var(--dim);margin-bottom:6px">TMDB #${id} — toque para abrir e remover o que não quiser manter</div>
+    ${arr.map(x=>`<div class="dup-row" data-k="${x.k.replace(/"/g,'&quot;')}" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line);cursor:pointer">
+      <div style="min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.t} (${x.y})</div>
+      <div style="font-size:11px;color:var(--dim)">${x.r!=null?'★'+String(x.r).replace('.',','):'sem nota'}${x.ts?' · visto em '+new Date(x.ts).toLocaleDateString('pt-BR'):''}</div></div>
+      <span style="color:var(--acc1);font-size:12px;white-space:nowrap">Abrir ›</span></div>`).join('')}
+    </div>`).join('');
+  $$('.dup-row').forEach(el=>el.onclick=()=>{const k=el.dataset.k;if(!cache[k])return;$('#settings').classList.remove('show');openFilm(k);});
 };
 $('#setSaveHTML').onclick=()=>{$('#settings').classList.remove('show');saveHTML();};
 
