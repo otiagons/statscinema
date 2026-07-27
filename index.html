@@ -1,5 +1,68 @@
 <!DOCTYPE html><!--
   CineStats — Changelog
+  v6.4 [2026-07-27]: Espiral do cabeçalho do Perfil agora é sempre estática — parou de herdar
+                  a preferência de animação dos Ajustes (que ainda vale pro giro do spiral de
+                  recomendações/conquistas, só não mais para essa).
+  v6.3 [2026-07-27]: Espiral do cabeçalho do Perfil (acima do @usuário) trocada pra mesma
+                  lógica aplicada no ícone da Stats (v6.2): usa o path fixo _SP1/_SP2 dos
+                  ícones reais de tela inicial via _miniIconSpiral, colorido pelo tema, em vez
+                  da curva recalculada por trigonometria. Giro (quando animação está ativa nos
+                  Ajustes) continua funcionando normalmente — só a classe 'spin' muda, a
+                  animação CSS é a mesma de antes.
+  v6.2 [2026-07-27]: Ícone da 3ª aba (Stats) trocado de novo — a v6.1 só ajustou a espessura
+                  do traço da espiral calculada (_miniVertigoSpiral), mas o desenho em si
+                  (curva gerada por trigonometria) ainda era diferente do usado nos ícones reais
+                  de tela inicial. Agora reaproveita o MESMO path fixo (_SP1/_SP2) dos ícones
+                  selecionáveis em Ajustes → tela inicial (ICON_VARIANTS/_iconSVG), só que colo-
+                  rido pelo tema (var(--acc1)/--acc2) em vez de cor fixa — fidelidade total ao
+                  design original, sem recálculo geométrico.
+  v6.1 [2026-07-27]: Ícone da 3ª aba (Stats) — o gerador _miniVertigoSpiral usava largura de
+                  traço fixa (2.2), pensada pro tamanho do cabeçalho do Perfil (64px). No ícone
+                  pequeno da Stats (26px) isso fazia as duas espirais (verde/vermelho) se
+                  sobreporem, virando um borrão quase sólido em vez das faixas finas e
+                  alternadas do desenho original. Agora a espessura escala com o tamanho do
+                  ícone em todos os usos (Perfil, tela de boas-vindas, aba Stats).
+  v6.0 [2026-07-27]: Corrigidos 4 problemas: (1) barra de sub-abas (.tabs) da aba Páginas
+                  ficava visível em Stats/Repertório/Perfil no desktop — só era escondida
+                  fora do mobile por engano; agora obedece a classe tabs-mode em qualquer
+                  largura de tela. (2) Busca não marcava "visto" em filmes com título
+                  diferente do original (dublagem/versão PT-BR) quando o registro não tinha
+                  ID do TMDB vinculado — o conjunto de títulos vistos só considerava um campo
+                  de título; agora inclui título salvo, título traduzido e título original.
+                  (3) Card "Recomendação de hoje" (Repertório) ficava em branco sem nenhuma
+                  mensagem quando a busca não retornava candidatos ou dava erro — agora tenta
+                  um fallback de populares (mesmo padrão já usado nas recomendações por vibe)
+                  e, se mesmo assim falhar, mostra o motivo e um botão "Tentar de novo" em vez
+                  de sumir silenciosamente. (4) Editar perfil não tinha campo para o
+                  nome de usuário (@handle) — o cabeçalho do Perfil sempre lia bio.handle,
+                  que nunca era gravado, caindo no valor fixo "@tiagonunesn"; adicionado campo
+                  editável, que salva e atualiza o cabeçalho.
+  v5.9 [2026-07-27]: Navegação no desktop — a bot-nav (Páginas/Pesquisa/Stats/Repertório/Perfil)
+                  não tinha nenhuma versão para telas largas (>680px), ficando totalmente
+                  invisível fora do mobile. Agora, a partir de 681px, os mesmos 5 botões viram
+                  uma barra lateral fixa à esquerda (com rótulo de texto visível, já que sobra
+                  espaço). Todo o conteúdo (.wrap) e as telas cheias (.over/.modal) recebem um
+                  respiro à esquerda equivalente à largura da barra para não ficar por baixo
+                  dela. Pura CSS via media query — reage ao tamanho da janela, não ao tipo de
+                  aparelho, então funciona igual em notebook, tablet largo ou navegador redimen-
+                  sionado, sem detecção de user-agent.
+  v5.8 [2026-07-27]: Ícone da 3ª aba (Stats, botão central) usava uma espiral desenhada à mão,
+                  com coordenadas próprias — diferente da de Conquistas e do Perfil. Agora usa o
+                  mesmo gerador (_miniVertigoSpiral), garantindo a mesma marca/forma em todo o
+                  app (varia só o tamanho, por finalidade). Fica estático, como já era.
+  v5.7 [2026-07-27]: Header da aba Páginas mais discreto sobre o pôster (sem fundo/borda/blur,
+                  só sombra no texto) para não tapar a imagem. Pôster do topo agora fica fixo
+                  por 24h (em vez de sortear a cada troca de aba) e tenta priorizar uma versão
+                  sem texto do pôster via TMDB. Resultados da Pesquisa: badge "Visto/Na
+                  watchlist" + botão "+ Quero ver" viraram um único ícone discreto (check para
+                  visto, bookmark pra alternar quero-ver); filmes já vistos ficam com o texto
+                  apagado. Corrigidas omdbFetch()/_omdbByTmdbId(), que tinham sido apagadas do
+                  código e quebravam silenciosamente a Recomendação de hoje (Repertório →
+                  Recomendações), o filtro por nota IMDb na busca e a desambiguação por diretor.
+                  Diagnóstico de duplicados (Ajustes) agora corrige automaticamente os casos
+                  seguros — um registro com nota + fantasmas de watchlist/lista do mesmo
+                  filme — em vez de só listar; a correção também roda sozinha sempre que um
+                  filme é avaliado, migrando a presença em listas para o registro válido.
   v5.6 [2026-07-27]: Alternador Atividade/Conquistas agora usa sublinhado deslizante
                   (sem preenchimento) em vez do brilho de sombra — a barra de 2px anima
                   suavemente entre as duas opções. Os demais alternadores do tipo "seg"
@@ -170,7 +233,9 @@ header{background:var(--panel);border:1px solid var(--line);border-radius:16px;p
 body:not(.show-brand) header{display:none}
 body.show-brand header{justify-content:center;text-align:center}
 body.show-brand .logo{flex:none;justify-content:center}
-body.hero-on header{margin-top:-36px;position:relative;z-index:2;background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+body.hero-on header{margin-top:-34px;position:relative;z-index:2;background:transparent;border-color:transparent;padding:9px 15px;box-shadow:none}
+body.hero-on .logo svg{filter:drop-shadow(0 1px 4px rgba(0,0,0,.65))}
+body.hero-on .logo h1{text-shadow:0 1px 5px rgba(0,0,0,.75)}
 #pageHero{display:none;height:calc(env(safe-area-inset-top) + 120px);margin:0 -13px;background-size:cover;background-position:center 22%;border-radius:0 0 20px 20px;position:relative;overflow:hidden}
 #pageHero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.30),rgba(0,0,0,.10) 40%,var(--bg))}
 body.show-brand #pageHero.on{display:block}
@@ -188,7 +253,7 @@ body:not(.show-brand) #view{margin-top:calc(env(safe-area-inset-top) + 10px)}
 .set-opt .set-opt-lbl{font-weight:700;font-size:14px;color:var(--ink)}
 .icon-btn{background:var(--panel);border:1px solid var(--line);color:var(--mut);border-radius:9px;width:38px;height:38px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .icon-btn svg{width:18px;height:18px}
-.tabs{position:sticky;top:0;z-index:15;background:rgba(16,17,21,.95);backdrop-filter:blur(8px);display:flex;gap:0;margin:6px -13px 0;padding:0 6px;border-bottom:1px solid var(--line)}
+.tabs{position:sticky;top:0;z-index:15;background:rgba(16,17,21,.95);backdrop-filter:blur(8px);display:none;gap:0;margin:6px -13px 0;padding:0 6px;border-bottom:1px solid var(--line)}.tabs-mode .tabs{display:flex}
 .tabs button{flex:1;text-align:center;background:none;border:0;border-bottom:2px solid transparent;color:var(--mut);padding:11px 3px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;letter-spacing:-.01em}
 .tabs button.on{color:var(--ink);border-bottom-color:var(--gold)}
 .tab-bio{color:var(--gold)!important;font-weight:800;font-size:14.5px;border-right:1px solid var(--line);margin-right:5px;padding-right:15px}
@@ -458,6 +523,11 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .sr-badge svg{flex:none}
 .sr-visto{color:var(--acc1)}
 .sr-wl{color:var(--mut)}
+.sr-ind{flex:none;display:flex;align-items:center;justify-content:center}
+.sr-ind-seen{width:26px;height:26px;color:var(--dim);opacity:.6}
+.sr-ind-btn{width:30px;height:30px;border-radius:50%;background:transparent;border:1px solid var(--line);color:var(--dim);cursor:pointer;padding:0}
+.sr-ind-btn.on{border-color:var(--acc1);color:var(--acc1);background:color-mix(in srgb,var(--acc1) 10%,transparent)}
+.sr-ind-btn:active{transform:scale(.94)}
 .po-rw{position:absolute;right:5px;top:5px;background:rgba(0,0,0,.74);color:var(--ink);font-size:10px;font-weight:800;border-radius:5px;padding:1px 5px}
 .po-seen{position:absolute;left:5px;top:5px;background:rgba(0,0,0,.74);color:var(--acc1);border-radius:4px;padding:2px 4px;display:flex;align-items:center;line-height:1}
 .po-seen svg{width:10px;height:10px}
@@ -630,6 +700,24 @@ select{color-scheme:dark}
   .over-nav{bottom:calc(58px + env(safe-area-inset-bottom))!important;}
 }
 
+/* ── side nav (desktop, >=681px) — same bot-nav buttons, repositioned ── */
+@media(min-width:681px){
+  body{padding-left:92px}
+  .bot-nav{display:flex;position:fixed;top:0;left:0;bottom:0;width:92px;height:100vh;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:rgba(12,12,14,.97);border-top:none;border-right:1px solid var(--line);z-index:55;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+  .bot-nav-item{flex:none;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;color:var(--dim);padding:8px 4px;cursor:pointer;width:100%;min-height:44px;justify-content:center}
+  .bot-nav-item svg{width:22px;height:22px}
+  .bot-nav-item span{display:block;font-size:9.5px;font-weight:700;letter-spacing:.01em}
+  .bot-nav-item.on{color:var(--acc1)}
+  .bot-nav-item:hover{color:var(--ink)}
+  .bot-nav-center{width:48px;height:48px;border-radius:50%;border:2px solid var(--acc1);background:color-mix(in srgb,var(--acc1) 8%,transparent);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;transition:background .15s}
+  .bot-nav-center svg{width:26px;height:26px}
+  .bot-nav-center.on{background:color-mix(in srgb,var(--acc1) 20%,transparent)}
+  .bot-nav-center:hover{background:color-mix(in srgb,var(--acc1) 14%,transparent)}
+  .over{left:92px}
+  .modal{left:92px}
+  .toast{left:calc(92px + (100vw - 92px)/2)}
+}
+
 /* ── REPERTÓRIO ── */
 .cura-tv{flex:1;text-align:center;background:none;border:none;border-bottom:2px solid transparent;color:var(--mut);padding:10px 8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:color .15s}
 .cura-tv.on{color:var(--ink);border-bottom-color:var(--acc1)}
@@ -673,6 +761,7 @@ select{color-scheme:dark}
 .bio-hero{position:relative;text-align:center;padding:26px 12px 16px;margin-top:6px;background:radial-gradient(circle at 50% 0%,color-mix(in srgb,var(--acc1) 10%,transparent),transparent 62%)}
 .bio-hero-spiral{width:64px;height:64px;margin:0 auto 10px;display:block}
 @media(prefers-reduced-motion:no-preference){.bio-hero-spiral.spin{animation:vspin 28s linear infinite}}
+.bnstats-spiral{width:26px;height:26px;display:block}
 .bio-hero h2{margin:0;font-size:24px;font-weight:800;letter-spacing:-.01em;word-break:break-word}
 .bio-hero-tags{font-size:12.5px;color:var(--dim);margin-top:5px;line-height:1.5}
 .bio-hero-site{margin-top:7px;font-size:12px}
@@ -712,6 +801,10 @@ select{color-scheme:dark}
 .dup-row .k{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mut)}
 .dup-row:active .k,.dup-row:hover .k{color:var(--ink)}
 .dup-row .bdg{flex:none;font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line);border-radius:5px;padding:2px 5px}
+.dup-fix-btn{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;margin-top:8px;background:color-mix(in srgb,var(--acc1) 12%,transparent);border:1px solid color-mix(in srgb,var(--acc1) 45%,var(--line));color:var(--acc1);border-radius:8px;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer}
+.dup-fix-btn:active{background:color-mix(in srgb,var(--acc1) 20%,transparent)}
+.dup-fix-btn.dup-fix-all{margin:2px 0 10px}
+.dup-manual-note{font-size:11px;color:var(--dim);margin-top:7px;line-height:1.4}
 </style>
 </head><body>
 <div class="wrap">
@@ -820,6 +913,7 @@ select{color-scheme:dark}
 <div class="over" id="bioEdit" style="justify-content:flex-start"><div class="oh"><h2>Editar perfil</h2><button class="icon-btn" id="bioEditClose">✕</button></div>
   <div class="ob box" style="max-width:480px">
     <label class="eyb">Nome</label><input class="tin" id="bioName" placeholder="seu nome"/>
+    <label class="eyb">Usuário (@)</label><input class="tin" id="bioHandle" placeholder="seuusuario"/>
     <label class="eyb">Link do site pessoal</label><input class="tin" id="bioSite" placeholder="ex.: tiago.com"/>
     <label class="eyb">Cor da espiral</label><div class="chips" id="bioAccent"></div>
     <label class="eyb" style="margin-top:14px">Top 5 favoritos (toque para escolher)</label><div class="favrow" id="bioFavs"></div>
@@ -881,7 +975,7 @@ select{color-scheme:dark}
     <span>Pesquisa</span>
   </button>
   <button class="bot-nav-center" id="bnStats">
-    <svg viewBox="0 0 48 48" fill="none" style="width:26px;height:26px" aria-hidden="true"><path d="M25.5 24.0 L25.68 24.37 L25.76 24.81 L25.71 25.3 L25.53 25.8 L25.21 26.28 L24.75 26.7 L24.17 27.01 L23.48 27.19 L22.73 27.21 L21.95 27.04 L21.19 26.68 L20.49 26.12 L19.91 25.39 L19.49 24.51 L19.28 23.5 L19.29 22.43 L19.55 21.35 L20.06 20.3 L20.83 19.37 L21.81 18.59 L22.99 18.03 L24.31 17.74 L25.7 17.74 L27.1 18.06 L28.45 18.7 L29.65 19.65 L30.65 20.87 L31.38 22.32 L31.78 23.95 L31.83 25.66 L31.48 27.39 L30.75 29.05 L29.65 30.55 L28.22 31.8 L26.5 32.73 L24.58 33.28 L22.54 33.4 L20.48 33.07 L18.49 32.29 L16.69 31.06 L15.16 29.44 L13.99 27.49 L13.26 25.28 L13.02 22.92 L13.3 20.52 L14.11 18.2 L15.43 16.06 L17.21 14.23 L19.38 12.8 L21.86 11.85 L24.53 11.46 L27.26 11.66 L29.93 12.45 L32.41 13.83 L34.57 15.74 L36.29 18.11 L37.48 20.84 L38.07 23.8 L37.99 26.87 L37.25 29.9 L35.85 32.73 L33.84 35.24 L31.3 37.28 L28.34 38.74 L25.09 39.55 L21.69 39.63 L18.31 38.97 L15.11 37.58 L12.25 35.51 L9.87 32.83 L8.09 29.66 L7.03 26.14 L6.75 22.43 L7.29 18.7 L8.63 15.13 L10.73 11.89 L13.52 9.14 L16.87 7.04 L20.64 5.69 L24.66 5.18 L28.74 5.55 L32.69 6.8 L36.31 8.9 L39.44 11.76 L41.9 15.27 L43.57 19.27 L44.35 23.57 L44.17 27.99 L43.05 32.32 L40.99 36.34" stroke="var(--acc1)" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M25.5 24.0 L25.68 23.63 L25.76 23.19 L25.71 22.7 L25.53 22.2 L25.21 21.72 L24.75 21.3 L24.17 20.99 L23.48 20.81 L22.73 20.79 L21.95 20.96 L21.19 21.32 L20.49 21.88 L19.91 22.61 L19.49 23.49 L19.28 24.5 L19.29 25.57 L19.55 26.65 L20.06 27.7 L20.83 28.63 L21.81 29.41 L22.99 29.97 L24.31 30.26 L25.7 30.26 L27.1 29.94 L28.45 29.3 L29.65 28.35 L30.65 27.13 L31.38 25.68 L31.78 24.05 L31.83 22.34 L31.48 20.61 L30.75 18.95 L29.65 17.45 L28.22 16.2 L26.5 15.27 L24.58 14.72 L22.54 14.6 L20.48 14.93 L18.49 15.71 L16.69 16.94 L15.16 18.56 L13.99 20.51 L13.26 22.72 L13.02 25.08 L13.3 27.48 L14.11 29.8 L15.43 31.94 L17.21 33.77 L19.38 35.2 L21.86 36.15 L24.53 36.54 L27.26 36.34 L29.93 35.55 L32.41 34.17 L34.57 32.26 L36.29 29.89 L37.48 27.16 L38.07 24.2 L37.99 21.13 L37.25 18.1 L35.85 15.27 L33.84 12.76 L31.3 10.72 L28.34 9.26 L25.09 8.45 L21.69 8.37 L18.31 9.03 L15.11 10.42 L12.25 12.49 L9.87 15.17 L8.09 18.34 L7.03 21.86 L6.75 25.57 L7.29 29.3 L8.63 32.87 L10.73 36.11 L13.52 38.86 L16.87 40.96 L20.64 42.31 L24.66 42.82 L28.74 42.45 L32.69 41.2 L36.31 39.1 L39.44 36.24 L41.9 32.73 L43.57 28.73 L44.35 24.43 L44.17 20.01 L43.05 15.68 L40.99 11.66" stroke="var(--acc2)" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="24" cy="24" r="2.3" fill="var(--ink)" opacity="0.95"/></svg>
+    <span id="bnStatsSpiral" aria-hidden="true"></span>
   </button>
   <button class="bot-nav-item" id="bnReco">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10.5 21h3"/><path d="M12 2C7.6 2 4 5.6 4 10c0 2.8 1.4 5.2 3.5 6.7L8 18h8l.5-1.3C18.6 15.2 20 12.8 20 10c0-4.4-3.6-8-8-8z"/></svg>
@@ -928,6 +1022,19 @@ function _iconSVG(iv){
     +'<path d="'+_SP1+'" stroke="'+iv.c1+'" stroke-width="1.7" stroke-linecap="round"/>'
     +'<path d="'+_SP2+'" stroke="'+iv.c2+'" stroke-width="1.7" stroke-linecap="round"/>'
     +'<circle cx="24" cy="24" r="1.8" fill="'+iv.dot+'"/>'
+    +'</svg>';
+}
+// v6.2: mesmo desenho fixo (_SP1/_SP2) usado nos ícones reais de tela inicial (ICON_VARIANTS/
+// _iconSVG), só que colorido pelas variáveis de tema (var(--acc1)/--acc2) em vez de cor fixa —
+// para reaproveitar em elementos da UI que precisam acompanhar o tema, como o botão da aba
+// Stats. Ao contrário de _miniVertigoSpiral (traçado recalculado por trigonometria a cada
+// tamanho), aqui o path é sempre o mesmo — muda só o width/height do <svg>, que escala o
+// desenho inteiro (curva + espessura do traço) proporcionalmente, sem perder fidelidade.
+function _miniIconSpiral(size,cls){
+  return '<svg class="'+(cls||'')+'" viewBox="0 0 48 48" width="'+size+'" height="'+size+'" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+    +'<path d="'+_SP1+'" stroke="var(--acc1)" stroke-width="1.7" stroke-linecap="round"/>'
+    +'<path d="'+_SP2+'" stroke="var(--acc2)" stroke-width="1.7" stroke-linecap="round"/>'
+    +'<circle cx="24" cy="24" r="1.8" fill="var(--ink)"/>'
     +'</svg>';
 }
 let _iconUrl=null;
@@ -1091,6 +1198,15 @@ const GLOBE_SVG='<svg class="gicon" viewBox="0 0 24 24" fill="none" stroke="curr
 const ICON_SHARE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px;margin-right:5px"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>';
 const ICON_EXT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;vertical-align:-1px;margin-right:3px"><path d="M8 17L17 8M9 8h8v8"/></svg>';
 const ICON_EYE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="2.6"/></svg>';
+const ICON_BM_SM='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
+// Indicador discreto de status na busca: um único ícone no lugar do badge de texto + botão "+ Quero ver".
+// Visto → check pequeno e apagado (sem botão). Nem visto nem "seenElsewhere" → bookmark que alterna quero-ver.
+// "seenElsewhere" (visto por outra chave/lista, mas sem nota nesta) → nada, igual ao comportamento anterior.
+function _srIndicator(isRated,onWl,cur,ek,seenElsewhere){
+  if(isRated)return '<span class="sr-ind sr-ind-seen" title="Visto'+(cur!=null?' · '+star(cur):'')+'">'+ICON_CHECK+'</span>';
+  if(seenElsewhere)return '';
+  return '<button class="sr-ind sr-ind-btn'+(onWl?' on':'')+'" data-wl="'+ek+'" title="'+(onWl?'Remover de Quero ver':'Adicionar a Quero ver')+'">'+ICON_BM_SM+'</button>';
+}
 const ICON_SPARK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-3px;margin-right:5px"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 4v3M17 5.5h3"/></svg>';
 let KEY=null, cache={}, db=null, tab='stats', busy=false, PEOPLE=null, _demoMode=false;
 const _filmoCache={};
@@ -1844,9 +1960,8 @@ function renderBio(){
     return `<div class="favslot" data-fav="${i}">${r&&r.po?`<img src="${IMG}/w185${r.po}"/>`:(r?`<div class="ph2">${r.t}</div>`:'<span>+</span>')}</div>`;}).join('');
   const handle='@'+String(bio.handle||'tiagonunesn').replace(/^@+/,'');
   const heroTags=(Array.isArray(bio.tags)&&bio.tags.length?bio.tags:['Cinema de arte','noir','terror cult','queer','ficção científica']).join(' · ');
-  const _spd=bio.speed!=null?bio.speed:(bio.animate===false?0:2);
   $('#view').innerHTML=`<div class="bio-hero">
-    ${_miniVertigoSpiral(64,_spd>0)}
+    ${_miniIconSpiral(64,'bio-hero-spiral')}
     <h2>${handle}</h2>
     <div class="bio-hero-tags">${heroTags}</div>
     ${bio.site?`<div class="bio-hero-site">${site}</div>`:''}
@@ -1963,9 +2078,8 @@ async function _loadTop10Cat(catName){
     const ex=cache[k2];const cur=ex?ex.r:null;const onWl=ex&&!!ex.wl;const isRated=cur!=null;
     const seen=isRated||seenIds.has(m.id)||seenT.has(norm(m.title||''));
     const po=m.poster_path?'<img src="'+IMG+'/w92'+m.poster_path+'"/>':'<div class="pp"></div>';
-    const badge=isRated?'<span class="sr-badge sr-visto">'+ICON_CHECK+' Visto · '+star(cur)+'</span>':onWl?'<span class="sr-badge sr-wl">'+ICON_EYE+' Na watchlist</span>':'';
-    const wlBtn=!isRated&&!seen?'<button class="wl-btn'+(onWl?' on':'')+'" data-wl="'+ek+'">'+(onWl?'✓ Quero ver':'+ Quero ver')+'</button>':'';
-    return '<div class="sr sr-row t10-row" data-k="'+ek+'"><span class="t10-rk">'+(i+1)+'</span>'+po+'<div class="si"><div class="st">'+_titlePair(m.original_title||m.title,m.original_title&&m.original_title!==m.title?m.title:null)+'</div><div class="sy">'+y+'<span class="sr-imdb" data-srimdb="'+ek+'"></span></div>'+badge+(wlBtn?'<div style="margin-top:5px">'+wlBtn+'</div>':'')+'</div></div>';
+    const ind=_srIndicator(isRated,onWl,cur,ek,seen);
+    return '<div class="sr sr-row t10-row'+(isRated?' seen':'')+'" data-k="'+ek+'"><span class="t10-rk">'+(i+1)+'</span>'+po+'<div class="si"><div class="st">'+_titlePair(m.original_title||m.title,m.original_title&&m.original_title!==m.title?m.title:null)+'</div><div class="sy">'+y+'<span class="sr-imdb" data-srimdb="'+ek+'"></span></div></div>'+ind+'</div>';
   }).join('');
   _top10Cache[catName]={ts:now,html};
   host.innerHTML=html;
@@ -1973,12 +2087,12 @@ async function _loadTop10Cat(catName){
   _wireTop10Clicks(host);
 }
 function _wireTop10Clicks(host){
-  host.querySelectorAll('.wl-btn').forEach(wb=>{wb.onclick=e=>{e.stopPropagation();const k2=wb.dataset.wl;const m=window._sres&&window._sres[k2];if(!m)return;
+  host.querySelectorAll('.sr-ind-btn').forEach(wb=>{wb.onclick=e=>{e.stopPropagation();const k2=wb.dataset.wl;const m=window._sres&&window._sres[k2];if(!m)return;
     let rec=cache[k2];if(rec&&rec.wl){delete rec.wl;cache[k2]=rec;put(k2,rec);toast('Tirado da watchlist');}
     else if(rec&&rec.r!=null)toast('Esse você já assistiu');
     else{rec=rec||{t:m.t,y:m.y};rec.wl=1;rec.r=null;rec.id=m.id;rec.po=m.po;rec.gids=m.gids;rec.lang=m.lang;rec.ti=m.t;rec.ot=m.ot||m.t;rec.ye=String(m.y);rec.src='user';cache[k2]=rec;put(k2,rec);PEOPLE=null;toast('Quero ver: '+m.t);}
-    wb.classList.toggle('on',!!(cache[k2]&&cache[k2].wl));wb.textContent=cache[k2]&&cache[k2].wl?'✓ Quero ver':'+ Quero ver';};});
-  host.querySelectorAll('.t10-row').forEach(row=>{row.onclick=async e=>{if(e.target.closest('.wl-btn'))return;
+    const nowOn=!!(cache[k2]&&cache[k2].wl);wb.classList.toggle('on',nowOn);wb.title=nowOn?'Remover de Quero ver':'Adicionar a Quero ver';};});
+  host.querySelectorAll('.t10-row').forEach(row=>{row.onclick=async e=>{if(e.target.closest('.sr-ind-btn'))return;
     const k2=row.dataset.k;const m=window._sres&&window._sres[k2];if(!m)return;
     if(!cache[k2])cache[k2]={t:m.t,y:m.y,id:m.id,po:m.po,gids:m.gids,lang:m.lang,ti:m.t,ot:m.ot||m.t,ye:String(m.y),src:'user',_stub:1};
     await openFilm(k2);};});
@@ -2366,13 +2480,39 @@ function _updateBotNav(){
   // sync tabs-mode visibility with content tab state
   if(!contentTabs.includes(tab)){document.body.classList.remove('tabs-mode');}
 }
-function _updatePageHero(){
+// v5.7: pôster do topo da aba Páginas agora fica fixo por 24h (em vez de sortear a cada troca de
+// aba) e, ao escolher um novo, tenta priorizar um pôster "sem texto" (estilo fotografia) via TMDB.
+const HERO_TTL=24*60*60*1000;
+function _heroCacheGet(){try{return JSON.parse(localStorage.getItem('cs_hero_poster')||'null');}catch(e){return null;}}
+function _heroCacheSet(v){try{localStorage.setItem('cs_hero_poster',JSON.stringify(v));}catch(e){}}
+let _heroReqSeq=0;
+async function _updatePageHero(){
   const el=$('#pageHero');if(!el)return;
   const pool=films().filter(r=>r.po);
-  if(!pool.length){el.style.backgroundImage='';el.classList.remove('on');document.body.classList.remove('hero-on');return;}
-  const r=pool[Math.floor(Math.random()*pool.length)];
-  el.style.backgroundImage='url('+IMG+'/w780'+r.po+')';
+  if(!pool.length){el.style.backgroundImage='';el.classList.remove('on');document.body.classList.remove('hero-on');_heroCacheSet(null);return;}
+  const cached=_heroCacheGet();
+  const stillValid=cached&&cached.po&&(Date.now()-cached.ts)<HERO_TTL&&(!cached.id||pool.some(r=>r.id===cached.id));
+  if(stillValid){
+    el.style.backgroundImage='url('+IMG+'/w780'+cached.po+')';
+    el.classList.add('on');document.body.classList.add('hero-on');
+    return;
+  }
+  const myReq=++_heroReqSeq;
+  const pick=pool[Math.floor(Math.random()*pool.length)];
+  el.style.backgroundImage='url('+IMG+'/w780'+pick.po+')';
   el.classList.add('on');document.body.classList.add('hero-on');
+  _heroCacheSet({po:pick.po,id:pick.id||null,ts:Date.now()});
+  if(!pick.id||!KEY)return;
+  // em segundo plano, procura um pôster sem texto pro mesmo filme; se achar, refina a escolha já fixada
+  try{
+    const j=await tmdb('/movie/'+pick.id+'/images',{include_image_language:'null'});
+    if(myReq!==_heroReqSeq)return; // já trocou de aba de novo — não sobrescreve a escolha mais recente
+    const textless=((j&&j.posters)||[]).filter(p=>!p.iso_639_1).sort((a,b)=>(b.vote_average||0)-(a.vote_average||0));
+    if(textless.length){
+      el.style.backgroundImage='url('+IMG+'/w780'+textless[0].file_path+')';
+      _heroCacheSet({po:textless[0].file_path,id:pick.id,ts:Date.now()});
+    }
+  }catch(e){}
 }
 function _updateHeaderBtns(t){
   const _isPag=['films','dir','actor','actress','genre'].includes(t);
@@ -2407,11 +2547,11 @@ $('#bnTabs').onclick=()=>{
 function bioFavSlots(host){host.innerHTML=[0,1,2,3,4].map(i=>{const k=(bio.favs||[])[i];const r=k?cache[k]:null;
   return `<div class="favslot" data-fav="${i}">${r&&r.po?`<img src="${IMG}/w185${r.po}"/>`:(r?`<div class="ph2">${r.t}</div>`:'<span>+</span>')}</div>`;}).join('');
   host.querySelectorAll('.favslot').forEach(el=>el.onclick=()=>openFavPicker(+el.dataset.fav));}
-function openBioEdit(){$('#bioName').value=bio.name||'';$('#bioSite').value=bio.site||'';
+function openBioEdit(){$('#bioName').value=bio.name||'';$('#bioHandle').value=(bio.handle||'').replace(/^@+/,'');$('#bioSite').value=bio.site||'';
   $('#bioAccent').innerHTML=Object.keys(ACCENTS).map(a=>{const[c1,c2]=ACCENTS[a];return `<button class="chip theme-chip ${(bio.accent||'vertigo')===a?'on':''}" data-a="${a}"><span class="sw" style="background:linear-gradient(135deg,${c1},${c2})"></span>${ACC_LBL[a]}</button>`;}).join('');
   bioFavSlots($('#bioFavs'));$('#bioEdit').classList.add('show');}
 $('#bioAccent').onclick=e=>{const b=e.target.closest('button');if(!b)return;bio.accent=b.dataset.a;bio.cat=THEME_SPIRAL[bio.accent]||bio.cat||'films';saveBio();applyAccent();$$('#bioAccent .chip').forEach(x=>x.classList.toggle('on',x.dataset.a===bio.accent));render();};
-$('#bioSave').onclick=()=>{bio.name=$('#bioName').value.trim();bio.site=$('#bioSite').value.trim();saveBio();$('#bioEdit').classList.remove('show');renderBio();};
+$('#bioSave').onclick=()=>{bio.name=$('#bioName').value.trim();bio.handle=$('#bioHandle').value.trim().replace(/^@+/,'').replace(/\s+/g,'');bio.site=$('#bioSite').value.trim();saveBio();$('#bioEdit').classList.remove('show');renderBio();};
 $('#bioEditClose').onclick=()=>{$('#bioEdit').classList.remove('show');renderBio();};
 function openFavPicker(i){curFav=i;$('#favIn').value='';renderFavRes('');$('#favOver').classList.add('show');setTimeout(()=>$('#favIn').focus(),100);}
 function renderFavRes(q){const nq=norm(q);let list=films();if(nq)list=list.filter(r=>norm(r.t).includes(nq));
@@ -2540,6 +2680,40 @@ const _CW=540,_CH=960,_CS=2; // canvas 1080×1920, preview em 540×960
 // Chave opcional da IA (Claude) — fica só no aparelho, como a do TMDB
 function getOmdbKey(){try{return localStorage.getItem('cs_omdb_key')||null;}catch(e){return null;}}
 function setOmdbKey(k){try{if(k)localStorage.setItem('cs_omdb_key',k);else localStorage.removeItem('cs_omdb_key');}catch(e){}}
+// Chave padrão do OMDb (grátis, 1.000 chamadas/dia) — usada se o usuário não colar a própria
+const OMDB_DEFAULT_KEY='2e29b4de';
+const _omdbTitleCache={};
+async function _omdbRaw(t,y){
+  if(!t)return null;
+  const ck=norm(t)+'|'+(y||'');
+  if(_omdbTitleCache[ck]!==undefined)return _omdbTitleCache[ck];
+  const key=getOmdbKey()||OMDB_DEFAULT_KEY;
+  let out=null;
+  try{
+    const u=new URL('https://www.omdbapi.com/');
+    u.searchParams.set('apikey',key);
+    u.searchParams.set('t',t);
+    if(y)u.searchParams.set('y',y);
+    const r=await fetch(u);
+    if(r.ok){const j=await r.json();if(j&&j.Response==='True')out=j;}
+  }catch(e){out=null;}
+  _omdbTitleCache[ck]=out;
+  return out;
+}
+// Busca no OMDb por título (com título alternativo de fallback) — usada para notas IMDb e desambiguação de diretor
+async function omdbFetch(t,y,tAlt){
+  let j=await _omdbRaw(t,y);
+  if(!j&&tAlt&&norm(tAlt)!==norm(t||''))j=await _omdbRaw(tAlt,y);
+  return j;
+}
+const _omdbIdCache={};
+// Mesma busca, mas cacheada por ID do TMDB para não repetir chamadas ao consultar o mesmo filme em telas diferentes
+async function _omdbByTmdbId(tmdbId,t,ot,y){
+  if(tmdbId!=null&&_omdbIdCache[tmdbId]!==undefined)return _omdbIdCache[tmdbId];
+  const j=await omdbFetch(ot||t,y,t);
+  if(tmdbId!=null)_omdbIdCache[tmdbId]=j;
+  return j;
+}
 function _getRejected(){try{const s=localStorage.getItem('cs_reco_rej');return new Set(s?JSON.parse(s):[]);}catch(e){return new Set();}}
 function _addRejected(id){try{const r=_getRejected();r.add(+id);localStorage.setItem('cs_reco_rej',JSON.stringify([...r]));}catch(e){}}
 
@@ -2631,7 +2805,7 @@ function _dayGenres(ctx){
 }
 
 // títulos já vistos que casam com os gêneros (reforça a deduplicação enviada à IA)
-function _watchedTitleSet(){return new Set(films().map(r=>norm(r.t)));}
+function _watchedTitleSet(){const s=new Set();films().forEach(r=>{[r.t,r.ti,r.ot].forEach(t=>{if(t)s.add(norm(t));});});return s;}
 function _watchedForGenres(genreIds,cap){
   const set=new Set(genreIds);
   const out=[];
@@ -3463,8 +3637,13 @@ function _vertigoSpiralSVG(size){
 // versão mini da espiral Vertigo (mesmo formato/geração das conquistas) — usada no cabeçalho do perfil, acima do @usuário
 function _miniVertigoSpiral(size,spin){
   const cx=size/2,cy=size/2,turns=4.6,rMax=size*0.46,steps=180;
+  // v6.1: largura do traço agora escala com o tamanho (metade do passo entre voltas, com uma
+  // margem de 18%) — antes era um valor fixo (2.2) que, em tamanhos pequenos (ícone da aba
+  // Stats, 26px), fazia as duas espirais se sobreporem e virar um borrão quase sólido em vez
+  // de faixas alternadas verde/vermelho nítidas.
+  const sw=Math.max(0.9,(rMax/turns/2)*0.82);
   const path=ph=>{let d='';for(let i=0;i<=steps;i++){const t=i/steps,a=t*turns*6.28319+ph,r=t*rMax;d+=(i?'L':'M')+(cx+Math.cos(a)*r).toFixed(1)+' '+(cy+Math.sin(a)*r).toFixed(1);}return d;};
-  return '<svg class="bio-hero-spiral'+(spin?' spin':'')+'" viewBox="0 0 '+size+' '+size+'" width="'+size+'" height="'+size+'" aria-hidden="true"><path d="'+path(0)+'" fill="none" stroke="var(--acc1)" stroke-width="2.2" stroke-linecap="round"/><path d="'+path(3.14159)+'" fill="none" stroke="var(--acc2)" stroke-width="2.2" stroke-linecap="round"/><circle cx="'+cx+'" cy="'+cy+'" r="'+(size*0.035).toFixed(1)+'" fill="var(--ink)"/></svg>';
+  return '<svg class="bio-hero-spiral'+(spin?' spin':'')+'" viewBox="0 0 '+size+' '+size+'" width="'+size+'" height="'+size+'" aria-hidden="true"><path d="'+path(0)+'" fill="none" stroke="var(--acc1)" stroke-width="'+sw.toFixed(2)+'" stroke-linecap="round"/><path d="'+path(3.14159)+'" fill="none" stroke="var(--acc2)" stroke-width="'+sw.toFixed(2)+'" stroke-linecap="round"/><circle cx="'+cx+'" cy="'+cy+'" r="'+(size*0.035).toFixed(1)+'" fill="var(--ink)"/></svg>';
 }
 function openAchievement(i){
   const a=ACH_SETS[i];if(!a)return;const idx=_watchedIndex();
@@ -3715,6 +3894,29 @@ function _starsFromPoint(x,y,container){
   const half=(x-rect.left)<rect.width/2;
   return{stars,val:half?+s.dataset.i-0.5:+s.dataset.i,key:s.dataset.key};
 }
+// Limpa registros-fantasma do mesmo filme (mesmo ID TMDB, chave diferente) que ficaram presos
+// em "quero ver"/listas depois que o filme foi marcado como visto pela chave sobrevivente.
+// Só remove duplicatas "inofensivas" (sem nota própria) — se a duplicata também tem nota, é um
+// conflito real e fica para o diagnóstico manual em Ajustes não perder dado sem o usuário ver.
+function _reconcileWatchedDupes(tmdbId,keepKey){
+  if(tmdbId==null)return;
+  const lists=_getLists();let listsChanged=false,cleaned=0;
+  Object.keys(cache).forEach(k=>{
+    if(k===keepKey)return;
+    const r=cache[k];
+    if(!r||r.id!==tmdbId||r.r!=null)return;
+    lists.forEach(l=>{
+      if(!l.films||!l.films.includes(k))return;
+      l.films=l.films.filter(x=>x!==k);
+      if(!l.films.includes(keepKey))l.films.push(keepKey);
+      listsChanged=true;
+    });
+    del(k);cleaned++;
+  });
+  if(listsChanged)_saveLists(lists);
+  if(cleaned)PEOPLE=null;
+  return cleaned;
+}
 function _commitStar(info){
   if(!info)return;
   const{key:k,val}=info;
@@ -3727,6 +3929,7 @@ function _commitStar(info){
   const wasWl=!!rec.wl;const hadRating=rec.r!=null&&!wasWl;
   rec.r=val;delete rec.wl;delete rec._stub;rec.s=1;if(!hadRating&&!rec.ts)rec.ts=Date.now();
   put(k,rec);PEOPLE=null;
+  if(rec.id!=null)_reconcileWatchedDupes(rec.id,k);
   toast((hadRating?'Nota corrigida: ':(wasWl?'Visto! ':'Avaliado: '))+rec.t+' '+star(val));
   openFilm(k);
 }
@@ -3829,10 +4032,9 @@ async function _runExplore(action){
       const ex=cache[k2];const cur=ex?ex.r:null;const onWl=ex&&!!ex.wl;const isRated=cur!=null;
       const seen=seenIds.has(m.id)||seenT.has(norm(m.title||''));
       const po=m.poster_path?'<img src="'+IMG+'/w92'+m.poster_path+'"/>':'<div class="pp"></div>';
-      const badge=isRated?'<span class="sr-badge sr-visto">'+ICON_CHECK+' Visto · '+star(cur)+'</span>':onWl?'<span class="sr-badge sr-wl">'+ICON_EYE+' Na watchlist</span>':'';
-      const wlBtn=!isRated&&!seen?'<button class="wl-btn'+(onWl?' on':'')+' " data-wl="'+k2.replace(/"/g,'&quot;')+'">'+(onWl?'✓ Quero ver':'+ Quero ver')+'</button>':'';
       const ek=k2.replace(/"/g,'&quot;');
-      return '<div class="sr sr-row" data-k="'+ek+'"><img src="'+IMG+'/w92'+(m.poster_path||'')+'"><div class="si"><div class="st">'+_titlePair(m.original_title||m.title,m.original_title&&m.original_title!==m.title?m.title:null)+'</div><div class="sy">'+y+'<span class="sr-imdb" data-srimdb="'+ek+'"></span></div>'+badge+(wlBtn?'<div style="margin-top:5px">'+wlBtn+'</div>':'')+'</div></div>';
+      const ind=_srIndicator(isRated,onWl,cur,ek,seen);
+      return '<div class="sr sr-row'+(isRated?' seen':'')+'" data-k="'+ek+'"><img src="'+IMG+'/w92'+(m.poster_path||'')+'"><div class="si"><div class="st">'+_titlePair(m.original_title||m.title,m.original_title&&m.original_title!==m.title?m.title:null)+'</div><div class="sy">'+y+'<span class="sr-imdb" data-srimdb="'+ek+'"></span></div></div>'+ind+'</div>';
     }).join('');
   _fetchSearchImdb(list.slice(0,10));
   sr.onclick=null;
@@ -3841,12 +4043,12 @@ async function _runExplore(action){
 }
 function _rewireSrClicks(){
   const sr=$('#searchRes');if(!sr)return;
-  sr.querySelectorAll('.wl-btn').forEach(wb=>{wb.onclick=e=>{e.stopPropagation();const k2=wb.dataset.wl;const m=window._sres&&window._sres[k2];if(!m)return;
+  sr.querySelectorAll('.sr-ind-btn').forEach(wb=>{wb.onclick=e=>{e.stopPropagation();const k2=wb.dataset.wl;const m=window._sres&&window._sres[k2];if(!m)return;
     let rec=cache[k2];if(rec&&rec.wl){delete rec.wl;cache[k2]=rec;put(k2,rec);toast('Tirado da watchlist');}
     else if(rec&&rec.r!=null)toast('Esse você já assistiu');
     else{rec=rec||{t:m.t,y:m.y};rec.wl=1;rec.r=null;rec.id=m.id;rec.po=m.po;rec.gids=m.gids;rec.lang=m.lang;rec.ti=m.t;rec.ot=m.ot||m.t;rec.ye=String(m.y);rec.src='user';cache[k2]=rec;put(k2,rec);PEOPLE=null;toast('Quero ver: '+m.t);}
-    wb.classList.toggle('on',!!(cache[k2]&&cache[k2].wl));wb.textContent=cache[k2]&&cache[k2].wl?'✓ Quero ver':'+ Quero ver';};});
-  sr.querySelectorAll('.sr-row').forEach(row=>{row.onclick=async e=>{if(e.target.closest('.wl-btn'))return;
+    const nowOn=!!(cache[k2]&&cache[k2].wl);wb.classList.toggle('on',nowOn);wb.title=nowOn?'Remover de Quero ver':'Adicionar a Quero ver';};});
+  sr.querySelectorAll('.sr-row').forEach(row=>{row.onclick=async e=>{if(e.target.closest('.sr-ind-btn'))return;
     const k2=row.dataset.k;const m=window._sres&&window._sres[k2];if(!m)return;
     if(!cache[k2])cache[k2]={t:m.t,y:m.y,id:m.id,po:m.po,gids:m.gids,lang:m.lang,ti:m.t,ot:m.ot||m.t,ye:String(m.y),src:'user',_stub:1};
     await openFilm(k2);};});
@@ -3877,10 +4079,9 @@ async function doSearch(q){
     window._sres[k]={id:m.id,t:m.title,ot:m.original_title||m.title,y:+y||0,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null};
     const ex=cache[k];const cur=ex?ex.r:null;const onWl=ex&&!!ex.wl;const isRated=cur!=null;
     const po=m.poster_path?`<img src="${IMG}/w92${m.poster_path}"/>`:"<div class=\"pp\"></div>";
-    const badge=isRated?`<span class="sr-badge sr-visto">${ICON_CHECK} Visto · ${star(cur)}</span>`:onWl?`<span class="sr-badge sr-wl">${ICON_EYE} Na watchlist</span>`:"";
-    const wlBtn=!isRated?`<button class="wl-btn${onWl?' on':''}" data-wl="${k.replace(/"/g,'&quot;')}">${onWl?'✓ Quero ver':'+ Quero ver'}</button>`:'';
     const ek=k.replace(/"/g,'&quot;');
-    return `<div class="sr sr-row" data-k="${ek}">${po}<div class="si"><div class="st">${_titlePair(m.original_title||m.title,m.original_title&&m.original_title!==m.title?m.title:null)}</div><div class="sy">${y}<span class="sr-imdb" data-srimdb="${ek}"></span></div>${badge}${wlBtn?`<div style="margin-top:5px">${wlBtn}</div>`:""}</div></div>`;
+    const ind=_srIndicator(isRated,onWl,cur,ek,false);
+    return `<div class="sr sr-row${isRated?' seen':''}" data-k="${ek}">${po}<div class="si"><div class="st">${_titlePair(m.original_title||m.title,m.original_title&&m.original_title!==m.title?m.title:null)}</div><div class="sy">${y}<span class="sr-imdb" data-srimdb="${ek}"></span></div></div>${ind}</div>`;
   }).join('');
   $('#searchRes').innerHTML=pplHtml+movieHtml;
   $('#searchRes').querySelectorAll('.sr-person').forEach(el=>{el.onclick=e=>{e.stopPropagation();const pid=el.dataset.pid;const P2=people();const pp=[...P2.D,...P2.A].find(p=>String(p.id)===String(pid));if(pp)openPerson(pp);};});
@@ -3915,16 +4116,15 @@ async function _showPopularSuggestions(failedQuery){
     window._sres[k]={id:m.id,t:m.title,ot:m.original_title||m.title,y:+y||0,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null};
     const ex=cache[k];const cur=ex?ex.r:null;const onWl=ex&&!!ex.wl;const isRated=cur!=null;
     const po=m.poster_path?`<img src="${IMG}/w92${m.poster_path}"/>`:"<div class=\"pp\"></div>";
-    const badge=isRated?`<span class="sr-badge sr-visto">${ICON_CHECK} Visto · ${star(cur)}</span>`:onWl?`<span class="sr-badge sr-wl">${ICON_EYE} Na watchlist</span>`:"";
-    const wlBtn=!isRated?`<button class="wl-btn${onWl?' on':''}" data-wl="${k.replace(/"/g,'&quot;')}">+ Quero ver</button>`:'';
     const ek=k.replace(/"/g,'&quot;');
-    return `<div class="sr sr-row" data-k="${ek}">${po}<div class="si"><div class="st">${_titlePair(m.original_title||m.title,m.original_title&&m.original_title!==m.title?m.title:null)}</div><div class="sy">${y}<span class="sr-imdb" data-srimdb="${ek}"></span></div>${badge}${wlBtn?`<div style="margin-top:5px">${wlBtn}</div>`:""}</div></div>`;
+    const ind=_srIndicator(isRated,onWl,cur,ek,false);
+    return `<div class="sr sr-row${isRated?' seen':''}" data-k="${ek}">${po}<div class="si"><div class="st">${_titlePair(m.original_title||m.title,m.original_title&&m.original_title!==m.title?m.title:null)}</div><div class="sy">${y}<span class="sr-imdb" data-srimdb="${ek}"></span></div></div>${ind}</div>`;
   }).join("");
   const sr=$('#searchRes');if(sr)sr.innerHTML+='<div class="eyb" style="margin:14px 0 8px">Populares fora dos cartazes</div>'+rows;
   _fetchSearchImdb(pop);
 }
 $('#searchRes').addEventListener('click',async e=>{
-  const wb=e.target.closest('.wl-btn');
+  const wb=e.target.closest('.sr-ind-btn');
   if(wb){e.stopPropagation();const k=wb.dataset.wl;const m=window._sres[k];if(!m)return;let rec=cache[k];
     if(rec&&rec.wl){delete rec.wl;cache[k]=rec;put(k,rec);toast('Tirado da watchlist');}
     else if(rec&&rec.r!=null){toast('Esse você já assistiu');}
@@ -4053,6 +4253,10 @@ function maybeWelcome(){
 $('#welcImport').onclick=()=>{try{localStorage.setItem('cs_welcome','1');}catch(e){}$('#welc').classList.remove('show');$('#fileIn').click();};
 $('#welcSkip').onclick=()=>{try{localStorage.setItem('cs_welcome','1');}catch(e){}$('#welc').classList.remove('show');loadDemo();};
 {const ws=$('#welcSpiral');if(ws)ws.innerHTML=_miniVertigoSpiral(48,true).replace('bio-hero-spiral','welc-spin');}
+// v5.8: ícone da 3ª aba (Stats, central) usava uma espiral desenhada à mão, diferente da de
+// Conquistas/Perfil. Agora usa o mesmo gerador (_miniVertigoSpiral) — mesma marca, variando só
+// o tamanho por finalidade — mas fica estático (sem giro), como no ícone original.
+{const bs=$('#bnStatsSpiral');if(bs)bs.innerHTML=_miniIconSpiral(26,'bnstats-spiral');}
 // ── Perfil de exemplo (modo demonstração; dados em memória, não persistidos) ──
 const DEMO_FILMS=[
   {t:'Vertigo',y:1958,r:5,gids:[9648,53,10749],co:['US'],rt:128},
@@ -4105,26 +4309,55 @@ $('#keysSave').onclick=()=>{
 };
 
 /* ── v4.5: diagnóstico de duplicados (mesmo TMDB ID em chaves diferentes) ── */
+/* v5.7: quando só há UM registro com nota própria no grupo, os demais são fantasmas de
+   watchlist/lista deixados por uma chave diferente do mesmo filme — agora dá pra corrigir
+   com um toque (migra a presença em listas para o registro válido e apaga o resto). */
 $('#dupScan').onclick=()=>{
   const res=$('#dupRes');
   res.innerHTML='<div class="reco-spin" style="padding:12px 0 4px"><div class="reco-loader"></div>Varrendo banco local…</div>';
-  setTimeout(()=>{
-    const byId={};
-    Object.entries(cache).forEach(([k,r])=>{if(r&&r.id!=null)(byId[r.id]=byId[r.id]||[]).push([k,r]);});
-    const dups=Object.entries(byId).filter(([,arr])=>arr.length>1);
-    if(!dups.length){res.innerHTML='<div class="dup-ok">'+ICON_CHECK+' Nenhum duplicado — cada filme tem um único registro.</div>';return;}
-    const rows=dups.map(([id,arr])=>{
-      const t=arr[0][1].t||'?',y=arr[0][1].y||arr[0][1].ye||'';
-      const items=arr.map(([k,r])=>{
-        const badges=[r._stub?'stub':null,r.wl?'watchlist':null,r.r!=null?'nota '+r.r:null].filter(Boolean).map(b=>'<span class="bdg">'+b+'</span>').join('');
-        return '<div class="dup-row" data-dupk="'+String(k).replace(/"/g,'&quot;')+'"><span class="k">'+k+'</span>'+badges+'</div>';
-      }).join('');
-      return '<div style="margin-top:10px"><b>'+t+(y?' ('+y+')':'')+'</b> · TMDB '+id+' · '+arr.length+' registros'+items+'</div>';
-    }).join('');
-    res.innerHTML='<div class="dup-bad"><b>'+dups.length+(dups.length>1?' títulos duplicados':' título duplicado')+'</b> no banco local — toque num registro para abrir a ficha:'+rows+'</div>';
-    res.querySelectorAll('[data-dupk]').forEach(el=>el.onclick=()=>{$('#settings').classList.remove('show');openFilm(el.dataset.dupk);});
-  },60);
+  setTimeout(()=>_runDupScan(res),60);
 };
+function _runDupScan(res){
+  const byId={};
+  Object.entries(cache).forEach(([k,r])=>{if(r&&r.id!=null)(byId[r.id]=byId[r.id]||[]).push([k,r]);});
+  const dups=Object.entries(byId).filter(([,arr])=>arr.length>1);
+  if(!dups.length){res.innerHTML='<div class="dup-ok">'+ICON_CHECK+' Nenhum duplicado — cada filme tem um único registro.</div>';return;}
+  let fixableTotal=0;
+  const rows=dups.map(([id,arr])=>{
+    const t=arr[0][1].t||'?',y=arr[0][1].y||arr[0][1].ye||'';
+    const rated=arr.filter(([,r])=>r.r!=null);
+    const fixable=rated.length===1&&arr.length>rated.length;
+    if(fixable)fixableTotal++;
+    const items=arr.map(([k,r])=>{
+      const badges=[r._stub?'stub':null,r.wl?'watchlist':null,r.r!=null?'nota '+r.r:null].filter(Boolean).map(b=>'<span class="bdg">'+b+'</span>').join('');
+      return '<div class="dup-row" data-dupk="'+String(k).replace(/"/g,'&quot;')+'"><span class="k">'+k+'</span>'+badges+'</div>';
+    }).join('');
+    const action=fixable
+      ?'<button class="dup-fix-btn" data-fixid="'+id+'" data-fixkeep="'+String(rated[0][0]).replace(/"/g,'&quot;')+'">'+ICON_CHECK+' Corrigir automaticamente</button>'
+      :'<div class="dup-manual-note">'+(rated.length>1?'Mais de um registro com nota própria — revise manualmente antes de mesclar.':'Nenhum registro com nota — toque para abrir e decidir manualmente.')+'</div>';
+    return '<div style="margin-top:10px" data-dupgroup="'+id+'"><b>'+t+(y?' ('+y+')':'')+'</b> · TMDB '+id+' · '+arr.length+' registros'+items+action+'</div>';
+  }).join('');
+  const fixAllBtn=fixableTotal>1?'<button id="dupFixAll" class="dup-fix-btn dup-fix-all">'+ICON_CHECK+' Corrigir todos os '+fixableTotal+' automaticamente</button>':'';
+  res.innerHTML='<div class="dup-bad"><b>'+dups.length+(dups.length>1?' títulos duplicados':' título duplicado')+'</b> no banco local'+(fixableTotal?' · '+fixableTotal+' corrigível'+(fixableTotal>1?'is':'')+' automaticamente':'')+' — toque num registro para abrir a ficha:'+fixAllBtn+rows+'</div>';
+  res.querySelectorAll('[data-dupk]').forEach(el=>el.onclick=()=>{$('#settings').classList.remove('show');openFilm(el.dataset.dupk);});
+  res.querySelectorAll('.dup-fix-btn[data-fixid]').forEach(btn=>btn.onclick=e=>{
+    e.stopPropagation();
+    const n=_reconcileWatchedDupes(+btn.dataset.fixid,btn.dataset.fixkeep);
+    toast(n?'Duplicado corrigido':'Nada para corrigir');
+    _runDupScan(res);
+  });
+  const fa=$('#dupFixAll');
+  if(fa)fa.onclick=e=>{
+    e.stopPropagation();
+    let total=0;
+    dups.forEach(([id,arr])=>{
+      const rated=arr.filter(([,r])=>r.r!=null);
+      if(rated.length===1&&arr.length>rated.length)total+=_reconcileWatchedDupes(+id,rated[0][0])||0;
+    });
+    toast(total?total+' registro(s) corrigido(s)':'Nada para corrigir');
+    _runDupScan(res);
+  };
+}
 
 /* ── v4.5: Recomendação de hoje (card do Perfil; reusa o motor das vibes) ── */
 let _todayPool=null,_todayIdx=0,_todayHTML=null;
@@ -4138,13 +4371,30 @@ function _todayWhy(m,ctx){
   const day=(ctx.dayNote.split('—')[1]||ctx.dayNote).trim();
   return (bits.length?bits.join(' · ')+' — ':'')+'encaixa no seu momento: '+day.toLowerCase()+'.';
 }
+function _todayEmptyHtml(msg){
+  return '<div class="today-card"><div class="today-head"><h3>Recomendação de hoje</h3>'
+    +'<button class="today-again" id="todayAgain">Tentar de novo</button></div>'
+    +'<div class="reco-empty">'+msg+'</div></div>';
+}
+function _wireTodayRetry(host){
+  const again=host.querySelector('#todayAgain');
+  if(again)again.onclick=()=>{_todayPool=null;_todayIdx=0;_renderTodayReco(true);};
+}
 async function _renderTodayReco(force){
   const host=$('#todayReco');if(!host)return;
   if(_todayHTML&&!force){host.innerHTML=_todayHTML;_wireTodayReco(host);return;}
   host.innerHTML='<div class="today-card"><div class="today-head"><h3>Recomendação de hoje</h3></div><div class="reco-spin" style="padding:18px 0"><div class="reco-loader"></div>Escolhendo pelo seu perfil e momento…</div></div>';
   try{
-    if(!_todayPool||!_todayPool.length||_todayIdx>=_todayPool.length){_todayPool=await _fetchRecos('surpresa');_todayIdx=0;}
-    if(!_todayPool||!_todayPool.length){host.innerHTML='';_todayHTML=null;return;}
+    let fbKind=null;
+    if(!_todayPool||!_todayPool.length||_todayIdx>=_todayPool.length){
+      _todayPool=await _fetchRecos('surpresa');_todayIdx=0;
+      if(!_todayPool||!_todayPool.length){_todayPool=await _fetchPopularReco('surpresa');_todayIdx=0;}
+    }
+    if(!_todayPool||!_todayPool.length){
+      host.innerHTML=_todayEmptyHtml('Não encontrei nenhum título novo pro seu perfil agora — pode ser falta de chave/conexão com o TMDB ou poucos filmes correspondendo aos filtros do momento.');
+      _wireTodayRetry(host);_todayHTML=null;return;
+    }
+    fbKind=(_todayPool[_todayIdx]&&_todayPool[_todayIdx]._fallbackKind)||null;
     const ctx=_recoContext();
     const main=_todayPool[_todayIdx];
     const alts=_todayPool.filter((m,i)=>i!==_todayIdx).slice(0,2);
@@ -4165,6 +4415,7 @@ async function _renderTodayReco(force){
     host.innerHTML='<div class="today-card">'
       +'<div class="today-head"><h3>Recomendação de hoje</h3><button class="today-again" id="todayAgain">Gerar outra</button></div>'
       +'<div class="today-ctx">'+ctx.dayNote+(ctx.season?' · '+ctx.season:'')+'</div>'
+      +(fbKind?_recoFallNote(fbKind):'')
       +'<div class="today-main">'+po+'<div style="flex:1;min-width:0"><div class="today-tag">Principal</div>'
       +'<div class="today-title" data-recokey="'+main.id+'">'+ot+(yr?' ('+yr+')':'')+(pt?'<span class="pt">'+pt+'</span>':'')+'</div>'
       +(meta?'<div class="today-meta">'+meta+'</div>':'')
@@ -4173,7 +4424,10 @@ async function _renderTodayReco(force){
       +'</div>';
     _todayHTML=host.innerHTML;
     _wireTodayReco(host);
-  }catch(e){host.innerHTML='';_todayHTML=null;}
+  }catch(e){
+    host.innerHTML=_todayEmptyHtml('Não consegui buscar a recomendação agora ('+(e&&e.message?e.message:'erro de rede')+').');
+    _wireTodayRetry(host);_todayHTML=null;
+  }
 }
 function _wireTodayReco(host){
   const again=host.querySelector('#todayAgain');
