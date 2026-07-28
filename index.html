@@ -875,6 +875,19 @@ select{color-scheme:dark}
   </div>
 
   <div class="set-card">
+    <h3>Conta e sincronizacao</h3>
+    <p class="sub" id="cloudStat">Verificando...</p>
+    <div id="cloudLogin">
+      <label class="set-lbl" for="authEmail">E-mail</label>
+      <input class="tin" id="authEmail" type="email" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="seu e-mail"/>
+      <label class="set-lbl" for="authPass">Senha</label>
+      <input class="tin" id="authPass" type="password" autocomplete="current-password" placeholder="sua senha"/>
+      <button class="btn sec" id="authIn">Entrar</button>
+    </div>
+    <button class="btn sec" id="authOut" style="display:none">Sair desta conta</button>
+  </div>
+
+  <div class="set-card">
     <h3>Importar</h3>
     <p class="sub">Traga seu histórico ou restaure um backup. Tudo se soma ao que já existe — nada é apagado.</p>
     <button class="btn sec" id="setImport" style="margin-top:0">Importar dados</button>
@@ -1226,14 +1239,46 @@ function setKey(k){KEY=k;try{localStorage.setItem('cs_key',k);}catch(e){}}
 // ── Supabase: sincronização entre navegadores/dispositivos ──────────────────
 const SUPABASE_URL='https://ysikyxbnflitlgqvpwzg.supabase.co';
 const SUPABASE_ANON_KEY='sb_publishable_D3JOqk4e4KRQW5ZrfDb2Aw_IGF9D6iT';
-async function verifyCloud(){if(!sb)return;try{const{error}=await sb.from('cinestats_state').select('id').eq('id',CS_ROW_ID).maybeSingle();if(error&&error.code==='42P01'){console.warn('Tabela cinestats_state não existe no Supabase. Crie-a manualmente.');toast('⚠️ Supabase: tabela não encontrada. Crie cinestats_state.',4000);}else{console.log('Supabase OK');}}catch(e){console.warn('verifyCloud:',e);}}
 const CS_ROW_ID='tiago';
 let sb=null, _cloudReady=false, _cloudSaveTimer=null, _cloudLoading=false;
+let _authUser=null, _cloudWarned=false;
 try{ if(window.supabase) sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY); }catch(e){ console.warn('supabase init:',e); }
+
+function cloudStatus(){
+  if(!sb)return{ok:false,msg:'A biblioteca do Supabase nao carregou. Seus filmes ficam salvos so neste aparelho.'};
+  if(!_authUser)return{ok:false,msg:'Voce nao esta conectado. Seus filmes ficam salvos so neste aparelho.'};
+  return{ok:true,msg:'Conectado como '+(_authUser.email||'-')+'. Sincronizacao ativa.'};
+}
+async function authRefresh(){
+  if(!sb){_authUser=null;return null;}
+  try{const{data}=await sb.auth.getSession();_authUser=(data&&data.session&&data.session.user)||null;}
+  catch(e){_authUser=null;}
+  return _authUser;
+}
+async function authSignIn(email,pass){
+  if(!sb)throw new Error('Supabase indisponivel');
+  const{data,error}=await sb.auth.signInWithPassword({email:email,password:pass});
+  if(error)throw error;
+  _authUser=(data&&data.user)||null;_cloudWarned=false;return _authUser;
+}
+async function authSignOut(){
+  if(sb){try{await sb.auth.signOut();}catch(e){}}
+  _authUser=null;
+}
+async function verifyCloud(){
+  if(!sb)return;
+  if(!_authUser){console.log('Supabase: sem sessao - modo local.');return;}
+  try{
+    const{error}=await sb.from('cinestats_state').select('id').eq('id',CS_ROW_ID).maybeSingle();
+    if(error&&error.code==='42P01'){console.warn('Tabela cinestats_state nao existe no Supabase.');toast('Supabase: tabela nao encontrada.',4000);}
+    else if(error){console.warn('verifyCloud:',error);}
+    else{console.log('Supabase OK');}
+  }catch(e){console.warn('verifyCloud:',e);}
+}
 setTimeout(()=>verifyCloud&&verifyCloud(),3000);
 
 async function cloudLoad(){
-  if(!sb)return null;
+  if(!sb||!_authUser)return null;
   try{
     const {data,error}=await sb.from('cinestats_state').select('bio,films').eq('id',CS_ROW_ID).maybeSingle();
     if(error){console.warn('cloudLoad:',error);return null;}
@@ -1242,13 +1287,17 @@ async function cloudLoad(){
   }catch(e){console.warn('cloudLoad:',e);return null;}
 }
 function cloudSave(){
-  if(!sb)return;
+  if(!sb||!_authUser)return;
   clearTimeout(_cloudSaveTimer);
   _cloudSaveTimer=setTimeout(async()=>{
     if(_cloudLoading)return; // evita sobrescrever durante o load inicial
     try{
       const filmsObj={};Object.keys(cache||{}).forEach(k=>filmsObj[k]=cache[k]);
-      await sb.from('cinestats_state').upsert({id:CS_ROW_ID,bio,films:filmsObj,updated_at:new Date().toISOString()});
+      const{error}=await sb.from('cinestats_state').upsert({id:CS_ROW_ID,user_id:_authUser.id,bio,films:filmsObj,updated_at:new Date().toISOString()});
+      if(error){
+        console.warn('cloudSave:',error);
+        if(!_cloudWarned){_cloudWarned=true;toast('Nao deu para salvar na nuvem. Seus filmes seguem salvos no aparelho.',5000);}
+      }else{_cloudWarned=false;}
     }catch(e){console.warn('cloudSave:',e);}
   },1200);
 }
@@ -1462,7 +1511,7 @@ function renderFilms(){
   }
   // base conforme o modo de filtro
   let base,modeNote;
-  if(fMode==='watchlist'){fMode='list';base=films();modeNote='filmes';}
+  if(fMode==='watchlist'){base=watchlist();modeNote='quero ver';}
   else if(fMode==='rewatch'){base=films().filter(r=>(r.rw||0)>=1);modeNote='revisto(s)';}
   else if(fMode==='unrated'){base=films().filter(r=>r.r==null);modeNote='sem nota';}
   else{base=films();modeNote='filmes';}
@@ -1480,7 +1529,8 @@ function renderFilms(){
   const langCounts={};base.forEach(r=>{if(r.lang)langCounts[r.lang]=(langCounts[r.lang]||0)+1;});
   const langOpts=Object.entries(langCounts).sort((a,b)=>b[1]-a[1]).slice(0,18);
   const wlCount=watchlist().length,rwCount=films().filter(r=>(r.rw||0)>=1).length;
-  const modes=[['rewatch',`<svg style="width:13px;height:13px;flex:none;margin-right:2px;vertical-align:-2px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Revistos`,'chip-feat',rwCount]];
+  const modes=[['watchlist',`<svg style="width:13px;height:13px;flex:none;margin-right:2px;vertical-align:-2px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Quero ver`,'chip-feat',wlCount],
+    ['rewatch',`<svg style="width:13px;height:13px;flex:none;margin-right:2px;vertical-align:-2px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Revistos`,'chip-feat',rwCount]];
 
   const langSel=langOpts.length?`<select id="fLang"><option value="">Idioma: todos</option>${langOpts.map(([c,n])=>`<option value="${c}" ${fLang===c?'selected':''}>${LANGS[c]||c.toUpperCase()} · ${n}</option>`).join('')}</select>`:''
   const tagSel=tagOpts.length?`<select id="fTag"><option value="">Tags: todas (${fmt(Object.keys(tagCounts).length)})</option>${tagOpts.map(([t,n])=>`<option value="${t.replace(/"/g,'&quot;')}" ${fTag===t?'selected':''}>${t} · ${n}</option>`).join('')}</select>`:''
@@ -4244,6 +4294,7 @@ function openSettings(){const done=films().filter(r=>r.cc).length,found=films().
   renderIconOpts();
   renderGhIconArea();
   _fillKeyInputs();
+  if(window._renderCloudCard)_renderCloudCard();
   $('#setInfo').innerHTML=`<b style="color:var(--ink)">${fmt(found)}</b> de ${fmt(films().length)} filmes localizados · elenco em <b style="color:var(--ink)">${fmt(done)}</b>.`;
   $('#settings').classList.add('show');}
 $('#gear').onclick=openSettings;
@@ -4314,6 +4365,42 @@ $('#keysSave').onclick=()=>{
   toast('Chaves salvas — ficam só neste aparelho');
   if(tv&&tv!==cur)sync();
 };
+
+/* -- v5.8: conta Supabase (login) -- */
+function _renderCloudCard(){
+  const st=cloudStatus(),p=$('#cloudStat'),lg=$('#cloudLogin'),out=$('#authOut');
+  if(p)p.textContent=st.msg;
+  if(lg)lg.style.display=st.ok?'none':'';
+  if(out)out.style.display=st.ok?'':'none';
+}
+{
+  const _bIn=$('#authIn');
+  if(_bIn)_bIn.onclick=async()=>{
+    const em=($('#authEmail').value||'').trim(),pw=$('#authPass').value||'';
+    if(!em||!pw){toast('Preencha e-mail e senha');return;}
+    _bIn.disabled=true;
+    try{
+      await authSignIn(em,pw);
+      $('#authPass').value='';
+      _renderCloudCard();
+      toast('Conectado - sincronizando...');
+      const remote=await cloudLoad();
+      if(remote&&remote.films&&Object.keys(remote.films).length){
+        cache=remote.films;
+        Object.keys(cache).forEach(k=>{try{db.transaction('films','readwrite').objectStore('films').put(cache[k],k);}catch(e){}});
+        if(remote.bio&&Object.keys(remote.bio).length)bio=Object.assign({},remote.bio);
+        PEOPLE=null;render();
+      }
+      cloudSave();
+    }catch(e){toast('Nao deu para entrar: '+((e&&e.message)||'verifique e-mail e senha'),5000);}
+    _bIn.disabled=false;
+  };
+  const _bOut=$('#authOut');
+  if(_bOut)_bOut.onclick=async()=>{
+    await authSignOut();_renderCloudCard();
+    toast('Desconectado. Seus filmes continuam salvos neste aparelho.');
+  };
+}
 
 /* ── v4.5: diagnóstico de duplicados (mesmo TMDB ID em chaves diferentes) ── */
 /* v5.7: quando só há UM registro com nota própria no grupo, os demais são fantasmas de
@@ -4541,6 +4628,8 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopSpiralA
 /* ---------- boot ---------- */
 (async()=>{
   try{db=await openDB();cache=await loadAll();}catch(e){cache={};}
+  await authRefresh();
+  if(window._renderCloudCard)_renderCloudCard();
   _cloudLoading=true;
   try{
     const remote=await cloudLoad();
@@ -4562,6 +4651,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopSpiralA
   if(!bio.icon||bio.icon==='dark'){bio.icon='green';saveBio();} // migração: default era dark, agora é green
   {const _m={vermelho:'prata',sonho:'cobalto',noir:'prata',classic:'cobalto'};if(bio.accent&&_m[bio.accent]){bio.accent=_m[bio.accent];saveBio();}} // migração: temas removidos
   setTimeout(()=>_setAppIcon(bio.icon),200);
+  if('serviceWorker' in navigator){try{navigator.serviceWorker.register('sw.js');}catch(e){console.warn('sw:',e);}}
 })();
 </script>
 </body></html>
