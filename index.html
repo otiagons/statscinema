@@ -2001,6 +2001,7 @@ const CURA_ICONS={
 };
 const ICON_KEYS_PICKER=['film','horror','drama','scifi','crime','comedy','romance','doc','globe','star','moon','heart','eye','bookmark','list'];
 const SMART_LISTS_DEF=[
+  {id:'wl_geral',  name:'Geral',         icon:'list',    all:true},
   {id:'wl_terror', name:'Terror',        icon:'horror',  gids:[27]},
   {id:'wl_drama',  name:'Drama',         icon:'drama',   gids:[18,36,9648]},
   {id:'wl_scifi',  name:'Sci-fi',        icon:'scifi',   gids:[878,14]},
@@ -2100,15 +2101,21 @@ function _wireTop10Clicks(host){
 const CS_LISTS_KEY='cs_lists';
 function _getLists(){try{return JSON.parse(localStorage.getItem(CS_LISTS_KEY)||'[]');}catch(e){return[];}}
 function _saveLists(l){try{localStorage.setItem(CS_LISTS_KEY,JSON.stringify(l));}catch(e){}}
+function _removeFromAllLists(k){
+  const ls=_getLists();let changed=false;
+  ls.forEach(l=>{if(l.films&&l.films.includes(k)){l.films=l.films.filter(x=>x!==k);changed=true;}});
+  if(changed)_saveLists(ls);
+}
 function _getMyProviders(){try{return JSON.parse(localStorage.getItem('cs_streaming')||'[]');}catch(e){return[];}}
 function _saveMyProviders(ps){try{localStorage.setItem('cs_streaming',JSON.stringify(ps));}catch(e){}}
 function _icon(k,sz){return (CURA_ICONS[k]||CURA_ICONS.list).replace(/width="20" height="20"/g,`width="${sz}" height="${sz}"`).replace(/width="16" height="16"/g,`width="${sz}" height="${sz}"`).replace(/width="14" height="14"/g,`width="${sz}" height="${sz}"`);}
 function _smartFilms(sl){
-  const wl=films().filter(r=>r.wl);
+  const wl=watchlist();
+  if(sl.all)return wl;
   if(sl.lang)return wl.filter(r=>r.lang===sl.lang);
   if(sl.catch){
     const taken=new Set();
-    SMART_LISTS_DEF.filter(x=>!x.catch&&!x.lang).forEach(x=>_smartFilms(x).forEach(r=>taken.add(r)));
+    SMART_LISTS_DEF.filter(x=>!x.catch&&!x.lang&&!x.all).forEach(x=>_smartFilms(x).forEach(r=>taken.add(r)));
     return wl.filter(r=>!taken.has(r));
   }
   return wl.filter(r=>(r.gids||[]).some(g=>sl.gids.includes(g)));
@@ -2125,7 +2132,7 @@ function _curaAutoMigrateWatchlist(){
   const geralFilms=wlEntries.map(([k])=>k);
   const newLists=[{id:'cl_geral',name:'Geral',icon:'list',films:geralFilms,created:Date.now()}];
   // Genre auto-lists
-  SMART_LISTS_DEF.filter(sl=>!sl.catch).forEach(sl=>{
+  SMART_LISTS_DEF.filter(sl=>!sl.catch&&!sl.all).forEach(sl=>{
     const matching=wlEntries.filter(([k,r])=>{
       if(sl.lang)return r.lang===sl.lang;
       return(r.gids||[]).some(g=>sl.gids.includes(g));
@@ -3908,7 +3915,6 @@ function _reconcileWatchedDupes(tmdbId,keepKey){
     lists.forEach(l=>{
       if(!l.films||!l.films.includes(k))return;
       l.films=l.films.filter(x=>x!==k);
-      if(!l.films.includes(keepKey))l.films.push(keepKey);
       listsChanged=true;
     });
     del(k);cleaned++;
@@ -3929,6 +3935,7 @@ function _commitStar(info){
   const wasWl=!!rec.wl;const hadRating=rec.r!=null&&!wasWl;
   rec.r=val;delete rec.wl;delete rec._stub;rec.s=1;if(!hadRating&&!rec.ts)rec.ts=Date.now();
   put(k,rec);PEOPLE=null;
+  _removeFromAllLists(k);
   if(rec.id!=null)_reconcileWatchedDupes(rec.id,k);
   toast((hadRating?'Nota corrigida: ':(wasWl?'Visto! ':'Avaliado: '))+rec.t+' '+star(val));
   openFilm(k);
