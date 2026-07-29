@@ -370,6 +370,11 @@ select{background:var(--panel);color:var(--ink);border:1px solid var(--line);bor
 .sr .si{flex:1;min-width:0}.sr .st{font-weight:700;font-size:13.5px;line-height:1.15}.sr .sy{font-size:11.5px;color:var(--mut);margin:2px 0 5px}
 .over{position:fixed;inset:0;background:var(--bg);border:1px solid color-mix(in srgb,var(--acc1) 22%,var(--line));box-sizing:border-box;z-index:50;display:none;flex-direction:column;padding:calc(env(safe-area-inset-top) + 16px) 16px 16px}
 .over.show{display:flex}
+/* v6.1 — a barra inferior tinha z-index maior que os overlays de tela cheia e não
+   reservava espaço para eles (diferente dos over-nav, que já reservam). Resultado:
+   em Ajustes, detalhe do filme, editar perfil etc. ela ficava flutuando por cima do
+   conteúdo, em vez de sumir — parecendo "mudar de lugar" dependendo da tela aberta. */
+body:has(.over.show:not(.over-nav)) .bot-nav{display:none}
 .over .oh{display:flex;align-items:center;gap:10px;margin-bottom:6px}.over .oh h2{font-size:19px;margin:0;flex:1}
 .over .ob{flex:1;overflow:auto}
 .box{max-width:430px;width:100%;margin:auto}
@@ -722,7 +727,8 @@ select{color-scheme:dark}
 @media(max-width:680px){
   .tabs{display:none}.tabs-mode .tabs{display:flex}
   .wrap{padding-bottom:calc(env(safe-area-inset-bottom) + 72px)}
-  .bot-nav{display:flex;position:fixed;bottom:0;left:0;right:0;height:calc(58px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(12,12,14,.97);border-top:1px solid var(--line);z-index:55;align-items:center;justify-content:space-around;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+  .bot-nav{display:flex;position:fixed;bottom:0;left:0;right:0;height:calc(58px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:none;border-top:none;z-index:55;align-items:center;justify-content:space-around}
+  .bot-nav::before{content:'';position:absolute;left:0;right:0;bottom:0;height:calc(140px + env(safe-area-inset-bottom));z-index:-1;pointer-events:none;background:linear-gradient(to top,color-mix(in srgb,var(--acc1) 13%,#000000) 0%,color-mix(in srgb,var(--acc1) 5%,#000000) 34%,transparent 82%)}
   .bot-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:0;background:none;border:none;color:var(--dim);padding:8px 2px;cursor:pointer;-webkit-tap-highlight-color:transparent;min-height:44px;justify-content:center}
   .bot-nav-item svg{width:22px;height:22px}
   .bot-nav-item span{display:none}
@@ -1729,7 +1735,7 @@ function personDetail(p){
 function renderRanking(){
   const done=films().filter(r=>r.cc).length;
   if(done<20){$('#view').innerHTML=`<div class="empty">Ainda baixando o elenco…<br>Esta aba fica pronta conforme a sincronização avança. Deixe o painel aberto um instante.</div>`;return;}
-  const r=rankList(),top=r.slice(0,5),rest=r.slice(5,50);
+  const r=rankList(),top=r.slice(0,50);
   {const _d=decadesOf(),_y=[...new Set(films().map(x=>x.y))].sort((a,b)=>b-a);
    if(rYr==null&&_y.length)rYr=_y[0];if(rDec==null&&_d.length)rDec=_d[0];}
   const ctrl=_fBar();
@@ -1740,26 +1746,14 @@ function renderRanking(){
       return `<div class="pc"><div class="ph"><span class="rk">${i+1}</span>${ph}</div><div class="bd"><div class="nm">${p.n}</div>
         <div class="st"><b>${p.n_}</b> filme${p.n_>1?'s':''}${p.avg!=null?' · '+star(+p.avg.toFixed(2)):''}</div>
         ${bf?`<div class="st" style="color:var(--dim)">Top: ${bf.t} ${star(bf.r)}</div>`:''}<div class="mini">${mini}</div></div></div>`;}).join('');
-    const rows=rest.map((p,i)=>{const rank=i+6;const op=expanded[tab+rank];const av=p.pic?`<img class="av" loading="lazy" src="${IMG}/w185${p.pic}"/>`:`<div class="av ini">${initials(p.n)}</div>`;
-      const {mini,bf}=personDetail(p);
-      return `<div class="rw ${op?'open':''}" data-r="${rank}"><div class="rk">${rank}</div>${av}<div class="nm">${p.n}</div>
-        <div class="ct"><b>${p.n_}</b> f${p.avg!=null?' · <span class="g">'+star(+p.avg.toFixed(2))+'</span>':''}</div><div class="car"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></div></div>
-        <div class="exp ${op?'show':''}" data-e="${rank}">${bf?`<div class="best">Melhor: <b>${bf.t}</b> (${bf.y}) ${star(bf.r)}</div>`:''}<div class="mini">${mini}</div></div>`;}).join('');
-    let note=(rankSort==='avg'?'Ordenado pela sua nota média (mín. 3 filmes vistos, 2 avaliados). ':'')+`Top ${Math.min(50,r.length)} de ${fmt(r.length)} pessoas com 3 ou mais filmes neste recorte. Toque do 6º ao ${Math.min(50,r.length)}º para ver os filmes.`;
+    let note=(rankSort==='avg'?'Ordenado pela sua nota média (mín. 3 filmes vistos, 2 avaliados). ':'')+`Top ${Math.min(50,r.length)} de ${fmt(r.length)} pessoas com 3 ou mais filmes neste recorte.`;
     if(tab==='actor'||tab==='actress')note+=' Divisão por gênero vem do TMDB e pode falhar.';
     if(tab!=='dir')note+=' "Ator" = elenco principal (top 8).';
-    body=`<div class="podium">${cards}</div>${rows?`<div class="rows">${rows}</div>`:''}<div class="note">${note}</div>`;
+    body=`<div class="podium">${cards}</div><div class="note">${note}</div>`;
   }
   $('#view').innerHTML=ctrl+body;
   _fWire();
-  const _rp=[...top,...rest];
   $$('.pc').forEach((el,i)=>el.onclick=()=>openPerson(top[i]));
-  $$('.rw').forEach((el,i)=>{
-    el.onclick=e=>{
-      if(e.target.closest('.av,.nm')){openPerson(rest[i]);return;}
-      const rk=el.dataset.r;expanded[tab+rk]=!expanded[tab+rk];el.classList.toggle('open');const ex=$(`.exp[data-e="${rk}"]`);if(ex)ex.classList.toggle('show');
-    };
-  });
 }
 
 /* ---------- GÊNERO ---------- */
