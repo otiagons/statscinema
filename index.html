@@ -370,10 +370,12 @@ select{background:var(--panel);color:var(--ink);border:1px solid var(--line);bor
 .sr .si{flex:1;min-width:0}.sr .st{font-weight:700;font-size:13.5px;line-height:1.15}.sr .sy{font-size:11.5px;color:var(--mut);margin:2px 0 5px}
 .over{position:fixed;inset:0;background:var(--bg);border:1px solid color-mix(in srgb,var(--acc1) 22%,var(--line));box-sizing:border-box;z-index:50;display:none;flex-direction:column;padding:calc(env(safe-area-inset-top) + 16px) 16px 16px}
 .over.show{display:flex}
-/* v6.1 — a barra inferior tinha z-index maior que os overlays de tela cheia e não
-   reservava espaço para eles (diferente dos over-nav, que já reservam). Resultado:
+/* v6.1 — a barra inferior tinha z-index maior que os overlays de tela cheia. Resultado:
    em Ajustes, detalhe do filme, editar perfil etc. ela ficava flutuando por cima do
-   conteúdo, em vez de sumir — parecendo "mudar de lugar" dependendo da tela aberta. */
+   conteúdo, em vez de sumir — parecendo "mudar de lugar" dependendo da tela aberta.
+   Os over-nav (Pesquisar/Repertório) ficam de fora de propósito: neles a barra deve
+   continuar visível por cima, porque cobrem a tela inteira com fundo opaco próprio
+   (só o conteúdo interno reserva espaço pra ela — ver .over-nav .ob). */
 body:has(.over.show:not(.over-nav)) .bot-nav{display:none}
 .over .oh{display:flex;align-items:center;gap:10px;margin-bottom:6px}.over .oh h2{font-size:19px;margin:0;flex:1}
 .over .ob{flex:1;overflow:auto}
@@ -727,8 +729,8 @@ select{color-scheme:dark}
 @media(max-width:680px){
   .tabs{display:none}.tabs-mode .tabs{display:flex}
   .wrap{padding-bottom:calc(env(safe-area-inset-bottom) + 72px)}
-  .bot-nav{display:flex;position:fixed;bottom:0;left:0;right:0;height:calc(58px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:none;border-top:none;z-index:55;align-items:center;justify-content:space-around}
-  .bot-nav::before{content:'';position:absolute;left:0;right:0;bottom:0;height:calc(140px + env(safe-area-inset-bottom));z-index:-1;pointer-events:none;background:linear-gradient(to top,color-mix(in srgb,var(--acc1) 13%,#000000) 0%,color-mix(in srgb,var(--acc1) 5%,#000000) 34%,transparent 82%)}
+  .bot-nav{display:flex;position:fixed;bottom:0;left:0;right:0;height:calc(58px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:none;border-top:1px solid var(--line);z-index:55;align-items:center;justify-content:space-around}
+  .bot-nav::before{content:'';position:absolute;left:0;right:0;bottom:0;height:calc(140px + env(safe-area-inset-bottom));z-index:-1;pointer-events:none;background:linear-gradient(to top,rgba(0,0,0,.97) 0%,rgba(0,0,0,.80) 50%,transparent 90%)}
   .bot-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:0;background:none;border:none;color:var(--dim);padding:8px 2px;cursor:pointer;-webkit-tap-highlight-color:transparent;min-height:44px;justify-content:center}
   .bot-nav-item svg{width:22px;height:22px}
   .bot-nav-item span{display:none}
@@ -736,7 +738,7 @@ select{color-scheme:dark}
   .bot-nav-center{width:48px;height:48px;border-radius:50%;border:2px solid var(--acc1);background:color-mix(in srgb,var(--acc1) 8%,transparent);display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;transition:background .15s}
   .bot-nav-center svg{width:26px;height:26px}
   .bot-nav-center.on{background:color-mix(in srgb,var(--acc1) 20%,transparent)}
-  .over-nav{bottom:calc(58px + env(safe-area-inset-bottom))!important;}
+  .over-nav .ob{padding-bottom:calc(58px + env(safe-area-inset-bottom) + 16px)}
 }
 
 /* ── side nav (desktop, >=681px) — same bot-nav buttons, repositioned ── */
@@ -4645,13 +4647,15 @@ async function _renderTodayReco(force){
     const altHtml=alts.map(a=>{
       const ay=(a.release_date||'').slice(0,4),aot=a.original_title||a.title||'?';
       const sc=a._imdb!=null?'IMDb '+a._imdb.toFixed(1):(a.vote_average?'★ '+a.vote_average.toFixed(1):'');
-      return '<div class="today-alt" data-recokey="'+a.id+'"><div class="today-alt-t">'+aot+(ay?' <span style="color:var(--dim);font-weight:600">('+ay+')</span>':'')+'</div><div class="today-alt-s">'+sc+'</div></div>';
+      return '<div class="today-alt" data-recokey="'+a.id+'"><div style="flex:1;min-width:0"><div class="today-alt-t">'+aot+(ay?' <span style="color:var(--dim);font-weight:600">('+ay+')</span>':'')+'</div><div class="today-alt-s">'+sc+'</div></div>'
+        +'<button class="reco-reject" data-reject="'+a.id+'" data-role="alt" title="Ignorar — não mostrar mais">'+ICON_RECO_REJECT+'</button></div>';
     }).join('');
     host.innerHTML='<div class="today-card">'
       +'<div class="today-head"><h3>Recomendação de hoje</h3><button class="today-again" id="todayAgain">Gerar outra</button></div>'
       +'<div class="today-ctx">'+ctx.dayNote+(ctx.season?' · '+ctx.season:'')+'</div>'
       +(fbKind?_recoFallNote(fbKind):'')
-      +'<div class="today-main">'+po+'<div style="flex:1;min-width:0"><div class="today-tag">Principal</div>'
+      +'<div class="today-main">'+po+'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center"><div class="today-tag">Principal</div>'
+      +'<button class="reco-reject" data-reject="'+main.id+'" data-role="main" title="Ignorar — não mostrar mais" style="margin-left:auto">'+ICON_RECO_REJECT+'</button></div>'
       +'<div class="today-title" data-recokey="'+main.id+'">'+ot+(yr?' ('+yr+')':'')+(pt?'<span class="pt">'+pt+'</span>':'')+'</div>'
       +(meta?'<div class="today-meta">'+meta+'</div>':'')
       +'<div class="today-why">'+_todayWhy(main,ctx)+'</div></div></div>'
@@ -4675,6 +4679,26 @@ function _wireTodayReco(host){
       const k=key(m.title,y);
       if(!cache[k])cache[k]={t:m.title,y:+y||0,id:m.id,po:m.poster_path||null,gids:m.genre_ids||[],lang:m.original_language||null,ti:m.title,ot:m.original_title||m.title,ye:y,src:'reco',_stub:1};
       openFilm(k);
+    };
+  });
+  host.querySelectorAll('.reco-reject').forEach(btn=>{
+    btn.onclick=e=>{
+      e.stopPropagation();
+      const id=+btn.dataset.reject;
+      _addRejected(id);
+      _todayPool=(_todayPool||[]).filter(m=>m.id!==id);
+      if(btn.dataset.role==='main'){
+        toast('Filme ignorado — não vai mais aparecer aqui.');
+        _renderTodayReco(true);
+      }else{
+        toast('Filme ignorado — não vai mais aparecer aqui.');
+        const row=btn.closest('.today-alt');
+        if(row){
+          row.style.transition='opacity .25s ease';
+          row.style.opacity='0';
+          setTimeout(()=>{row.remove();_todayHTML=host.innerHTML;},250);
+        }
+      }
     };
   });
 }
