@@ -236,7 +236,7 @@ body.show-brand .logo{flex:none;justify-content:center}
 body.hero-on header{margin-top:-34px;position:relative;z-index:2;background:transparent;border-color:transparent;padding:9px 15px;box-shadow:none}
 body.hero-on .logo svg{filter:drop-shadow(0 1px 4px rgba(0,0,0,.65))}
 body.hero-on .logo h1{text-shadow:0 1px 5px rgba(0,0,0,.75)}
-#pageHero{display:none;height:calc(env(safe-area-inset-top) + 120px);margin:0 -13px;background-size:cover;background-position:center 22%;border-radius:0 0 20px 20px;position:relative;overflow:hidden}
+#pageHero{display:none;height:calc(env(safe-area-inset-top) + 120px);margin:0 -13px;background-size:cover;background-position:center 42%;border-radius:0 0 20px 20px;position:relative;overflow:hidden}
 #pageHero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.30),rgba(0,0,0,.10) 40%,var(--bg))}
 body.show-brand #pageHero.on{display:block}
 body:not(.show-brand) #view{margin-top:calc(env(safe-area-inset-top) + 10px)}
@@ -2627,10 +2627,16 @@ const HERO_TTL=24*60*60*1000;
 function _heroCacheGet(){try{return JSON.parse(localStorage.getItem('cs_hero_poster')||'null');}catch(e){return null;}}
 function _heroCacheSet(v){try{localStorage.setItem('cs_hero_poster',JSON.stringify(v));}catch(e){}}
 let _heroReqSeq=0;
+const HERO_TRIES=6;
+function _heroOff(el){
+  el.style.backgroundImage='';el.classList.remove('on');
+  document.body.classList.remove('hero-on');_heroCacheSet(null);
+}
 async function _updatePageHero(){
   const el=$('#pageHero');if(!el)return;
-  const pool=films().filter(r=>r.po);
-  if(!pool.length){el.style.backgroundImage='';el.classList.remove('on');document.body.classList.remove('hero-on');_heroCacheSet(null);return;}
+  // precisa do id do TMDB pra buscar as imagens — filme sem id não entra no sorteio
+  const pool=films().filter(r=>r.id!=null);
+  if(!pool.length){_heroOff(el);return;}
   const cached=_heroCacheGet();
   const stillValid=cached&&cached.po&&(Date.now()-cached.ts)<HERO_TTL&&(!cached.id||pool.some(r=>r.id===cached.id));
   if(stillValid){
@@ -2638,22 +2644,29 @@ async function _updatePageHero(){
     el.classList.add('on');document.body.classList.add('hero-on');
     return;
   }
+  if(!KEY){_heroOff(el);return;}
+  // v6.2 — só backdrop (16:9). Sem fallback pra pôster: sorteia outro filme até achar
+  // um que tenha backdrop; se nenhum tiver, o header simplesmente não aparece.
   const myReq=++_heroReqSeq;
-  const pick=pool[Math.floor(Math.random()*pool.length)];
-  el.style.backgroundImage='url('+IMG+'/w780'+pick.po+')';
-  el.classList.add('on');document.body.classList.add('hero-on');
-  _heroCacheSet({po:pick.po,id:pick.id||null,ts:Date.now()});
-  if(!pick.id||!KEY)return;
-  // em segundo plano, procura um pôster sem texto pro mesmo filme; se achar, refina a escolha já fixada
-  try{
-    const j=await tmdb('/movie/'+pick.id+'/images',{include_image_language:'null'});
-    if(myReq!==_heroReqSeq)return; // já trocou de aba de novo — não sobrescreve a escolha mais recente
-    const textless=((j&&j.posters)||[]).filter(p=>!p.iso_639_1).sort((a,b)=>(b.vote_average||0)-(a.vote_average||0));
-    if(textless.length){
-      el.style.backgroundImage='url('+IMG+'/w780'+textless[0].file_path+')';
-      _heroCacheSet({po:textless[0].file_path,id:pick.id,ts:Date.now()});
-    }
-  }catch(e){}
+  const tried=new Set();
+  for(let i=0;i<HERO_TRIES&&tried.size<pool.length;i++){
+    const pick=pool[Math.floor(Math.random()*pool.length)];
+    if(tried.has(pick.id))continue;
+    tried.add(pick.id);
+    try{
+      const j=await tmdb('/movie/'+pick.id+'/images',{include_image_language:'null'});
+      if(myReq!==_heroReqSeq)return; // trocou de aba — não sobrescreve a escolha mais recente
+      const backs=((j&&j.backdrops)||[]).filter(b=>!b.iso_639_1)
+        .sort((a,b)=>(b.vote_average||0)-(a.vote_average||0));
+      if(backs.length){
+        el.style.backgroundImage='url('+IMG+'/w780'+backs[0].file_path+')';
+        el.classList.add('on');document.body.classList.add('hero-on');
+        _heroCacheSet({po:backs[0].file_path,id:pick.id,ts:Date.now()});
+        return;
+      }
+    }catch(e){}
+  }
+  if(myReq===_heroReqSeq)_heroOff(el);
 }
 function _updateHeaderBtns(t){
   const _isPag=['films','dir','actor','actress','genre'].includes(t);
