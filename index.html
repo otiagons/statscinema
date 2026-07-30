@@ -1,5 +1,17 @@
 <!DOCTYPE html><!--
   CineStats — Changelog
+  v6.7 [2026-07-30]: Correção: a tela de Conquistas mostrava 43, não 40 — a contagem real
+                  sempre soma os 3 fixos de "Panorama" (Volta ao mundo/Viagem no tempo/
+                  Poliglota) por fora do ACH_SETS, então "manter as 40" totais significa
+                  ACH_SETS com 37, não 40. Removidos mais 3 de Diretores para fechar a
+                  conta — Bresson essencial, Lanthimos completo e Charlie Kaufman completo
+                  (os de menor porte/mais recentes que sobravam). Dos 7 adicionados antes
+                  (Hitchcock, Bergman, Wilder, Welles, Kurosawa, Fellini, Bresson), ficam 6 —
+                  Bresson sai. Total real (ACH_SETS + Panorama) volta a 40.
+  v6.6 [2026-07-30]: Conquistas de Diretores ajustadas de novo por pedido do Tiago:
+                  removidos Robert Eggers completo, Jordan Peele completo e Alain
+                  Guiraudie completo; entraram Kurosawa essencial, Fellini essencial e
+                  Bresson essencial. Total segue em 40.
   v6.5 [2026-07-30]: Correção: remover um filme de "Quero ver" deixava o registro vazio
                   (sem nota, sem wl) sem marcar como stub na hora — só a limpeza do boot
                   fazia isso, então até recarregar o app o filme aparecia fantasma em
@@ -3766,16 +3778,13 @@ const ACH_SETS=[
   {cat:'Diretores',icon:'director',name:'Bergman essencial',goal:9,films:[['Smiles of a Summer Night',1955],['The Seventh Seal',1957],['Wild Strawberries',1957],['The Virgin Spring',1960],['Through a Glass Darkly',1961],['Winter Light',1963],['The Silence',1963],['Persona',1966],['Hour of the Wolf',1968],['Cries and Whispers',1972],['Autumn Sonata',1978],['Fanny and Alexander',1982]]},
   {cat:'Diretores',icon:'director',name:'Billy Wilder essencial',goal:6,films:[['Double Indemnity',1944],['Sunset Boulevard',1950],['Ace in the Hole',1951],['Stalag 17',1953],['Sabrina',1954],['Witness for the Prosecution',1957],['Some Like It Hot',1959],['The Apartment',1960]]},
   {cat:'Diretores',icon:'director',name:'Orson Welles essencial',goal:5,films:[['Citizen Kane',1941],['The Magnificent Ambersons',1942],['The Lady from Shanghai',1947],['Touch of Evil',1958],['The Trial',1962],['Chimes at Midnight',1965]]},
+  {cat:'Diretores',icon:'director',name:'Kurosawa essencial',goal:6,films:[['Stray Dog',1949],['Rashomon',1950],['Ikiru',1952],['Seven Samurai',1954],['Throne of Blood',1957],['Yojimbo',1961],['High and Low',1963],['Ran',1985]]},
+  {cat:'Diretores',icon:'director',name:'Fellini essencial',goal:5,films:[['La Strada',1954],['Nights of Cabiria',1957],['La Dolce Vita',1960],['8½',1963],['Juliet of the Spirits',1965],['Roma',1972],['Amarcord',1973]]},
   {cat:'Diretores',icon:'director',name:'Kubrick completo',goal:12,films:[['Fear and Desire',1953],['Killer\'s Kiss',1955],['The Killing',1956],['Paths of Glory',1957],['Spartacus',1960],['Lolita',1962],['Dr. Strangelove',1964],['2001: A Space Odyssey',1968],['A Clockwork Orange',1971],['Barry Lyndon',1975],['The Shining',1980],['Full Metal Jacket',1987],['Eyes Wide Shut',1999]]},
   {cat:'Diretores',icon:'director',name:'Lynch completo',goal:10,films:[['Eraserhead',1977],['The Elephant Man',1980],['Dune',1984],['Blue Velvet',1986],['Wild at Heart',1990],['Twin Peaks: Fire Walk with Me',1992],['Lost Highway',1997],['The Straight Story',1999],['Mulholland Drive',2001],['Inland Empire',2006]]},
   {cat:'Diretores',icon:'director',name:'Bong Joon-ho completo',goal:7,films:[['Barking Dogs Never Bite',2000],['Memories of Murder',2003],['The Host',2006],['Mother',2009],['Snowpiercer',2013],['Okja',2017],['Parasite',2019]]},
-  {cat:'Diretores',icon:'director',name:'Lanthimos completo',goal:6,films:[['Dogtooth',2009],['Alps',2011],['The Lobster',2015],['The Killing of a Sacred Deer',2017],['The Favourite',2018],['Poor Things',2023],['Kinds of Kindness',2024]]},
-  {cat:'Diretores',icon:'director',name:'Robert Eggers completo',goal:4,films:[['The Witch',2015],['The Lighthouse',2019],['The Northman',2022],['Nosferatu',2024]]},
-  {cat:'Diretores',icon:'director',name:'Jordan Peele completo',goal:3,films:[['Get Out',2017],['Us',2019],['Nope',2022]]},
-  {cat:'Diretores',icon:'director',name:'Charlie Kaufman completo',goal:3,films:[['Synecdoche, New York',2008],['Anomalisa',2015],['I\'m Thinking of Ending Things',2020]]},
   {cat:'Diretores',icon:'director',name:'David Fincher completo',goal:12,films:[['Alien 3',1992],['Se7en',1995],['The Game',1997],['Fight Club',1999],['Panic Room',2002],['Zodiac',2007],['The Curious Case of Benjamin Button',2008],['The Social Network',2010],['The Girl with the Dragon Tattoo',2011],['Gone Girl',2014],['Mank',2020],['The Killer',2023]]},
   {cat:'Diretores',icon:'director',name:'Park Chan-wook completo',goal:9,films:[['Joint Security Area',2000],['Sympathy for Mr. Vengeance',2002],['Oldboy',2003],['Sympathy for Lady Vengeance',2005],['I\'m a Cyborg, But That\'s OK',2006],['Thirst',2009],['Stoker',2013],['The Handmaiden',2016],['Decision to Leave',2022]]},
-  {cat:'Diretores',icon:'director',name:'Alain Guiraudie completo',goal:5,films:[['No Rest for the Brave',2003],['The King of Escape',2009],['Stranger by the Lake',2013],['Staying Vertical',2016],['Misericordia',2024]]},
   {cat:'Diretores',icon:'director',name:'Wong Kar-wai completo',goal:8,films:[['As Tears Go By',1988],['Days of Being Wild',1990],['Chungking Express',1994],['Ashes of Time',1994],['Fallen Angels',1995],['Happy Together',1997],['In the Mood for Love',2000],['2046',2004],['My Blueberry Nights',2007],['The Grandmaster',2013]]},
   {cat:'Diretores',icon:'director',name:'Almodóvar essencial',goal:6,films:[['Women on the Verge of a Nervous Breakdown',1988],['All About My Mother',1999],['Talk to Her',2002],['Volver',2006],['Broken Embraces',2009],['The Skin I Live In',2011],['Julieta',2016],['Pain and Glory',2019],['Parallel Mothers',2021]]},
 ];
