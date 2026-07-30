@@ -1,5 +1,16 @@
 <!DOCTYPE html><!--
   CineStats — Changelog
+  v6.5 [2026-07-30]: Correção: remover um filme de "Quero ver" deixava o registro vazio
+                  (sem nota, sem wl) sem marcar como stub na hora — só a limpeza do boot
+                  fazia isso, então até recarregar o app o filme aparecia fantasma em
+                  "Sem nota". Agora a marcação acontece na hora da remoção. Legendas e
+                  textos de apoio revisados para versões mais diretas (ex.: dica de
+                  conquista não fala mais em marcar "à mão"; texto do card de Stories
+                  corrigido; notas do diagnóstico de duplicados simplificadas). Conquistas
+                  de Diretores: removido "Ari Aster completo" (3 filmes, diretor novo,
+                  menor legado) e adicionados 4 diretores de maior peso histórico —
+                  Hitchcock, Bergman, Billy Wilder e Orson Welles ("essencial", como
+                  Almodóvar) — mantendo o total em 40.
   v6.4 [2026-07-27]: Espiral do cabeçalho do Perfil agora é sempre estática — parou de herdar
                   a preferência de animação dos Ajustes (que ainda vale pro giro do spiral de
                   recomendações/conquistas, só não mais para essa).
@@ -2507,7 +2518,12 @@ function _curaOpenList(listId){
         delete r.rw;put(k,r);PEOPLE=null;
         toast('Revisões zeradas: '+(r.t||''));
       }else{
-        delete r.wl;put(k,r);_removeFromAllLists(k);PEOPLE=null;
+        delete r.wl;
+        // Mesmo critério da limpeza de stubs no boot: sem nota, sem data de sessão
+        // e não vindo do Letterboxd = nunca foi assistido de fato. Sem isso o
+        // registro sobrava em cache e reaparecia em "Sem nota" até o próximo boot.
+        if(r.r==null&&!r.ts&&r.src!=='lb')r._stub=1;
+        put(k,r);_removeFromAllLists(k);PEOPLE=null;
         toast('Removido de quero ver: '+(r.t||''));
       }
       _curaOpenList(listId);_renderCuraStats();
@@ -3320,7 +3336,7 @@ function _renderShareOb(){
   if(_sfType==='recap'&&(_recapYear==null||!recapYears.includes(_recapYear)))_recapYear=recapYears[0]||new Date().getFullYear();
   const recapSel=(_sfType==='recap'&&recapYears.length)?'<div class="scard-types" id="_recapYears">'+recapYears.slice(0,10).map(y=>'<button class="chip '+(y===_recapYear?'on':'')+'" data-y="'+y+'">'+y+'</button>').join('')+'</div>':'';
   const vitrineSel=(_sfType==='vitrine')?'<div class="scard-types" id="_vitrineTypes">'+[['filmes','Filmes'],['diretores','Diretores'],['atores','Atores'],['atrizes','Atrizes']].map(([t,l])=>'<button class="chip '+(_vitrineType===t?'on':'')+'" data-vt="'+t+'">'+l+'</button>').join('')+'</div>':'';
-  ob.innerHTML='<p style="color:var(--mut);font-size:12px;margin:0 0 8px">Cards 9:16 para Stories \u2014 toque Compartilhar.</p>'
+  ob.innerHTML='<p style="color:var(--mut);font-size:12px;margin:0 0 8px">Cards no formato 9:16, ideais para Stories. Toque em Compartilhar para baixar.</p>'
     +'<div class="scard-types" id="_ctypes">'+types.map(([t,l])=>'<button class="chip '+(t===_sfType?'on':'')+'" data-t="'+t+'">'+l+'</button>').join('')+'</div>'
     +recapSel+vitrineSel
     +'<div class="scard-wrap"><canvas id="sfCanvas" class="scard-canvas"></canvas>'
@@ -3746,12 +3762,15 @@ const ACH_SETS=[
   {cat:'Trilogias',icon:'trilogy',name:'Trilogia Toy Story (Pixar)',films:[['Toy Story',1995],['Toy Story 2',1999],['Toy Story 3',2010]]},
   // Diretores (filmografia de longas)
   {cat:'Diretores',icon:'director',name:'Tarkovsky completo',goal:7,films:[['Ivan\'s Childhood',1962],['Andrei Rublev',1966],['Solaris',1972],['Mirror',1975],['Stalker',1979],['Nostalghia',1983],['The Sacrifice',1986]]},
+  {cat:'Diretores',icon:'director',name:'Hitchcock essencial',goal:10,films:[['The 39 Steps',1935],['Rebecca',1940],['Shadow of a Doubt',1943],['Notorious',1946],['Rope',1948],['Strangers on a Train',1951],['Dial M for Murder',1954],['Rear Window',1954],['To Catch a Thief',1955],['The Man Who Knew Too Much',1956],['Vertigo',1958],['North by Northwest',1959],['Psycho',1960],['The Birds',1963]]},
+  {cat:'Diretores',icon:'director',name:'Bergman essencial',goal:9,films:[['Smiles of a Summer Night',1955],['The Seventh Seal',1957],['Wild Strawberries',1957],['The Virgin Spring',1960],['Through a Glass Darkly',1961],['Winter Light',1963],['The Silence',1963],['Persona',1966],['Hour of the Wolf',1968],['Cries and Whispers',1972],['Autumn Sonata',1978],['Fanny and Alexander',1982]]},
+  {cat:'Diretores',icon:'director',name:'Billy Wilder essencial',goal:6,films:[['Double Indemnity',1944],['Sunset Boulevard',1950],['Ace in the Hole',1951],['Stalag 17',1953],['Sabrina',1954],['Witness for the Prosecution',1957],['Some Like It Hot',1959],['The Apartment',1960]]},
+  {cat:'Diretores',icon:'director',name:'Orson Welles essencial',goal:5,films:[['Citizen Kane',1941],['The Magnificent Ambersons',1942],['The Lady from Shanghai',1947],['Touch of Evil',1958],['The Trial',1962],['Chimes at Midnight',1965]]},
   {cat:'Diretores',icon:'director',name:'Kubrick completo',goal:12,films:[['Fear and Desire',1953],['Killer\'s Kiss',1955],['The Killing',1956],['Paths of Glory',1957],['Spartacus',1960],['Lolita',1962],['Dr. Strangelove',1964],['2001: A Space Odyssey',1968],['A Clockwork Orange',1971],['Barry Lyndon',1975],['The Shining',1980],['Full Metal Jacket',1987],['Eyes Wide Shut',1999]]},
   {cat:'Diretores',icon:'director',name:'Lynch completo',goal:10,films:[['Eraserhead',1977],['The Elephant Man',1980],['Dune',1984],['Blue Velvet',1986],['Wild at Heart',1990],['Twin Peaks: Fire Walk with Me',1992],['Lost Highway',1997],['The Straight Story',1999],['Mulholland Drive',2001],['Inland Empire',2006]]},
   {cat:'Diretores',icon:'director',name:'Bong Joon-ho completo',goal:7,films:[['Barking Dogs Never Bite',2000],['Memories of Murder',2003],['The Host',2006],['Mother',2009],['Snowpiercer',2013],['Okja',2017],['Parasite',2019]]},
   {cat:'Diretores',icon:'director',name:'Lanthimos completo',goal:6,films:[['Dogtooth',2009],['Alps',2011],['The Lobster',2015],['The Killing of a Sacred Deer',2017],['The Favourite',2018],['Poor Things',2023],['Kinds of Kindness',2024]]},
   {cat:'Diretores',icon:'director',name:'Robert Eggers completo',goal:4,films:[['The Witch',2015],['The Lighthouse',2019],['The Northman',2022],['Nosferatu',2024]]},
-  {cat:'Diretores',icon:'director',name:'Ari Aster completo',goal:3,films:[['Hereditary',2018],['Midsommar',2019],['Beau Is Afraid',2023]]},
   {cat:'Diretores',icon:'director',name:'Jordan Peele completo',goal:3,films:[['Get Out',2017],['Us',2019],['Nope',2022]]},
   {cat:'Diretores',icon:'director',name:'Charlie Kaufman completo',goal:3,films:[['Synecdoche, New York',2008],['Anomalisa',2015],['I\'m Thinking of Ending Things',2020]]},
   {cat:'Diretores',icon:'director',name:'David Fincher completo',goal:12,films:[['Alien 3',1992],['Se7en',1995],['The Game',1997],['Fight Club',1999],['Panic Room',2002],['Zodiac',2007],['The Curious Case of Benjamin Button',2008],['The Social Network',2010],['The Girl with the Dragon Tattoo',2011],['Gone Girl',2014],['Mank',2020],['The Killer',2023]]},
@@ -3843,7 +3862,7 @@ function openAchievement(i){
       +'<span class="ach-ft">'+it[0]+(byHand?' <span style="color:var(--dim);font-size:10px">marcado por você</span>':'')+'</span>'
       +'<span class="ach-fy">'+it[1]+'</span></div>';}).join('');
   const got=_setProgress(a.films,idx),goal=a.goal||a.films.length;
-  $('#sheet').innerHTML='<div class="top"><div class="ach-bigic">'+(AICON[a.icon]||AICON.star)+'</div><div><h3>'+a.name+'</h3><div class="yr">'+a.cat+' · <b>'+got+'/'+goal+'</b>'+(got>=goal?' · concluída':'')+'</div></div></div><div class="lbl">Filmes · '+got+' de '+a.films.length+' vistos · toque num pendente para marcar à mão</div><div class="ach-flist">'+rows+'</div>';
+  $('#sheet').innerHTML='<div class="top"><div class="ach-bigic">'+(AICON[a.icon]||AICON.star)+'</div><div><h3>'+a.name+'</h3><div class="yr">'+a.cat+' · <b>'+got+'/'+goal+'</b>'+(got>=goal?' · concluída':'')+'</div></div></div><div class="lbl">Filmes · '+got+' de '+a.films.length+' vistos · toque num pendente para marcar como visto</div><div class="ach-flist">'+rows+'</div>';
   $('#modal').classList.add('show');
   $$('#sheet .ach-frow').forEach(el=>el.onclick=()=>{
     const t=el.dataset.acht,y=+el.dataset.achy;
@@ -4068,7 +4087,7 @@ async function openFilm(k){_curFilmKey=k;const r=cache[k];if(!r)return;const t=r
   const overview=r.ov?`<div class="lbl">Sinopse</div><p id="filmOv" style="font-size:13px;color:var(--mut);line-height:1.6;margin:0 0 4px"></p>`:'';
   showSheet(`<div class="top">${poster}<div style="flex:1;min-width:0"><h3>${_titleHtml(r)}</h3><hr class="film-sep"/><div class="yr">${y}${runtime?' · <b>'+runtime+'</b>':''}</div>${gn?`<div class="yr" style="margin-top:5px">${gn}</div>`:''}${dirs?`<div class="yr" style="margin-top:5px">Direção: <b>${dirs}</b></div>`:''}</div></div>
     ${overview}
-    <div class="lbl">Sua nota</div><div class="rating-row">${starWidget(r.r||0,k)}${!r.wl?`<div class="rw-ctl"><button class="rw-b" id="rwMinus">−</button><span class="rw-n" id="rwN">${r.rw||0} ${(r.rw||0)===1?'vez':'vezes'}</span><button class="rw-b" id="rwPlus">+</button></div>`:''}</div>${!r.wl?`<div class="date-action-row"><input type="date" id="filmDate" class="film-date-mini" value="${r.ts?new Date(r.ts).toISOString().slice(0,10):''}" title="Data que assisti"/><button class="rw-b" id="filmDateClear" title="Limpar data" style="padding:0 8px;font-size:16px">×</button>${r.r!=null?`<button class="film-action-icon danger" id="filmUnmarkSeen" title="Remover dos vistos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>`:''}<button class="film-action-icon" id="filmSaveList" title="Salvar no Repertório"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button></div>`:''}<div class="rate-hint">Deslize sobre as estrelas · metade esquerda = ,5 · arraste antes da 1ª estrela para apagar nota</div>
+    <div class="lbl">Sua nota</div><div class="rating-row">${starWidget(r.r||0,k)}${!r.wl?`<div class="rw-ctl"><button class="rw-b" id="rwMinus">−</button><span class="rw-n" id="rwN">${r.rw||0} ${(r.rw||0)===1?'vez':'vezes'}</span><button class="rw-b" id="rwPlus">+</button></div>`:''}</div>${!r.wl?`<div class="date-action-row"><input type="date" id="filmDate" class="film-date-mini" value="${r.ts?new Date(r.ts).toISOString().slice(0,10):''}" title="Data que assisti"/><button class="rw-b" id="filmDateClear" title="Limpar data" style="padding:0 8px;font-size:16px">×</button>${r.r!=null?`<button class="film-action-icon danger" id="filmUnmarkSeen" title="Remover dos vistos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>`:''}<button class="film-action-icon" id="filmSaveList" title="Salvar no Repertório"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button></div>`:''}<div class="rate-hint">Toque numa estrela para avaliar · metade esquerda = nota ,5 · arraste antes da 1ª estrela para apagar</div>
     ${_filmExtrasHtml(r)}
     ${cast?`<div class="lbl">Elenco principal</div><div class="cast">${cast}</div>`:(r.id?'<div class="note">Elenco ainda sendo baixado…</div>':'')}`,k);
   if(r.ov){const ovEl=$('#filmOv');if(ovEl)renderExpandable(ovEl,r.ov,200);}
@@ -4601,7 +4620,7 @@ function _runDupScan(res){
     }).join('');
     const action=fixable
       ?'<button class="dup-fix-btn" data-fixid="'+id+'" data-fixkeep="'+String(rated[0][0]).replace(/"/g,'&quot;')+'">'+ICON_CHECK+' Corrigir automaticamente</button>'
-      :'<div class="dup-manual-note">'+(rated.length>1?'Mais de um registro com nota própria — revise manualmente antes de mesclar.':'Nenhum registro com nota — toque para abrir e decidir manualmente.')+'</div>';
+      :'<div class="dup-manual-note">'+(rated.length>1?'Mais de um registro tem nota própria — revise antes de mesclar.':'Nenhum registro tem nota — toque para abrir e escolher qual manter.')+'</div>';
     return '<div style="margin-top:10px" data-dupgroup="'+id+'"><b>'+t+(y?' ('+y+')':'')+'</b> · TMDB '+id+' · '+arr.length+' registros'+items+action+'</div>';
   }).join('');
   const fixAllBtn=fixableTotal>1?'<button id="dupFixAll" class="dup-fix-btn dup-fix-all">'+ICON_CHECK+' Corrigir todos os '+fixableTotal+' automaticamente</button>':'';
