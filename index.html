@@ -277,6 +277,21 @@ body:not(.show-brand) #view{margin-top:calc(env(safe-area-inset-top) + 10px)}
 .ftoks{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 11px}
 .ftok{background:color-mix(in srgb,var(--acc1) 11%,transparent);border:1px solid var(--acc1);color:var(--acc1);border-radius:999px;padding:5px 7px 5px 11px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:5px}
 .ftok button{background:none;border:none;color:var(--acc1);font-size:15px;line-height:1;cursor:pointer;padding:0 3px;font-family:inherit}
+/* v6.2 — linha unificada de Ano/Década em Atividade: mesmo layout, mesmo comportamento,
+   barra proporcional à QUANTIDADE (antes a de década usava nota, e ficava toda igual) */
+.tl-row{display:flex;align-items:center;gap:9px;width:100%;padding:9px 2px;background:none;
+  border:0;border-bottom:1px solid var(--line);cursor:pointer;font-family:inherit;text-align:left}
+.tl-row:last-of-type{border-bottom:none}
+.tl-row:active{background:var(--p2)}
+.tl-lbl{font-size:12.5px;font-weight:800;color:var(--ink);width:46px;flex:none;
+  font-variant-numeric:tabular-nums}
+.tl-track{flex:1;min-width:0;height:6px;background:var(--p2);border-radius:3px;overflow:hidden}
+.tl-fill{display:block;height:100%;border-radius:3px;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--acc1) 50%,transparent),var(--acc1))}
+.tl-meta{font-size:11.5px;color:var(--mut);font-weight:600;flex:none;text-align:right;
+  min-width:70px;font-variant-numeric:tabular-nums}
+.tl-meta .g{color:var(--acc1);font-weight:700}
+.tl-cv{color:var(--dim);font-size:14px;flex:none;line-height:1}
 .grp-lbl{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:700;padding:15px 2px 8px}
 .grp{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--p2);border-radius:10px;overflow:hidden}
 .gr{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;border-bottom:1px solid var(--line);padding:13px 14px;cursor:pointer;font-family:inherit;text-align:left}
@@ -402,7 +417,6 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .eyb-row{display:flex;align-items:baseline;justify-content:space-between;margin:16px 0 9px}
 .eyb-row .eyb{margin:0}
 .eyb-more{display:none}
-.full-search{width:100%;margin-bottom:10px}
 .bio-id{display:flex;align-items:flex-start;gap:10px;margin-top:14px}
 .bio-id .bia{flex:1;min-width:0}.bio-id h2{margin:0;font-size:22px;word-break:break-word}
 .bio-site a{color:var(--cyan);font-size:13px;text-decoration:none;font-weight:600}
@@ -679,11 +693,6 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .hm-wrap::-webkit-scrollbar-thumb,.daily-hscroll::-webkit-scrollbar-thumb,.cast::-webkit-scrollbar-thumb,.scard-film::-webkit-scrollbar-thumb,.sheet::-webkit-scrollbar-thumb,.over .ob::-webkit-scrollbar-thumb,select::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
 .hm-wrap::-webkit-scrollbar-thumb:hover,.daily-hscroll::-webkit-scrollbar-thumb:hover,.cast::-webkit-scrollbar-thumb:hover,.scard-film::-webkit-scrollbar-thumb:hover,.sheet::-webkit-scrollbar-thumb:hover,.over .ob::-webkit-scrollbar-thumb:hover,select::-webkit-scrollbar-thumb:hover{background:var(--acc1)}
 select{color-scheme:dark}
-.yy-rows{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.yy-row{display:grid;grid-template-columns:46px 1fr auto auto;align-items:center;gap:8px;padding:9px 12px;background:var(--panel);border-bottom:1px solid var(--line);font-size:12.5px}
-.yy-row:last-child{border-bottom:none}
-.yy-y{font-weight:800;color:var(--acc1)}.yy-n b{color:var(--ink)}.yy-n{color:var(--mut)}
-.yy-a{color:var(--gold);font-weight:700}.yy-g{color:var(--dim);font-size:11px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:88px}
 .ach-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 @media(max-width:380px){.ach-grid{grid-template-columns:1fr}}
 .ach{display:flex;gap:9px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:10px;opacity:.6}
@@ -979,15 +988,6 @@ select{color-scheme:dark}
   <input class="tin" id="favIn" placeholder="buscar nos seus filmes…" autocomplete="off"/>
   <div class="ob" id="favRes"></div></div>
 
-<!-- ANO A ANO (ficha completa) -->
-<div class="over" id="yyOver"><div class="oh"><h2>Ano a ano</h2><button class="icon-btn" id="yyClose">✕</button></div>
-  <input class="tin full-search" id="yyIn" placeholder="buscar ano…" autocomplete="off" inputmode="numeric"/>
-  <div class="ob" id="yyRes"></div></div>
-
-<!-- DÉCADAS (ficha completa) -->
-<div class="over" id="decOver"><div class="oh"><h2>Décadas</h2><button class="icon-btn" id="decClose">✕</button></div>
-  <input class="tin full-search" id="decIn" placeholder="buscar década…" autocomplete="off" inputmode="numeric"/>
-  <div class="ob" id="decRes"></div></div>
 
 
 <!-- COMPARTILHAR CARD -->
@@ -1261,12 +1261,12 @@ function _srIndicator(isRated,onWl,cur,ek,seenElsewhere){
 const ICON_SPARK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-3px;margin-right:5px"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 4v3M17 5.5h3"/></svg>';
 let KEY=null, cache={}, db=null, tab='stats', busy=false, PEOPLE=null, _demoMode=false;
 const _filmoCache={};
-let pSort='rt', pDec=null, pYr=null, rScope='all', rDec=null, rYr=null, gSort='count', expanded={};
+let pSort='rt', pDec=null, pYr=null, pWatchYr=null, rScope='all', rDec=null, rYr=null, gSort='count', expanded={};
 let fView='list', rView='list', gView='list';  // 'list' or 'country'
 let fMode='all', fLang='', fTag='';  // filtros da aba Filmes
 let rankSort='count';                          // ranking: 'count' | 'avg'
 let statsYear=null;                            // ano selecionado no heatmap/aba Stats
-let _yyExpanded=false,_decExpanded=false,_paisExpanded=false; // drag-expand state
+let _yyExpanded=false,_decExpanded=false; // drag-expand state
 const LANGS={en:'Inglês',ja:'Japonês',ko:'Coreano',fr:'Francês',it:'Italiano',de:'Alemão',es:'Espanhol',pt:'Português',ru:'Russo',zh:'Chinês',cn:'Chinês',sv:'Sueco',da:'Dinamarquês',fi:'Finlandês',no:'Norueguês',pl:'Polonês',cs:'Tcheco',hu:'Húngaro',nl:'Holandês',fa:'Persa',hi:'Hindi',ar:'Árabe',tr:'Turco',th:'Tailandês',el:'Grego',he:'Hebraico',ro:'Romeno',is:'Islandês',sr:'Sérvio',uk:'Ucraniano',vi:'Vietnamita',tl:'Filipino',id:'Indonésio',ka:'Georgiano',et:'Estoniano'};
 
 /* ---------- storage ---------- */
@@ -1488,57 +1488,6 @@ function people(){if(!PEOPLE)PEOPLE=buildPeople();return PEOPLE;}
 function decadesOf(){return [...new Set(films().map(r=>Math.floor(r.y/10)*10))].sort((a,b)=>b-a);}
 
 /* ---------- PAÍS (filtro) ---------- */
-function countryBreakdown(viewTab,limit){
-  const fl=films();
-  const noData='<div class="empty">Dados de país ainda em sincronização com o TMDB.<br>Aguarde a sincronização concluir e retorne a esta aba.</div>';
-  // poster thumb helper
-  const pth=(p,title)=>p?'<img class="ctr-th" loading="lazy" src="'+IMG+'/w92'+p+'" title="'+(title||'').replace(/"/g,'')+'"/>':'<div class="ctr-th ph"></div>';
-  const faceThumb=(pic,nm)=>pic?'<img class="ctr-th rnd" loading="lazy" src="'+IMG+'/w92'+pic+'" title="'+(nm||'').replace(/"/g,'')+'"/>':'<div class="ctr-th rnd ph">'+initials(nm||'?')+'</div>';
-
-  if(viewTab==='films'||viewTab==='genre'){
-    const P={};
-    fl.forEach(r=>{const raw=(r.co&&(Array.isArray(r.co)?r.co[0]:r.co))||'';if(!raw)return;
-      const c=normalizeKey(raw)||raw;  // normalize to ISO or original
-      P[c]=P[c]||{n:0,rated:[],all:[],gMap:{},disp:displayCountry(raw)};P[c].n++;P[c].all.push(r);
-      if(r.r!=null)P[c].rated.push(r);
-      (r.gids||[]).forEach(id=>{const g=GENRES[id];if(g)P[c].gMap[g]=(P[c].gMap[g]||0)+1;});});
-    const arr=Object.entries(P).sort((a,b)=>b[1].n-a[1].n).slice(0,limit||30);
-    if(!arr.length)return noData;
-    return arr.map(([c,v],idx)=>{
-      const avg=v.rated.length?(v.rated.reduce((s,r)=>s+r.r,0)/v.rated.length).toFixed(1):null;
-      const top3=[...v.rated].sort((a,b)=>b.r-a.r).slice(0,3);
-      const pool=top3.length?top3:v.all.slice(0,3);
-      const thumbs=pool.map(r=>pth(r.po,(r.ti||r.t)+' ('+r.y+')')).join('');
-      let chips='';
-      if(viewTab==='genre'){
-        chips=Object.entries(v.gMap).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([g,gn])=>'<span class="ctr-chip">'+g+' · '+gn+'</span>').join('');
-      }
-      return '<div class="ctr" data-c="'+c+'"><div class="ctr-head"><span class="ctr-rk">'+(idx+1)+'</span>'+flagImg(c,26)+'<span class="ctr-nm">'+(v.disp||displayCountry(c))+'</span><span class="ctr-ct">'+fmt(v.n)+' filmes'+(avg?' · '+avg+'<span style="color:var(--gold)">★</span>':'')+'</span><span class="ctr-arr"></span></div><div class="ctr-thumbs">'+thumbs+'</div>'+(chips?'<div class="ctr-chips">'+chips+'</div>':'')+'</div>';
-    }).join('');
-  }
-
-  // dir / actor / actress: group people by primary production country of their films
-  const P2=people();
-  let persons=viewTab==='dir'?P2.D:viewTab==='actor'?P2.A.filter(p=>p.g===2):P2.A.filter(p=>p.g===1);
-  const byC={};
-  persons.forEach(person=>{
-    const cc={};
-    person.f.forEach(f=>{const cached=cache[key(f.t,f.y)];const raw=cached&&(Array.isArray(cached.co)?cached.co[0]:cached.co);if(raw){const nk=normalizeKey(raw)||raw;cc[nk]=(cc[nk]||0)+1;}});
-    const prim=Object.entries(cc).sort((a,b)=>b[1]-a[1])[0];
-    if(!prim)return;const c=prim[0];
-    byC[c]=byC[c]||{persons:[],disp:displayCountry(c)};byC[c].persons.push(person);});
-  const arr2=Object.entries(byC).sort((a,b)=>b[1].persons.length-a[1].persons.length).slice(0,30);
-  if(!arr2.length)return noData;
-  const lbl=viewTab==='dir'?'diretores':viewTab==='actor'?'atores':'atrizes';
-  return arr2.map(([c,v],idx)=>{
-    const top3=[...v.persons].sort((a,b)=>b.f.length-a.f.length).slice(0,3);
-    const thumbs=top3.map(p=>faceThumb(p.pic,p.n)).join('');
-    const names=top3.map(p=>'<span class="ctr-chip">'+p.n+' · '+p.f.length+'f</span>').join('');
-    return '<div class="ctr" data-c="'+c+'"><div class="ctr-head"><span class="ctr-rk">'+(idx+1)+'</span>'+flagImg(c,26)+'<span class="ctr-nm">'+(v.disp||displayCountry(c))+'</span><span class="ctr-ct">'+v.persons.length+' '+lbl+'</span><span class="ctr-arr"></span></div><div class="ctr-thumbs">'+thumbs+'</div><div class="ctr-chips">'+names+'</div></div>';
-  }).join('');
-}
-
-/* ---------- FILMES ---------- */
 /* ── v6.0: barra de filtros unificada, usada por Filmes, Rankings e Gêneros ──
    Uma linha só: ordenação + botão "Filtros" com contador. Tudo o mais mora na
    gaveta. Os filtros ativos viram etiquetas removíveis logo abaixo. ── */
@@ -1551,6 +1500,7 @@ function _fActive(){
   if(tab==='films'){
     if(pDec!=null)out.push(['dec',pDec+'s']);
     if(pYr!=null)out.push(['yr',String(pYr)]);
+    if(pWatchYr!=null)out.push(['wyr','vistos em '+pWatchYr]);
     if(fLang)out.push(['lang',LANGS[fLang]||fLang.toUpperCase()]);
     if(fTag)out.push(['tag',fTag]);
   }else if(_fIsRank()){
@@ -1560,7 +1510,8 @@ function _fActive(){
   return out;
 }
 function _fClear(kind){
-  if(kind==='dec'){pDec=null;if(_fIsRank())rScope='all';}
+  if(kind==='wyr'){pWatchYr=null;}
+  else if(kind==='dec'){pDec=null;if(_fIsRank())rScope='all';}
   else if(kind==='yr'){pYr=null;if(_fIsRank())rScope='all';}
   else if(kind==='lang'){fLang='';}
   else if(kind==='tag'){fTag='';}
@@ -1701,6 +1652,7 @@ function renderFilms(){
   let list=base.filter(r=>(!fLang||r.lang===fLang)&&(!fTag||(r.tags&&r.tags.includes(fTag)))).map(r=>({t:r.t,y:r.y,r:r.r,rec:r}));
   if(pDec!=null)list=list.filter(x=>Math.floor(x.y/10)*10===pDec);
   if(pYr!=null)list=list.filter(x=>x.y===pYr);
+  if(pWatchYr!=null)list=list.filter(x=>x.rec&&x.rec.ts&&new Date(x.rec.ts).getFullYear()===pWatchYr);
   if(pSort==='pop')list.sort((a,b)=>((b.rec&&b.rec.pop)||0)-((a.rec&&a.rec.pop)||0));
   else if(pSort==='az')list.sort((a,b)=>a.t.localeCompare(b.t));
   else if(pSort==='new')list.sort((a,b)=>b.y-a.y);
@@ -1714,7 +1666,7 @@ function renderFilms(){
       const badge=x.r!=null?`<span class="rt">${star(x.r)}</span>`:'';
       const rwb=(r&&(r.rw||0)>=1)?`<span class="po-rw" title="revisto ${r.rw}×">↺${r.rw>1?r.rw:''}</span>`:'';
       return `<div class="po" data-k="${(x.t+'|'+x.y).replace(/"/g,'&quot;')}">${po}${badge}${rwb}</div>`;}).join('');
-    body=`<div class="grid">${cells}</div><div class="note">${fmt(list.length)} filmes${pYr!=null?' · '+pYr:pDec!=null?' nos '+pDec+'s':''}${fLang?' · '+(LANGS[fLang]||fLang.toUpperCase()):''}${fTag?' · '+fTag:''}. Toque num pôster para detalhes.</div>`;
+    body=`<div class="grid">${cells}</div><div class="note">${fmt(list.length)} filmes${pWatchYr!=null?' vistos em '+pWatchYr:pYr!=null?' · '+pYr:pDec!=null?' nos '+pDec+'s':''}${fLang?' · '+(LANGS[fLang]||fLang.toUpperCase()):''}${fTag?' · '+fTag:''}. Toque num pôster para detalhes.</div>`;
   }
   $('#view').innerHTML=ctrl+body;
   _fWire();
@@ -2751,27 +2703,6 @@ function renderFavRes(q){const nq=norm(q);let list=films();if(nq)list=list.filte
   $$('#favRes .sr').forEach(el=>el.onclick=()=>{bio.favs=bio.favs||[];bio.favs[curFav]=el.dataset.k;saveBio();$('#favOver').classList.remove('show');if($('#bioEdit').classList.contains('show'))bioFavSlots($('#bioFavs'));renderBio();});}
 $('#favClose').onclick=()=>$('#favOver').classList.remove('show');
 
-// ── Ficha completa "Ano a ano" (mantém a tela de estatísticas curta mesmo com o catálogo crescendo) ──
-function _yyRowHtml(r){return '<div class="yy-row"><span class="yy-y">'+r.y+'</span><span class="yy-n"><b>'+fmt(r.n)+'</b> filmes</span><span class="yy-a">'+(r.avg!=null?r.avg.toFixed(2).replace('.',',')+'★':'—')+'</span><span class="yy-g">'+(r.top?r.top[0]:'—')+'</span></div>';}
-function renderYYRes(q){
-  const all=_byYear();
-  const f=q?all.filter(r=>String(r.y).includes(q.trim())):all;
-  $('#yyRes').innerHTML='<div class="yy-rows">'+(f.length?f.map(_yyRowHtml).join(''):'<div class="note" style="padding:12px">Nada encontrado.</div>')+'</div>';
-}
-function openYYOver(){$('#yyIn').value='';renderYYRes('');$('#yyOver').classList.add('show');setTimeout(()=>$('#yyIn').focus(),100);}
-$('#yyClose').onclick=()=>$('#yyOver').classList.remove('show');
-$('#yyIn').oninput=e=>renderYYRes(e.target.value);
-
-// ── Ficha completa "Décadas" ──
-function _decRowHtml(d){const w=d.avg!=null?d.avg/5*100:0;return '<div class="barrow"><div class="bn">'+d.d+'s</div><div class="track"><div class="fill" style="width:'+w+'%"></div></div><div class="bmeta">'+(d.avg!=null?'<span class="g">'+star(+d.avg.toFixed(2))+'</span> · ':'')+fmt(d.n)+'f</div></div>';}
-function renderDecRes(q){
-  const all=_decadeStats().filter(d=>d.n>=1).sort((a,b)=>b.d-a.d);
-  const f=q?all.filter(d=>String(d.d).includes(q.trim())):all;
-  $('#decRes').innerHTML='<div class="bars">'+(f.length?f.map(_decRowHtml).join(''):'<div class="note" style="padding:12px">Nada encontrado.</div>')+'</div>';
-}
-function openDecOver(){$('#decIn').value='';renderDecRes('');$('#decOver').classList.add('show');setTimeout(()=>$('#decIn').focus(),100);}
-$('#decClose').onclick=()=>$('#decOver').classList.remove('show');
-$('#decIn').oninput=e=>renderDecRes(e.target.value);
 $('#shareClose').onclick=()=>$('#shareOver').classList.remove('show');
 // recoClose removed (merged into recoOverClose handler)
 $('#favIn').oninput=e=>renderFavRes(e.target.value);
@@ -3726,15 +3657,6 @@ const MILESTONES=[100,250,500,750,1000,1250,1500,1750,2000,2500,3000,4000,5000];
 function _dayIdx(ts){const d=new Date(ts);return Math.floor(new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()/864e5);}
 function _tsFilms(){return films().filter(r=>r.ts);}
 function _statsYears(){return [...new Set(_tsFilms().map(r=>new Date(r.ts).getFullYear()))].sort((a,b)=>b-a);}
-function _streaks(){
-  const days=[...new Set(_tsFilms().map(r=>_dayIdx(r.ts)))].sort((a,b)=>a-b);
-  if(!days.length)return{cur:0,longest:0};
-  let longest=1,run=1;for(let i=1;i<days.length;i++){if(days[i]===days[i-1]+1){run++;if(run>longest)longest=run;}else run=1;}
-  const set=new Set(days),today=Math.floor(Date.now()/864e5);let cur=0,d=today;
-  if(!set.has(today)&&set.has(today-1))d=today-1;
-  if(set.has(d)){cur=1;while(set.has(d-1)){cur++;d--;}}
-  return{cur,longest};
-}
 function _cadence(){
   const dow=[0,0,0,0,0,0,0];_tsFilms().forEach(r=>dow[new Date(r.ts).getDay()]++);
   const days=[...new Set(_tsFilms().map(r=>_dayIdx(r.ts)))].sort((a,b)=>a-b);
@@ -3913,8 +3835,14 @@ function renderStats(){
   const hy=$('#hmYearBtn');if(hy)hy.onclick=_openYearPicker;
   _wireDrag('yyPanel','yyKnob',()=>_yyExpanded,v=>{_yyExpanded=v;renderStats();});
   _wireDrag('decPanel','decKnob',()=>_decExpanded,v=>{_decExpanded=v;renderStats();});
-  _wireDrag('paisPanel','paisKnob',()=>_paisExpanded,v=>{_paisExpanded=v;renderStats();});
-  $$('#view .ctr').forEach(el=>el.onclick=()=>openCountry(el.dataset.c));
+  $$('#view .tl-row').forEach(b=>b.onclick=()=>{
+    const kind=b.dataset.tl,v=+b.dataset.tlv;
+    if(kind==='wyr'){pWatchYr=v;pDec=null;pYr=null;}
+    else{pDec=v;pYr=null;pWatchYr=null;}
+    fLang='';fTag='';
+    document.body.classList.add('tabs-mode');
+    _setTab('films');
+  });
   const ac=$('#achCatBtn');if(ac)ac.onclick=_openAchCatPicker;
   $$('.ach[data-ai]').forEach(el=>el.onclick=()=>openAchievement(+el.dataset.ai));
 }
@@ -3945,6 +3873,18 @@ function _wireDrag(panelId,knobId,expandedRef,setter){
   panel.addEventListener('touchend',onEnd,{passive:true});
   if(knob){knob.addEventListener('click',e=>{e.stopPropagation();setter(!expandedRef());});}
 }
+function _tlRow(label,n,avg,maxN,kind,val){
+  const w=maxN?Math.max(2,Math.round(n/maxN*100)):0;
+  return '<button class="tl-row" data-tl="'+kind+'" data-tlv="'+val+'">'
+    +'<span class="tl-lbl">'+label+'</span>'
+    +'<span class="tl-track"><span class="tl-fill" style="width:'+w+'%"></span></span>'
+    +'<span class="tl-meta">'+fmt(n)+(avg!=null?' · <span class="g">'+avg.toFixed(1).replace('.',',')+'\u2605</span>':'')+'</span>'
+    +'<span class="tl-cv">\u203a</span></button>';
+}
+function _tlKnob(id,expanded){
+  return '<div class="drag-knob'+(expanded?' expanded':'')+'" id="'+id+'"><span class="drag-knob-arrow">'
+    +(expanded?'\u25b2 menos':'\u25bc mais')+'</span></div>';
+}
 function _activityHTML(){
   const all=films();
   const st=computeStats();
@@ -3952,62 +3892,62 @@ function _activityHTML(){
   if(statsYear==null||!years.includes(statsYear))statsYear=years[0]||new Date().getFullYear();
   const ms=MILESTONES.find(m=>m>st.total),prev=[...MILESTONES].reverse().find(m=>m<=st.total)||0;
   const msPct=ms?Math.round((st.total-prev)/(ms-prev)*100):100;
-  // header / marco
-  let html='<div class="st-hd"><div class="st-hd-big">'+fmt(st.total)+'</div><div class="st-hd-sub">filmes · '+fmt(st.totalHours)+'h · '+(st.avg!=null?st.avg.toFixed(2).replace('.',',')+'★ média':'sem nota')+'</div>'
-    +(ms?'<div class="ms-bar"><i style="width:'+msPct+'%"></i></div><div class="ms-lbl">faltam <b>'+fmt(ms-st.total)+'</b> p/ o marco de '+fmt(ms)+'</div>':'<div class="ms-lbl">'+ICON_TROPHY+'Você já passou de '+fmt(prev)+' filmes</div>')
+  // cabeçalho / marco — v6.2: horas agora declaram a própria cobertura, em vez de
+  // parecerem o total (só filmes com duração conhecida entram na soma)
+  const rtN=all.filter(r=>r.rt&&r.rt>0).length;
+  const avgTxt=st.avg!=null?st.avg.toFixed(2).replace('.',',')+'\u2605 média':'sem nota';
+  let hd='<div class="st-hd"><div class="st-hd-big">'+fmt(st.total)+'</div>'
+    +'<div class="st-hd-sub">filmes'+(rtN>=st.total&&st.totalHours?' · '+fmt(st.totalHours)+'h':'')+' · '+avgTxt+'</div>';
+  if(rtN<st.total&&st.totalHours)
+    hd+='<div class="ms-lbl" style="opacity:.75">'+fmt(st.totalHours)+'h somadas em '+fmt(rtN)+' de '+fmt(st.total)+' filmes com duração conhecida</div>';
+  hd+=(ms?'<div class="ms-bar"><i style="width:'+msPct+'%"></i></div><div class="ms-lbl">faltam <b>'+fmt(ms-st.total)+'</b> p/ o marco de '+fmt(ms)+'</div>':'<div class="ms-lbl">'+ICON_TROPHY+'Você já passou de '+fmt(prev)+' filmes</div>')
     +'</div>';
-  // daily – últimos vistos
-  let _dailyExpanded=false;
-  const dailyRows=renderDaily();
-  html+='<span class="eyb" style="margin-top:18px">Últimos vistos</span>'+dailyRows;
-  // heatmap
-  const hasTs=_tsFilms().length>0;
-  html+='<span class="eyb" style="margin-top:18px">Atividade</span>';
+  let html=hd;
+  // últimos vistos
+  html+='<span class="eyb" style="margin-top:18px">Últimos vistos</span>'+renderDaily();
+  // mapa de sessões (v6.2: era "Atividade", mesmo nome da aba)
+  const tsN=_tsFilms().length,hasTs=tsN>0;
+  html+='<span class="eyb" style="margin-top:18px">Mapa de sessões</span>';
   if(hasTs){
-    const yrBtn=years.length>1?'<button class="chip" id="hmYearBtn" style="margin:0 0 8px">'+statsYear+' ›</button>':'';
+    const yrBtn=years.length>1?'<button class="chip" id="hmYearBtn" style="margin:0 0 8px">'+statsYear+' \u203a</button>':'';
     html+=yrBtn+_heatmapHtml(statsYear);
+    if(tsN<st.total)
+      html+='<div class="note" style="margin:6px 0 0">Baseado em '+fmt(tsN)+' de '+fmt(st.total)+' filmes — os demais não têm data registrada.</div>';
   }else{
-    html+='<div class="note" style="margin:2px 0 0">O mapa de atividade usa as datas em que você assistiu. Importe seus arquivos (Ajustes › Importar) ou avalie filmes aqui para preenchê-lo.</div>';
+    html+='<div class="note" style="margin:2px 0 0">O mapa usa as datas em que você assistiu. Importe seus arquivos (Ajustes › Importar) ou avalie filmes aqui para preenchê-lo.</div>';
   }
-  // streak + cadence
+  // ritmo — v6.2: sequência atual/maior saíram (quase sempre 0 ou 1 para quem não
+  // assiste todo dia, e dependiam de o diário estar sempre atualizado)
   if(hasTs){
-    const sk=_streaks(),cd=_cadence();
-    html+='<span class="eyb" style="margin-top:18px">Ritmo</span><div class="strow" style="grid-template-columns:repeat(4,1fr)">'
-      +'<div class="stbox"><div class="sv">'+sk.cur+'</div><div class="sl">sequência atual</div></div>'
-      +'<div class="stbox"><div class="sv">'+sk.longest+'</div><div class="sl">maior sequência</div></div>'
-      +'<div class="stbox"><div class="sv">'+(cd.gap!=null?cd.gap.toFixed(1):'—')+'</div><div class="sl">dias entre sessões</div></div>'
-      +'<div class="stbox"><div class="sv" style="font-size:11px">'+DOW_NAMES[cd.topDow].slice(0,3)+'</div><div class="sl">dia favorito</div></div>'
+    const cd=_cadence();
+    html+='<span class="eyb" style="margin-top:18px">Ritmo</span><div class="strow" style="grid-template-columns:repeat(2,1fr)">'
+      +'<div class="stbox"><div class="sv">'+(cd.gap!=null?cd.gap.toFixed(1):'\u2014')+'</div><div class="sl">dias entre sessões</div></div>'
+      +'<div class="stbox"><div class="sv" style="font-size:13px">'+DOW_NAMES[cd.topDow]+'</div><div class="sl">dia favorito</div></div>'
       +'</div>';
   }
-  // países (mesmo formato de Ano a ano / Décadas: prévia curta + "mais")
-  {const ctry=countryBreakdown('films',_paisExpanded?30:5);
-  if(ctry&&ctry.indexOf('empty')===-1){
-    html+='<span class="eyb" style="margin:16px 0 9px;display:block">Países</span>'
-      +'<div class="drag-panel" id="paisPanel">'+ctry
-      +'</div><div class="drag-knob'+(_paisExpanded?' expanded':'')+'" id="paisKnob"><span class="drag-knob-arrow">'+(_paisExpanded?'▲ menos':'▼ mais')+'</span></div>'
-      +'<div class="note" style="margin-top:2px">Produção principal, por quantidade de filmes (fonte: TMDB).</div>';
-  }}
-  // ano a ano (preview curto + ficha completa com busca, p/ não crescer com o catálogo)
+  // v6.2: Ano e Década agora com layout e comportamento idênticos, e cada linha
+  // é um filtro — toca e abre os filmes daquele recorte na aba Filmes.
+  const PREVIEW=5;
   const yy=_byYear();
-  const YY_PREVIEW=5;
   if(yy.length){
-    {const showYY=_yyExpanded?yy:yy.slice(0,YY_PREVIEW);const hasMore=yy.length>YY_PREVIEW;
-    html+='<span class="eyb" style="margin:16px 0 9px;display:block">Ano a ano</span>'
-      +'<div class="drag-panel" id="yyPanel"><div class="yy-rows">'
-      +showYY.map(r=>'<div class="yy-row"><span class="yy-y">'+r.y+'</span><span class="yy-n"><b>'+fmt(r.n)+'</b> filmes</span><span class="yy-a">'+(r.avg!=null?r.avg.toFixed(2).replace('.',',')+'★':'—')+'</span><span class="yy-g">'+(r.top?r.top[0]:'—')+'</span></div>').join('')
-      +'</div>'+(hasMore?'<div class="drag-knob'+(_yyExpanded?' expanded':'')+'" id="yyKnob"><span class="drag-knob-arrow">'+(_yyExpanded?'▲ menos':'▼ mais')+'</span></div>':'')+'</div>';}
+    const maxY=Math.max(...yy.map(r=>r.n));
+    const show=_yyExpanded?yy:yy.slice(0,PREVIEW);
+    html+='<span class="eyb" style="margin:18px 0 9px;display:block">Quando você assistiu</span>'
+      +'<div class="drag-panel" id="yyPanel">'
+      +show.map(r=>_tlRow(r.y,r.n,r.avg,maxY,'wyr',r.y)).join('')
+      +(yy.length>PREVIEW?_tlKnob('yyKnob',_yyExpanded):'')+'</div>'
+      +'<div class="note" style="margin-top:2px">Ano em que você assistiu. Toque para ver os filmes.</div>';
   }
-  // décadas por nota (preview curto + ficha completa)
   const dec=_decadeStats().filter(d=>d.n>=1);
-  const DEC_PREVIEW=5;
   if(dec.length){
     const list=dec.slice().sort((a,b)=>b.d-a.d);
-    {const showDec=_decExpanded?list:list.slice(0,DEC_PREVIEW);const hasMoreDec=list.length>DEC_PREVIEW;
-    html+='<span class="eyb" style="margin:16px 0 9px;display:block">Décadas</span>'
-      +'<div class="drag-panel" id="decPanel"><div class="bars">'
-      +showDec.map(d=>{const w=d.avg!=null?d.avg/5*100:0;return '<div class="barrow"><div class="bn">'+d.d+'s</div><div class="track"><div class="fill" style="width:'+w+'%"></div></div><div class="bmeta">'+(d.avg!=null?'<span class="g">'+star(+d.avg.toFixed(2))+'</span> · ':'')+fmt(d.n)+'f</div></div>';}).join('')
-      +'</div>'+(hasMoreDec?'<div class="drag-knob'+(_decExpanded?' expanded':'')+'" id="decKnob"><span class="drag-knob-arrow">'+(_decExpanded?'▲ menos':'▼ mais')+'</span></div>':'')
-      +'</div><div class="note" style="margin-top:2px">Ordenado da década mais recente para a mais antiga.</div>';}
+    const maxD=Math.max(...list.map(d=>d.n));
+    const show=_decExpanded?list:list.slice(0,PREVIEW);
+    html+='<span class="eyb" style="margin:18px 0 9px;display:block">Décadas dos filmes</span>'
+      +'<div class="drag-panel" id="decPanel">'
+      +show.map(d=>_tlRow(d.d+'s',d.n,d.avg,maxD,'dec',d.d)).join('')
+      +(list.length>PREVIEW?_tlKnob('decKnob',_decExpanded):'')+'</div>'
+      +'<div class="note" style="margin-top:2px">Década de lançamento do filme, da mais recente para a mais antiga. Toque para ver os filmes.</div>';
   }
   return html;
 }
