@@ -2656,8 +2656,22 @@ async function _updatePageHero(){
     try{
       const j=await tmdb('/movie/'+pick.id+'/images',{include_image_language:'null'});
       if(myReq!==_heroReqSeq)return; // trocou de aba — não sobrescreve a escolha mais recente
+      // v6.2 — ranqueamento entre os backdrops já sem idioma declarado. Não detecta texto
+      // (a API não expõe isso), mas favorece o que costuma ser arte oficial limpa:
+      //  1. nota só conta com votos suficientes — antes tudo com 0 voto empatava no fim
+      //  2. resolução alta: arte oficial vem em 1920px+; edição de fã com texto é menor
+      //  3. proporção exata 16:9: quem recorta pra aplicar texto quase sempre foge do 1.778
+      const MINV=3;
+      const score=b=>{
+        const w=b.width||0;
+        const rated=(b.vote_count||0)>=MINV;
+        const nota=rated?(b.vote_average||0)/10:0.5;      // sem votos = neutro, não zero
+        const res=Math.min(w/1920,1);                      // satura em 1920px
+        const ar=Math.abs((b.aspect_ratio||0)-16/9)<=0.02?1:0;
+        return nota*0.45+res*0.35+ar*0.20;
+      };
       const backs=((j&&j.backdrops)||[]).filter(b=>!b.iso_639_1)
-        .sort((a,b)=>(b.vote_average||0)-(a.vote_average||0));
+        .sort((a,b)=>score(b)-score(a)||(b.width||0)-(a.width||0));
       if(backs.length){
         el.style.backgroundImage='url('+IMG+'/w780'+backs[0].file_path+')';
         el.classList.add('on');document.body.classList.add('hero-on');
@@ -3746,12 +3760,63 @@ const ACH_SETS=[
   {cat:'Diretores',icon:'director',name:'Wong Kar-wai completo',goal:8,films:[['As Tears Go By',1988],['Days of Being Wild',1990],['Chungking Express',1994],['Ashes of Time',1994],['Fallen Angels',1995],['Happy Together',1997],['In the Mood for Love',2000],['2046',2004],['My Blueberry Nights',2007],['The Grandmaster',2013]]},
   {cat:'Diretores',icon:'director',name:'Almodóvar essencial',goal:6,films:[['Women on the Verge of a Nervous Breakdown',1988],['All About My Mother',1999],['Talk to Her',2002],['Volver',2006],['Broken Embraces',2009],['The Skin I Live In',2011],['Julieta',2016],['Pain and Glory',2019],['Parallel Mothers',2021]]},
 ];
-function _watchedIndex(){
-  const idx=new Map();
-  films().forEach(r=>{const y=+(r.ye||r.y)||r.y;[r.t,r.ti].forEach(t=>{if(!t)return;const k=norm(t);if(!k)return;let arr=idx.get(k);if(!arr){arr=[];idx.set(k,arr);}arr.push(y);});});
-  return idx;
+/* v6.2 — casamento de conquistas.
+   Antes: comparação exata de norm(título), o que falhava em toda variação de nome —
+   "Dr. Strangelove" vs o título completo, "Lady Vengeance" vs "Sympathy for Lady
+   Vengeance", "Alien 3" vs "Alien³", "Nostalghia" vs "Nostalgia". Agora há camadas,
+   sempre com o ano como trava (±1), que é o que impede falso positivo entre
+   "Alien"/"Alien 3" ou "O Poderoso Chefão I/II".
+   Também passa a indexar o título original (ot), que ficava de fora. */
+function _achSeenGet(){try{return new Set(JSON.parse(localStorage.getItem('cs_ach_seen')||'[]'));}catch(e){return new Set();}}
+function _achSeenSave(s){try{localStorage.setItem('cs_ach_seen',JSON.stringify([...s]));}catch(e){}}
+const _achKey=(t,y)=>norm(t)+'|'+y;
+function _achSeenToggle(t,y){
+  const s=_achSeenGet(),k=_achKey(t,y);
+  if(s.has(k))s.delete(k);else s.add(k);
+  _achSeenSave(s);return s.has(k);
 }
-function _setProgress(list,idx){let c=0;for(const it of list){const arr=idx.get(norm(it[0]));if(arr&&arr.some(y=>Math.abs(y-it[1])<=1))c++;}return c;}
+function _watchedIndex(){
+  const exact=new Map(),byYear=new Map();
+  films().forEach(r=>{
+    const y=+(r.ye||r.y)||r.y;
+    [r.t,r.ti,r.ot].forEach(t=>{
+      if(!t)return;const k=norm(t);if(!k)return;
+      let arr=exact.get(k);if(!arr){arr=[];exact.set(k,arr);}arr.push(y);
+      let b=byYear.get(y);if(!b){b=[];byYear.set(y,b);}if(b.indexOf(k)<0)b.push(k);
+    });
+  });
+  return {exact,byYear,manual:_achSeenGet()};
+}
+function _lev1(a,b){ // distância de edição <=1, sem montar matriz
+  if(a===b)return true;
+  const la=a.length,lb=b.length;
+  if(Math.abs(la-lb)>1)return false;
+  let i=0,j=0,d=0;
+  while(i<la&&j<lb){
+    if(a[i]===b[j]){i++;j++;continue;}
+    if(++d>1)return false;
+    if(la>lb)i++;else if(lb>la)j++;else{i++;j++;}
+  }
+  return true;
+}
+function _achMatch(idx,title,year){
+  if(idx.manual&&idx.manual.has(_achKey(title,year)))return true;
+  const t=norm(title);if(!t)return false;
+  const yOk=arr=>arr&&arr.some(y=>Math.abs(y-year)<=1);
+  if(yOk(idx.exact.get(t)))return true;              // 1. exato
+  const ts=t.replace(/ /g,'');
+  const cands=[];
+  for(let y=year-1;y<=year+1;y++){const b=idx.byYear.get(y);if(b)for(const k of b)cands.push(k);}
+  for(const k of cands){
+    const ks=k.replace(/ /g,'');
+    if(ks===ts)return true;                          // 2. ignora espaços (Alien 3 / Alien³)
+    if(ts.length>=6&&ks.length>=6&&(ks.startsWith(ts)||ts.startsWith(ks)))return true; // 3. prefixo (Dr. Strangelove)
+    if(ts.length>=8&&ks.length>=8&&(ks.includes(ts)||ts.includes(ks)))return true;     // 4. contido (Lady Vengeance)
+    if(ts.length>=5&&_lev1(ks,ts))return true;       // 5. 1 caractere de diferença (Nostalghia)
+  }
+  return false;
+}
+function _setProgress(list,idx){let c=0;for(const it of list){if(_achMatch(idx,it[0],it[1]))c++;}return c;}
 // espiral dupla estilo Vertigo (1958) — motivo visual das conquistas
 function _vertigoSpiralSVG(size){
   const cx=size/2,cy=size/2,turns=4.6,rMax=size*0.46,steps=260;
@@ -3771,11 +3836,23 @@ function _miniVertigoSpiral(size,spin){
 }
 function openAchievement(i){
   const a=ACH_SETS[i];if(!a)return;const idx=_watchedIndex();
-  const rows=a.films.map(it=>{const arr=idx.get(norm(it[0]));const seen=arr&&arr.some(y=>Math.abs(y-it[1])<=1);
-    return '<div class="ach-frow'+(seen?' seen':'')+'">'+(seen?ICON_CHECK:'<span class="ach-dot"></span>')+'<span class="ach-ft">'+it[0]+'</span><span class="ach-fy">'+it[1]+'</span></div>';}).join('');
+  const man=idx.manual;
+  const rows=a.films.map(it=>{const seen=_achMatch(idx,it[0],it[1]);const byHand=man.has(_achKey(it[0],it[1]));
+    return '<div class="ach-frow'+(seen?' seen':'')+'" data-acht="'+String(it[0]).replace(/"/g,'&quot;')+'" data-achy="'+it[1]+'" style="cursor:pointer">'
+      +(seen?ICON_CHECK:'<span class="ach-dot"></span>')
+      +'<span class="ach-ft">'+it[0]+(byHand?' <span style="color:var(--dim);font-size:10px">marcado por você</span>':'')+'</span>'
+      +'<span class="ach-fy">'+it[1]+'</span></div>';}).join('');
   const got=_setProgress(a.films,idx),goal=a.goal||a.films.length;
-  $('#sheet').innerHTML='<div class="top"><div class="ach-bigic">'+(AICON[a.icon]||AICON.star)+'</div><div><h3>'+a.name+'</h3><div class="yr">'+a.cat+' · <b>'+got+'/'+goal+'</b>'+(got>=goal?' · concluída':'')+'</div></div></div><div class="lbl">Filmes · '+got+' de '+a.films.length+' vistos</div><div class="ach-flist">'+rows+'</div>';
+  $('#sheet').innerHTML='<div class="top"><div class="ach-bigic">'+(AICON[a.icon]||AICON.star)+'</div><div><h3>'+a.name+'</h3><div class="yr">'+a.cat+' · <b>'+got+'/'+goal+'</b>'+(got>=goal?' · concluída':'')+'</div></div></div><div class="lbl">Filmes · '+got+' de '+a.films.length+' vistos · toque num pendente para marcar à mão</div><div class="ach-flist">'+rows+'</div>';
   $('#modal').classList.add('show');
+  $$('#sheet .ach-frow').forEach(el=>el.onclick=()=>{
+    const t=el.dataset.acht,y=+el.dataset.achy;
+    const auto=(()=>{const i2={exact:idx.exact,byYear:idx.byYear,manual:new Set()};return _achMatch(i2,t,y);})();
+    if(auto){toast('Este já é reconhecido pela sua coleção.');return;}
+    const now=_achSeenToggle(t,y);
+    toast(now?'Marcado como visto: '+t:'Desmarcado: '+t);
+    openAchievement(i);renderStats();
+  });
 }
 function _achievements(){
   const all=films(),idx=_watchedIndex(),out=[];
