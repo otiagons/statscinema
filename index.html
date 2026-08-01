@@ -659,6 +659,11 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .daily-sec{background:var(--panel);border-radius:10px;padding:10px 12px;margin:0 0 14px;max-height:360px;overflow:hidden}
 .rw-b{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:18px;font-weight:800;cursor:pointer;line-height:1}
 .rw-n{font-size:13.5px;font-weight:700;color:var(--gold);min-width:64px}
+.rw-icon{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--dim);font-size:11px;cursor:pointer;flex:none;position:relative;display:flex;align-items:center;justify-content:center;padding:0;transition:border-color .15s,color .15s,background-color .15s}
+.rw-icon.on{border-color:var(--acc1);color:var(--acc1);background:color-mix(in srgb,var(--acc1) 14%,transparent);font-weight:800}
+.rw-icon.confirming{border-color:var(--acc2)!important;color:var(--acc2)!important;background:color-mix(in srgb,var(--acc2) 14%,transparent)!important}
+.rw-badge{position:absolute;top:-6px;right:-6px;background:var(--acc1);color:#04140d;font-size:8px;font-weight:800;border-radius:5px;padding:0 3px;line-height:1.4}
+.rw-icon.confirming .rw-badge{background:var(--acc2);color:#1a0505}
 .film-note{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:10px;font-size:13.5px;min-height:54px;resize:vertical;font-family:inherit}
 .film-tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .ftag{background:var(--p2);border:1px solid var(--line);border-radius:16px;padding:4px 9px;font-size:11.5px;color:var(--ink)}
@@ -926,10 +931,10 @@ select{color-scheme:dark}
 <!-- BEM-VINDO / IMPORTAÇÃO (primeiro uso) -->
 <div class="over welc" id="welc"><div class="box">
   <div class="welc-logo"><span id="welcSpiral" aria-hidden="true"></span><h1><span style="color:var(--acc1)">Cine</span><b style="color:var(--acc2)">Stats</b></h1></div>
-  <p>Suas estatísticas pessoais de cinema. Importe seu histórico de filmes para montar o painel com notas, datas e gostos.</p>
+  <p>Suas estatísticas pessoais de cinema. Importe seu histórico de filmes para montar o painel com avaliações, datas e gostos.</p>
   <button class="btn" id="welcImport">Importar dados</button>
   <button class="btn ghost" id="welcSkip">Pular por agora</button>
-  <div class="welc-note">Aceita <b>.zip</b> ou <b>.csv</b> do export do Letterboxd, <b>.csv</b> de outros sites (colunas Nome/Ano/Nota) ou um <b>.json</b> de backup do CineStats.</div>
+  <div class="welc-note">Aceita <b>.zip</b> ou <b>.csv</b> do export do Letterboxd, <b>.csv</b> de outros sites (colunas Nome/Ano/Avaliação) ou um <b>.json</b> de backup do CineStats.</div>
 </div></div>
 
 <!-- AJUSTES -->
@@ -939,10 +944,10 @@ select{color-scheme:dark}
 
   <div class="set-card">
     <h3>Chaves de API</h3>
-    <p class="sub">Usadas para pôsteres, elenco e notas IMDb. Ficam salvas <b>só neste aparelho</b> — nunca saem dele.</p>
+    <p class="sub">Usadas para pôsteres, elenco e avaliações IMDb. Ficam salvas <b>só neste aparelho</b> — nunca saem dele.</p>
     <label class="set-lbl" for="keyTmdbIn">TMDB (v3)</label>
     <input class="tin" id="keyTmdbIn" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="API Key (v3) do TMDB"/>
-    <label class="set-lbl" for="keyOmdbIn">OMDb (notas IMDb)</label>
+    <label class="set-lbl" for="keyOmdbIn">OMDb (avaliações IMDb)</label>
     <input class="tin" id="keyOmdbIn" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="chave do OMDb — vazio usa a padrão"/>
     <button class="btn sec" id="keysSave">Salvar chaves</button>
   </div>
@@ -965,7 +970,7 @@ select{color-scheme:dark}
     <p class="sub">Traga seu histórico ou restaure um backup. Tudo se soma ao que já existe — nada é apagado.</p>
     <button class="btn sec" id="setImport" style="margin-top:0">Importar dados</button>
     <input type="file" id="fileIn" accept=".zip,.csv,.json,application/json" style="display:none"/>
-    <p class="sub" style="margin:10px 0 0">Aceita <b>.zip</b> ou <b>.csv</b> de export do Letterboxd (Settings › Data › <b>Export your data</b>), <b>.csv</b> de outros sites com colunas Nome/Ano/Nota, ou um <b>.json</b> de backup do CineStats.</p>
+    <p class="sub" style="margin:10px 0 0">Aceita <b>.zip</b> ou <b>.csv</b> de export do Letterboxd (Settings › Data › <b>Export your data</b>), <b>.csv</b> de outros sites com colunas Nome/Ano/Avaliação, ou um <b>.json</b> de backup do CineStats.</p>
   </div>
 
   <div class="set-card">
@@ -979,7 +984,7 @@ select{color-scheme:dark}
 
   <div class="set-card">
     <h3>Manutenção</h3>
-    <p class="sub">Renova capas e fichas, procura registros duplicados e limpa dados temporários. Seu histórico e notas não são afetados.</p>
+    <p class="sub">Renova capas e fichas, procura registros duplicados e limpa dados temporários. Seu histórico e suas avaliações não são afetados.</p>
     <button class="btn sec" id="setResync" style="margin-top:0">Atualizar informações e imagens</button>
     <button class="btn sec" id="dupScan">Verificar filmes duplicados</button>
     <div id="dupRes"></div>
@@ -1552,9 +1557,9 @@ function _fWire(){
 }
 /* v6.1 — gaveta de filtros (lista agrupada, "Ordenar por" sempre em primeiro) */
 function _sortOptsFor(){
-  if(tab==='films')return [['rt','Nota'],['pop','Popularidade'],['az','A–Z'],['new','Lançamento']];
-  if(_fIsRank())return [['count','Mais filmes'],['avg','Melhor nota']];
-  return [['count','Mais vistos'],['avg','Melhor avaliados']];
+  if(tab==='films')return [['rt','Avaliação'],['pop','Popularidade'],['az','A–Z'],['new','Lançamento']];
+  if(_fIsRank())return [['count','Mais filmes'],['avg','Melhor avaliação']];
+  return [['count','Mais vistos'],['avg','Melhor avaliação']];
 }
 function _curSort(){
   if(tab==='films')return pSort;
@@ -1723,7 +1728,7 @@ function renderRanking(){
       return `<div class="pc"><div class="ph"><span class="rk">${i+1}</span>${ph}</div><div class="bd"><div class="nm">${p.n}</div>
         <div class="st"><b>${p.n_}</b> filme${p.n_>1?'s':''}${p.avg!=null?' · '+star(+p.avg.toFixed(2)):''}</div>
         ${bf?`<div class="st" style="color:var(--dim)">Top: ${bf.t} ${star(bf.r)}</div>`:''}<div class="mini">${mini}</div></div></div>`;}).join('');
-    let note=(rankSort==='avg'?'Ordenado pela sua nota média (mín. 3 filmes vistos, 2 avaliados). ':'')+`Top ${Math.min(50,r.length)} de ${fmt(r.length)} pessoas com 3 ou mais filmes neste recorte.`;
+    let note=(rankSort==='avg'?'Ordenado pela sua avaliação média (mín. 3 filmes vistos, 2 avaliados). ':'')+`Top ${Math.min(50,r.length)} de ${fmt(r.length)} pessoas com 3 ou mais filmes neste recorte.`;
     if(tab==='actor'||tab==='actress')note+=' Divisão por gênero vem do TMDB e pode falhar.';
     if(tab!=='dir')note+=' "Ator" = elenco principal (top 8).';
     body=`<div class="podium">${cards}</div><div class="note">${note}</div>`;
@@ -1741,7 +1746,7 @@ function renderGenre(){
   let arr=Object.entries(agg).map(([g,v])=>({g,n:v.n,avg:v.c?v.s/v.c:null}));
   let note;
   if(gSort==='count'){arr.sort((a,b)=>b.n-a.n);note=`Por quantidade de filmes vistos. Gêneros vêm do TMDB (cobertura total: ${fmt(fl.length)} filmes).`;}
-  else{arr=arr.filter(x=>x.n>=5&&x.avg!=null);arr.sort((a,b)=>b.avg-a.avg);note='Pela sua nota média, só gêneros com 5+ filmes.';}
+  else{arr=arr.filter(x=>x.n>=5&&x.avg!=null);arr.sort((a,b)=>b.avg-a.avg);note='Pela sua avaliação média, só gêneros com 5+ filmes.';}
   const max=gSort==='count'?Math.max(...arr.map(x=>x.n)):5;
   const ctrl=_fBar();
   const pal=palette(arr.length);
@@ -1885,7 +1890,7 @@ function _filmoRow(m){
   const myR=seen&&localRec.r!=null?localRec.r:null;
   const dk=mk.replace(/"/g,'&quot;');
   const po=m.poster_path?`<img loading="lazy" src="${IMG}/w92${m.poster_path}" data-k="${dk}" data-tmdbid="${m.id}" data-ptitle="${(m.title||'').replace(/"/g,'&quot;')}" data-ppo="${m.poster_path}" class="" style="cursor:pointer"/>` :'<div class="pp"></div>';
-  const ratingTxt=myR!=null?' · sua nota '+star(myR):(m.vote_average?' · '+m.vote_average.toFixed(1)+'★ TMDB':'');
+  const ratingTxt=myR!=null?' · sua avaliação '+star(myR):(m.vote_average?' · '+m.vote_average.toFixed(1)+'★ TMDB':'');
   const wlBtn='';
   const rateBtn=seen?'':`<button class="filmo-rate-btn" data-filmoopen="${dk}" data-tmdbid="${m.id}" data-ptitle="${(m.title||'').replace(/"/g,'&quot;')}" data-ppo="${m.poster_path||''}">★ Avaliar</button>`;
   return `<div class="sr${seen?' seen':''}"><div class="sr-poster">${po}</div><div class="si"><div class="st">${_titlePair(m.original_title||m.title,m.original_title&&m.original_title!==m.title?m.title:null)}</div><div class="sy">${y||'—'}${m.vote_count?' · '+fmt(m.vote_count)+' votos':''}${ratingTxt}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${wlBtn}${rateBtn}</div></div></div>`;
@@ -1911,7 +1916,7 @@ function _renderFilmoEl(elId,stKey,full,labelText,kind,id){
     let arr=valid.slice();
     // hideSeen=true: blur via CSS class (não remove da lista)
     arr=_filmoSortArr(arr,st.sort);
-    const sortOpts=[['pop','Popular'],['rating','Nota'],['year','Ano']];
+    const sortOpts=[['pop','Popular'],['rating','Avaliação'],['year','Ano']];
     ctrlHtml=`<div class="filmo-sort-row">${sortOpts.map(([s,l])=>`<button class="filmo-sort-btn${st.sort===s?' on':''}" data-filmo-sort-key="${stKey}" data-s="${s}">${l}</button>`).join('')}</div>`
       +`<label class="filmo-hide-row"><input type="checkbox" data-filmo-hide="${stKey}" ${st.hideSeen?'checked':''}/> Ocultar filmes já vistos</label>`
       +``;
@@ -1988,9 +1993,9 @@ async function openCountry(c){
   const stat=(lbl,val)=>'<div class="cstat"><div class="cstat-v">'+val+'</div><div class="cstat-l">'+lbl+'</div></div>';
   const stats=
     stat('Filmes',fmt(all.length))+
-    (avg!=null?stat('Nota média',avg.toFixed(2)):'')+
+    (avg!=null?stat('Avaliação média',avg.toFixed(2)):'')+
     (topDec?stat('Década-pico',topDec[0]+'s'):'')+
-    (bf?stat('Melhor nota',star(bf.r)):'');
+    (bf?stat('Melhor avaliação',star(bf.r)):'');
   const genChips=topGen.length?'<div class="lbl">Gêneros mais frequentes</div><div class="ctr-chips" style="padding:0 14px 4px">'+topGen.map(([g,n])=>'<span class="ctr-chip">'+g+' · '+n+'</span>').join('')+'</div>':'';
   showSheet('<div class="top"><div class="cflag-wrap">'+(flag||'<div class="cflag-ph"></div>')+'</div><div><h3>'+displayCountry(c)+'</h3><div class="yr"><b>'+all.length+'</b> filmes vistos'+(avg!=null?' · média '+star(+avg.toFixed(2)):'')+'</div>'+(bf?'<div class="yr" style="margin-top:6px">Destaque: <b style="color:var(--gold)">'+bf.t+'</b> '+star(bf.r)+'</div>':'')+'</div></div>'+
     '<div class="cstats">'+stats+'</div>'+
@@ -2151,7 +2156,7 @@ const ICON_KEYS_PICKER=['film','horror','drama','scifi','crime','comedy','romanc
 // que é sempre a watchlist inteira (watchlist()), com remoção de verdade.
 const SMART_LISTS_DEF=[
   {id:'wl_geral',   name:'Quero ver', icon:'bookmark', all:true},
-  {id:'wl_unrated', name:'Sem nota',  icon:'circle',   unrated:true},
+  {id:'wl_unrated', name:'Sem avaliação', icon:'circle',   unrated:true},
   {id:'wl_rewatch', name:'Revistos',  icon:'check',    rewatch:true},
 ];
 const BR_PROVIDERS=[
@@ -2350,18 +2355,17 @@ async function _renderCuraStream(){
   const el=$('#curaViewStream');if(!el)return;
   const lists=_getLists();const myP=_getMyProviders();
 
-  const provHdr=`<div style="background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700">Meus streamings</div>
-      <button id="curaProvEdit" style="background:none;border:1px solid var(--line);color:var(--acc1);border-radius:6px;padding:2px 8px;font-size:10.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px">${_icon('settings',13)} Configurar</button>
-    </div>
-    ${myP.length
-      ?`<div style="display:flex;gap:6px;flex-wrap:wrap">${myP.map(p=>`<div style="background:var(--p2);border:1px solid ${T1}30;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:700;color:var(--ink)">${p}</div>`).join('')}</div>`
-      :'<div style="font-size:12px;color:var(--dim)">Toque em Configurar para selecionar seus serviços.</div>'
-    }
+  // Single-line summary header (name of each service now appears only once, in its section)
+  const hdrLine=txt=>`<div style="display:flex;align-items:center;justify-content:space-between;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px">
+    <div style="font-size:12.5px;color:var(--ink)">${txt}</div>
+    <button id="curaProvEdit" style="background:none;border:1px solid var(--line);color:var(--acc1);border-radius:6px;padding:3px 9px;font-size:10.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;flex-shrink:0">${_icon('settings',13)} Configurar</button>
   </div>`;
+  const cnt=(n,sing,plur)=>`<b style="color:${T1}">${n}</b> ${n!==1?plur:sing}`;
+  const hdrText=(films,servs)=>cnt(films,'filme','filmes')+(servs!=null?' · '+cnt(servs,'serviço','serviços'):'');
+  const hint=myP.length?'':'<div style="font-size:11.5px;color:var(--dim);margin-bottom:12px;line-height:1.4">Mostrando todos os serviços com filmes do Repertório. Configure os seus para focar.</div>';
 
-  el.innerHTML=provHdr+'<div style="text-align:center;padding:16px;color:var(--dim)">Verificando disponibilidade…</div>';
+  const provHdrLoading=hdrLine(myP.length?cnt(myP.length,'serviço configurado','serviços configurados'):'Nenhum serviço configurado');
+  el.innerHTML=provHdrLoading+'<div style="text-align:center;padding:16px;color:var(--dim)">Verificando disponibilidade…</div>';
   const pb=$('#curaProvEdit');if(pb)pb.onclick=_curaSelectProviders;
 
   // Collect all films (custom lists + smart watchlist)
@@ -2375,7 +2379,7 @@ async function _renderCuraStream(){
   const withStr=tmdbF.filter(({r})=>{const pv=_provCache[r.id];return pv&&pv.names&&pv.names.length;});
 
   if(!withStr.length){
-    el.innerHTML=provHdr+'<div style="text-align:center;padding:24px;color:var(--dim);line-height:1.5">Nenhum filme do Repertório no streaming BR agora.<br><span style="font-size:11px">Dados via TMDB · JustWatch</span></div>';
+    el.innerHTML=hdrLine(hdrText(0,myP.length||null))+'<div style="text-align:center;padding:24px;color:var(--dim);line-height:1.5">Nenhum filme do Repertório no streaming BR agora.<br><span style="font-size:11px">Dados via TMDB · JustWatch</span></div>';
     const pb2=$('#curaProvEdit');if(pb2)pb2.onclick=_curaSelectProviders;
     return;
   }
@@ -2399,7 +2403,7 @@ async function _renderCuraStream(){
     .sort((a,b)=>b[1].length-a[1].length);
 
   if(!provEntries.length){
-    el.innerHTML=provHdr+'<div style="text-align:center;padding:20px;color:var(--dim);line-height:1.5">Nenhum dos seus streamings tem filmes do Repertório disponíveis agora.</div>';
+    el.innerHTML=hdrLine(hdrText(0,effectiveMyP.length))+'<div style="text-align:center;padding:20px;color:var(--dim);line-height:1.5">Nenhum dos seus streamings tem filmes do Repertório disponíveis agora.</div>';
     const pb3=$('#curaProvEdit');if(pb3)pb3.onclick=_curaSelectProviders;
     return;
   }
@@ -2407,19 +2411,20 @@ async function _renderCuraStream(){
   // Total count (unique films across all shown providers)
   const totalUniq=new Set(provEntries.flatMap(([,pf])=>pf.map(x=>x.key))).size;
 
-  // Build filter chips HTML
-  // When services are configured, "Todos" shows only those; if single service no "Todos" chip
+  // Filter chips only earn their place with enough services to actually need filtering;
+  // below that, the summary header + section headers already say it all once each.
+  const needsChips=provEntries.length>5;
   const showTodos=provEntries.length>1;
-  const chipBar=`<div id="curaStreamChips" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:10px">
+  const chipBar=needsChips?`<div id="curaStreamChips" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:10px">
     ${showTodos?`<button class="cura-stream-chip on" data-cprov="all" style="border:1px solid ${T1};background:${T1}18;color:${T1};border-radius:18px;padding:5px 12px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">Todos · ${totalUniq}</button>`:''}
     ${provEntries.map(([pn,pf])=>`<button class="cura-stream-chip${!showTodos?' on':''}" data-cprov="${pn}" style="border:1px solid ${!showTodos?T1:'var(--line)'};background:${!showTodos?T1+'18':'var(--p2)'};color:${!showTodos?T1:'var(--mut)'};border-radius:18px;padding:5px 12px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">${pn} · ${pf.length}</button>`).join('')}
-  </div>`;
+  </div>`:'';
 
-  // Build total counter
-  const totalBar=`<div id="curaStreamTotal" style="font-size:12px;color:var(--dim);margin-bottom:12px;line-height:1.5">
+  // Live counter — only needed alongside chips, since the header already states the static total
+  const totalBar=needsChips?`<div id="curaStreamTotal" style="font-size:12px;color:var(--dim);margin-bottom:12px;line-height:1.5">
     <span id="curaStreamTotalN" style="font-size:18px;font-weight:800;color:var(--acc1)">${totalUniq}</span>
     <span style="margin-left:6px">filme${totalUniq!==1?'s':''} disponíveis${myP.length?' nos seus streamings':' no streaming BR'}</span>
-  </div>`;
+  </div>`:'';
 
   // Build provider sections
   let sectionsHtml='';
@@ -2445,7 +2450,7 @@ async function _renderCuraStream(){
 
   const disclaimer='<div style="font-size:11px;color:var(--dim);margin-top:8px">Dados via TMDB · JustWatch · atualização diária</div>';
 
-  el.innerHTML=provHdr+totalBar+chipBar+sectionsHtml+disclaimer;
+  el.innerHTML=hdrLine(hdrText(totalUniq,provEntries.length))+hint+totalBar+chipBar+sectionsHtml+disclaimer;
 
   // Wire poster clicks
   $$('#curaViewStream .cura-sf').forEach(d=>d.onclick=()=>openFilm(d.dataset.filmkey));
@@ -2792,7 +2797,7 @@ function statsBioHTML(){
     +'<div class="strow" style="grid-template-columns:repeat(3,1fr)">'
       +'<div class="stbox"><div class="sv">'+fmt(st.total)+'</div><div class="sl">filmes</div></div>'
       +'<div class="stbox"><div class="sv" style="font-size:11px">'+genT+'</div><div class="sl">g\u00eanero fav.</div></div>'
-      +'<div class="stbox"><div class="sv">'+avgT+'</div><div class="sl">nota m\u00e9dia</div></div>'
+      +'<div class="stbox"><div class="sv">'+avgT+'</div><div class="sl">avalia\u00e7\u00e3o m\u00e9dia</div></div>'
     +'</div>'
     +'<div class="strow" style="grid-template-columns:repeat(3,1fr);margin-top:0">'
       +'<div class="stbox"><div class="sv">'+horasT+'</div><div class="sl">na poltrona</div></div>'
@@ -2813,7 +2818,7 @@ function ratingDistHTML(){
         +'<div class="dcol-fill" style="height:'+h+'px;background:color-mix(in srgb,var(--acc1) '+p+'%,var(--acc2))"></div></div>';
     }).join('');
   const distAxis=distEntries.map(([v])=>'<span>'+String(v).replace('.',',')+'</span>').join('');
-  return'<span class="eyb">Notas</span><div class="dist-chart">'+distBars+'</div><div class="dist-axis">'+distAxis+'</div>';
+  return'<span class="eyb">Avaliações</span><div class="dist-chart">'+distBars+'</div><div class="dist-axis">'+distAxis+'</div>';
 }
 
 /* ── CARD GENERATOR ── */
@@ -3157,7 +3162,7 @@ async function _runRecoHeuristic(vibe){
   const cfg=VIBE_CFG[vibe];
   const res=ob.querySelector('#recoResults');
   const hasOmdb=!!getOmdbKey();
-  res.innerHTML='<div class="reco-spin"><div class="reco-loader"></div>'+(hasOmdb?'Filtrando com nota IMDb real…':'Buscando via TMDB…')+'</div>';
+  res.innerHTML='<div class="reco-spin"><div class="reco-loader"></div>'+(hasOmdb?'Filtrando com avaliação IMDb real…':'Buscando via TMDB…')+'</div>';
   const movies=await _fetchRecos(vibe);
   if(!movies.length){res.innerHTML='<div class="reco-empty">Não encontrei títulos novos. Tente outra vibe!</div>';return;}
   const fbKind=(movies[0]&&movies[0]._fallbackKind)||null;
@@ -3185,7 +3190,7 @@ function _recoEngineHtml(){
   return '<div class="reco-eng"><span class="dot"></span>Filtro IMDb ativo'+(custom?' <button id="recoOmdbDel">Remover chave</button>':' · chave padrão <button id="recoOmdbChg">Usar minha chave</button>')+'</div>';
 }
 function _recoOmdbBoxHtml(){
-  return '<div class="reco-keybox" id="recoOmdbBox"><div class="hint">Chave gratuita do OMDb — filtra candidatos pela nota real do IMDb em vez da nota inflada do TMDB. 1.000 chamadas/dia grátis.</div>'
+  return '<div class="reco-keybox" id="recoOmdbBox"><div class="hint">Chave gratuita do OMDb — filtra candidatos pela avaliação real do IMDb em vez da avaliação inflada do TMDB. 1.000 chamadas/dia grátis.</div>'
     +'<input id="recoOmdbIn" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sua-chave-omdb"/>'
     +'<button class="btn" id="recoOmdbSave" style="font-size:13px">Salvar chave OMDb</button>'
     +'<div class="hint" style="margin-top:8px">Obtenha em <span style="color:var(--cyan)">omdbapi.com</span> → API Key (plano gratuito).</div></div>';
@@ -4013,7 +4018,7 @@ function _activityHTML(){
   // cabeçalho / marco — v6.2: horas agora declaram a própria cobertura, em vez de
   // parecerem o total (só filmes com duração conhecida entram na soma)
   const rtN=all.filter(r=>r.rt&&r.rt>0).length;
-  const avgTxt=st.avg!=null?st.avg.toFixed(2).replace('.',',')+'\u2605 média':'sem nota';
+  const avgTxt=st.avg!=null?st.avg.toFixed(2).replace('.',',')+'\u2605 média':'sem avaliação';
   let hd='<div class="st-hd"><div class="st-hd-big">'+fmt(st.total)+'</div>'
     +'<div class="st-hd-sub">filmes'+(rtN>=st.total&&st.totalHours?' · '+fmt(st.totalHours)+'h':'')+' · '+avgTxt+'</div>';
   if(rtN<st.total&&st.totalHours)
@@ -4096,7 +4101,7 @@ async function openFilm(k){_curFilmKey=k;const r=cache[k];if(!r)return;const t=r
   const overview=r.ov?`<div class="lbl">Sinopse</div><p id="filmOv" style="font-size:13px;color:var(--mut);line-height:1.6;margin:0 0 4px"></p>`:'';
   showSheet(`<div class="top">${poster}<div style="flex:1;min-width:0"><h3>${_titleHtml(r)}</h3><hr class="film-sep"/><div class="yr">${y}${runtime?' · <b>'+runtime+'</b>':''}</div>${gn?`<div class="yr" style="margin-top:5px">${gn}</div>`:''}${dirs?`<div class="yr" style="margin-top:5px">Direção: <b>${dirs}</b></div>`:''}</div></div>
     ${overview}
-    <div class="lbl">Sua nota</div><div class="rating-row">${starWidget(r.r||0,k)}${!r.wl?`<div class="rw-ctl"><button class="rw-b" id="rwMinus">−</button><span class="rw-n" id="rwN">${r.rw||0} ${(r.rw||0)===1?'vez':'vezes'}</span><button class="rw-b" id="rwPlus">+</button></div>`:''}</div>${!r.wl?`<div class="date-action-row"><input type="date" id="filmDate" class="film-date-mini" value="${r.ts?new Date(r.ts).toISOString().slice(0,10):''}" title="Data que assisti"/><button class="rw-b" id="filmDateClear" title="Limpar data" style="padding:0 8px;font-size:16px">×</button>${r.r!=null?`<button class="film-action-icon danger" id="filmUnmarkSeen" title="Remover dos vistos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>`:''}<button class="film-action-icon" id="filmSaveList" title="Salvar no Repertório"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button></div>`:''}<div class="rate-hint">Toque numa estrela para avaliar · metade esquerda = nota ,5 · arraste antes da 1ª estrela para apagar</div>
+    <div class="lbl">Sua avaliação</div><div class="rating-row">${starWidget(r.r||0,k)}${!r.wl?`<button class="rw-icon${(r.rw||0)>=1?' on':''}" id="rwToggle" title="${(r.rw||0)>=1?'Revisto '+r.rw+'× · toque e segure para zerar':'Marcar como revisto'}">↺${(r.rw||0)>1?`<span class="rw-badge">${r.rw}</span>`:''}</button>`:''}</div>${!r.wl?`<div class="date-action-row"><input type="date" id="filmDate" class="film-date-mini" value="${r.ts?new Date(r.ts).toISOString().slice(0,10):''}" title="Data que assisti"/><button class="rw-b" id="filmDateClear" title="Limpar data" style="padding:0 8px;font-size:16px">×</button>${r.r!=null?`<button class="film-action-icon danger" id="filmUnmarkSeen" title="Remover dos vistos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>`:''}<button class="film-action-icon" id="filmSaveList" title="Salvar no Repertório"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button></div>`:''}<div class="rate-hint">Toque numa estrela para avaliar · metade esquerda = avaliação ,5 · arraste antes da 1ª estrela para apagar</div>
     ${_filmExtrasHtml(r)}
     ${cast?`<div class="lbl">Elenco principal</div><div class="cast">${cast}</div>`:(r.id?'<div class="note">Elenco ainda sendo baixado…</div>':'')}`,k);
   if(r.ov){const ovEl=$('#filmOv');if(ovEl)renderExpandable(ovEl,r.ov,200);}
@@ -4179,16 +4184,16 @@ function _commitStar(info){
   const{key:k,val}=info;
   const rec=cache[k];if(!rec)return;
   if(val===0){
-    if(rec.r==null){toast('Sem nota para apagar');return;}
+    if(rec.r==null){toast('Sem avaliação para apagar');return;}
     rec.r=null;rec.wl=1;
-    put(k,rec);PEOPLE=null;toast('Nota apagada: '+rec.t);openFilm(k);return;
+    put(k,rec);PEOPLE=null;toast('Avaliação apagada: '+rec.t);openFilm(k);return;
   }
   const wasWl=!!rec.wl;const hadRating=rec.r!=null&&!wasWl;
   rec.r=val;delete rec.wl;delete rec._stub;rec.s=1;if(!hadRating&&!rec.ts)rec.ts=Date.now();
   put(k,rec);PEOPLE=null;
   _removeFromAllLists(k);
   if(rec.id!=null)_reconcileWatchedDupes(rec.id,k);
-  toast((hadRating?'Nota corrigida: ':(wasWl?'Visto! ':'Avaliado: '))+rec.t+' '+star(val));
+  toast((hadRating?'Avaliação corrigida: ':(wasWl?'Visto! ':'Avaliado: '))+rec.t+' '+star(val));
   openFilm(k);
 }
 /* ── sheet (modal filme) – hover/touch preview ── */
@@ -4211,9 +4216,53 @@ function _commitStar(info){
   sh.addEventListener('touchmove',e=>{if(!_touchActive||!_touchStarsEl)return;const t=e.touches[0];const info=_starsFromPoint(t.clientX,t.clientY,sh);if(info){_previewStars(info.stars,info.val);}else{const rect=_touchStarsEl.getBoundingClientRect();if(t.clientX<rect.left)_previewStars(_touchStarsEl,0);}e.preventDefault();},{passive:false});
   sh.addEventListener('touchend',e=>{if(!_touchActive)return;_touchActive=false;const t=e.changedTouches[0];const info=_starsFromPoint(t.clientX,t.clientY,sh);const se=_touchStarsEl;_touchStarsEl=null;if(info){_commitStar(info);e.preventDefault();}else if(se){const rect=se.getBoundingClientRect();if(t.clientX<rect.left){_commitStar({stars:se,val:0,key:se.dataset.key});e.preventDefault();}}},{passive:false});
 })();
+(function(){
+  // ícone de revista: toque simples soma 1; toque e segure arma o zerar (evita precisar de um passo "−")
+  const sh=$('#sheet');
+  let _rwHoldT=null;
+  const _rwStart=e=>{
+    const btn=e.target.closest&&e.target.closest('#rwToggle');if(!btn)return;
+    clearTimeout(_rwHoldT);
+    _rwHoldT=setTimeout(()=>{
+      const rec=cache[_curFilmKey];if(!rec||!(rec.rw>0))return;
+      btn.classList.add('confirming');btn._rwJustArmed=true;
+      btn.title='Toque de novo para confirmar zerar';
+      clearTimeout(btn._rwRevert);
+      btn._rwRevert=setTimeout(()=>{
+        btn.classList.remove('confirming');btn._rwJustArmed=false;
+        const rec2=cache[_curFilmKey];
+        btn.title=(rec2&&rec2.rw>0)?'Revisto '+rec2.rw+'× · toque e segure para zerar':'Marcar como revisto';
+      },2500);
+    },550);
+  };
+  const _rwCancel=()=>clearTimeout(_rwHoldT);
+  sh.addEventListener('touchstart',_rwStart,{passive:true});
+  sh.addEventListener('touchend',_rwCancel,{passive:true});
+  sh.addEventListener('touchmove',_rwCancel,{passive:true});
+  sh.addEventListener('mousedown',_rwStart);
+  sh.addEventListener('mouseup',_rwCancel);
+})();
 $('#sheet').addEventListener('click',e=>{
   // filmShareBtn handled by sheetShareBtn
-  if(e.target.id==='rwPlus'||e.target.id==='rwMinus'){const rec=cache[_curFilmKey];if(!rec)return;rec.rw=Math.max(0,(rec.rw||0)+(e.target.id==='rwPlus'?1:-1));put(_curFilmKey,rec);const el=$('#rwN');if(el)el.textContent=rec.rw+' '+(rec.rw===1?'vez':'vezes');return;}
+  if(e.target.id==='rwToggle'||(e.target.closest&&e.target.closest('#rwToggle'))){
+    const btn=$('#rwToggle');if(!btn)return;
+    const rec=cache[_curFilmKey];if(!rec)return;
+    if(btn.classList.contains('confirming')){
+      if(btn._rwJustArmed){btn._rwJustArmed=false;return;} // this click is just the release of the long-press that armed it — ignore it
+      clearTimeout(btn._rwRevert);
+      rec.rw=0;put(_curFilmKey,rec);
+      btn.classList.remove('confirming','on');
+      btn.innerHTML='↺';
+      btn.title='Marcar como revisto';
+      toast('Contagem de revistas zerada');
+      return;
+    }
+    rec.rw=(rec.rw||0)+1;put(_curFilmKey,rec);
+    btn.classList.add('on');
+    btn.innerHTML='↺'+(rec.rw>1?`<span class="rw-badge">${rec.rw}</span>`:'');
+    btn.title='Revisto '+rec.rw+'× · toque e segure para zerar';
+    return;
+  }
   if(e.target.id==='filmWlRemove'){del(_curFilmKey);$('#modal').classList.remove('show');PEOPLE=null;toast('Removido da watchlist');render();return;}
   if(e.target.id==='filmUnmarkSeen'||(e.target.closest&&e.target.closest('#filmUnmarkSeen'))){e.stopPropagation();const btn=$('#filmUnmarkSeen');if(!btn)return;if(!btn.classList.contains('confirming')){btn.classList.add('confirming');btn.setAttribute('title','Clique de novo para confirmar');if(btn._ut)clearTimeout(btn._ut);btn._ut=setTimeout(()=>{btn.classList.remove('confirming');btn.setAttribute('title','Remover dos vistos');},2500);return;}if(btn._ut)clearTimeout(btn._ut);const rec=cache[_curFilmKey];if(!rec)return;rec.r=null;rec.wl=1;delete rec.s;delete rec.ts;put(_curFilmKey,rec);PEOPLE=null;$('#modal').classList.remove('show');toast('Removido dos vistos: '+rec.t);render();return;}
   if(e.target.id==='filmSaveList'){_curaPickList(_curFilmKey);return;}
@@ -4442,7 +4491,7 @@ async function importExport(file){
   Object.keys(dmap).forEach(k=>{if(!cache[k]){const[n,y]=k.split('|');apply(n,+y,rmap[k]!=null?rmap[k]:null);}});
   let wlAdded=0;
   wlist.forEach(r=>{const y=parseInt(r.Year);if(!y)return;const k=key(r.Name,y);if(cache[k])return;cache[k]={t:r.Name,y:y,r:null,wl:1,src:'lb'};put(k,cache[k]);wlAdded++;});
-  PEOPLE=null;toast(added+' novos · '+upd+' notas'+(wlAdded?' · '+wlAdded+' p/ ver':''));render();sync();
+  PEOPLE=null;toast(added+' novos · '+upd+' avaliações'+(wlAdded?' · '+wlAdded+' p/ ver':''));render();sync();
 }
 function exportCSV(){
   const rows=films().filter(r=>r.r!=null||r.ts).map(r=>{
@@ -4624,12 +4673,12 @@ function _runDupScan(res){
     const fixable=rated.length===1&&arr.length>rated.length;
     if(fixable)fixableTotal++;
     const items=arr.map(([k,r])=>{
-      const badges=[r._stub?'stub':null,r.wl?'watchlist':null,r.r!=null?'nota '+r.r:null].filter(Boolean).map(b=>'<span class="bdg">'+b+'</span>').join('');
+      const badges=[r._stub?'stub':null,r.wl?'watchlist':null,r.r!=null?'avaliação '+r.r:null].filter(Boolean).map(b=>'<span class="bdg">'+b+'</span>').join('');
       return '<div class="dup-row" data-dupk="'+String(k).replace(/"/g,'&quot;')+'"><span class="k">'+k+'</span>'+badges+'</div>';
     }).join('');
     const action=fixable
       ?'<button class="dup-fix-btn" data-fixid="'+id+'" data-fixkeep="'+String(rated[0][0]).replace(/"/g,'&quot;')+'">'+ICON_CHECK+' Corrigir automaticamente</button>'
-      :'<div class="dup-manual-note">'+(rated.length>1?'Mais de um registro tem nota própria — revise antes de mesclar.':'Nenhum registro tem nota — toque para abrir e escolher qual manter.')+'</div>';
+      :'<div class="dup-manual-note">'+(rated.length>1?'Mais de um registro tem avaliação própria — revise antes de mesclar.':'Nenhum registro tem avaliação — toque para abrir e escolher qual manter.')+'</div>';
     return '<div style="margin-top:10px" data-dupgroup="'+id+'"><b>'+t+(y?' ('+y+')':'')+'</b> · TMDB '+id+' · '+arr.length+' registros'+items+action+'</div>';
   }).join('');
   const fixAllBtn=fixableTotal>1?'<button id="dupFixAll" class="dup-fix-btn dup-fix-all">'+ICON_CHECK+' Corrigir todos os '+fixableTotal+' automaticamente</button>':'';
