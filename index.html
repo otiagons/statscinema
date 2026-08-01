@@ -668,6 +668,11 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .film-tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .ftag{background:var(--p2);border:1px solid var(--line);border-radius:16px;padding:4px 9px;font-size:11.5px;color:var(--ink)}
 .ftag i{color:var(--dim);font-style:normal;cursor:pointer;font-weight:800;margin-left:3px}
+.notebtn{display:inline-flex;align-items:center;gap:5px;background:none;border:1px dashed var(--line);color:var(--mut);border-radius:16px;padding:5px 11px;font-size:12px;cursor:pointer}
+.notebtn:hover{border-color:var(--acc1);color:var(--acc1)}
+.date-divider{width:1px;height:18px;background:var(--line);flex:none;margin:0 1px}
+.cast-wrap{position:relative}
+.cast-fade{position:absolute;right:0;top:0;bottom:4px;width:28px;background:linear-gradient(to right,transparent,var(--bg));pointer-events:none}
 .ftag-in{background:var(--bg);border:1px dashed var(--line);color:var(--ink);border-radius:16px;padding:4px 10px;font-size:11.5px;width:90px}
 .filmo-prog{display:flex;align-items:center;gap:9px;margin:4px 0 2px;font-size:11.5px;color:var(--mut)}
 .filmo-bar{flex:1;height:7px;background:var(--p2);border-radius:4px;overflow:hidden}
@@ -1436,7 +1441,7 @@ async function searchFilm(t,y){
 async function credits(id){
   const j=await tmdb('/movie/'+id,{append_to_response:'credits'}); if(!j)return null;
   const cr=j.credits||{};
-  const ca=(cr.cast||[]).slice().sort((a,b)=>(a.order??999)-(b.order??999)).slice(0,8).map(c=>[c.id,c.name,c.gender||0,c.profile_path||null,c.character||'']);
+  const ca=(cr.cast||[]).slice().sort((a,b)=>(a.order??999)-(b.order??999)).slice(0,24).map(c=>[c.id,c.name,c.gender||0,c.profile_path||null,c.character||'']);
   const di=(cr.crew||[]).filter(c=>c.job==='Director').map(c=>[c.id,c.name,c.profile_path||null]);
   const co=(j.production_countries||[]).map(c=>c.iso_3166_1);
   return {ca,di,co,rt:j.runtime||null,lang:j.original_language||null};
@@ -4093,17 +4098,18 @@ function render(){if(tab!=='bio')stopSpiralAnim();if(tab==='bio')return renderBi
 async function openFilm(k){_curFilmKey=k;const r=cache[k];if(!r)return;const t=r.t,y=r.y;
   const poster=(r.po)?`<div class="poster-wrap"><img id="filmPosterImg" src="${IMG}/w342${r.po}"/>${r.id?`<button id="filmSwapPoster" class="swap-poster-btn">⊙ trocar</button>`:''}</div>`:'';
   const dirs=(r.di||[]).map(d=>d[1]).join(', ');
-  const gn=(r.gids||[]).map(id=>GENRES[id]).filter(Boolean).join(' · ');
+  const gn=(r.gids||[]).map(id=>GENRES[id]).filter(Boolean);
   const cast=(r.ca||[]).map(c=>{const ph=c[3]?`<img src="${IMG}/w185${c[3]}" data-pid="${c[0]}" data-pname="${(c[1]||'').replace(/"/g,'&quot;')}" data-ppic="${c[3]}" style="cursor:pointer;border-radius:inherit"/>` :`<div class="ini" data-pid="${c[0]}" data-pname="${(c[1]||'').replace(/"/g,'&quot;')}" style="cursor:pointer">${initials(c[1])}</div>`;return `<div class="c">${ph}<div class="cn">${c[1]}</div>${c[4]?`<div class="cc">${c[4]}</div>`:''}</div>`;}).join('');
   if(r.id&&(r.ov===undefined||r.tp===undefined||!r.gids||!r.gids.length)){const d=await movieDetails(r.id);if(d){r.ov=d.ov;r.rt=d.rt;r.tg=d.tg;if(d.tp)r.tp=d.tp;if(d.gids&&d.gids.length&&(!r.gids||!r.gids.length))r.gids=d.gids;put(k,r);}}
   const runtime=r.rt?`${Math.floor(r.rt/60)}h ${r.rt%60}min`:'';
 
   const overview=r.ov?`<div class="lbl">Sinopse</div><p id="filmOv" style="font-size:13px;color:var(--mut);line-height:1.6;margin:0 0 4px"></p>`:'';
-  showSheet(`<div class="top">${poster}<div style="flex:1;min-width:0"><h3>${_titleHtml(r)}</h3><hr class="film-sep"/><div class="yr">${y}${runtime?' · <b>'+runtime+'</b>':''}</div>${gn?`<div class="yr" style="margin-top:5px">${gn}</div>`:''}${dirs?`<div class="yr" style="margin-top:5px">Direção: <b>${dirs}</b></div>`:''}</div></div>
+  const rateHint=localStorage.getItem('cs_rate_hint_seen')?'':'<div class="rate-hint">Toque numa estrela para avaliar · metade esquerda = avaliação ,5 · arraste antes da 1ª estrela para apagar</div>';
+  showSheet(`<div class="top">${poster}<div style="flex:1;min-width:0"><h3>${_titleHtml(r)}</h3><hr class="film-sep"/><div class="yr">${y}${runtime?' · <b>'+runtime+'</b>':''}</div>${dirs?`<div class="yr" style="margin-top:5px">Direção: <b>${dirs}</b></div>`:''}${gn.length?`<div class="film-tags" style="margin-top:6px">${gn.map(g=>`<span class="ftag" style="cursor:default">${g}</span>`).join('')}</div>`:''}</div></div>
     ${overview}
-    <div class="lbl">Sua avaliação</div><div class="rating-row">${starWidget(r.r||0,k)}${!r.wl?`<button class="rw-icon${(r.rw||0)>=1?' on':''}" id="rwToggle" title="${(r.rw||0)>=1?'Revisto '+r.rw+'× · toque e segure para zerar':'Marcar como revisto'}">↺${(r.rw||0)>1?`<span class="rw-badge">${r.rw}</span>`:''}</button>`:''}</div>${!r.wl?`<div class="date-action-row"><input type="date" id="filmDate" class="film-date-mini" value="${r.ts?new Date(r.ts).toISOString().slice(0,10):''}" title="Data que assisti"/><button class="rw-b" id="filmDateClear" title="Limpar data" style="padding:0 8px;font-size:16px">×</button>${r.r!=null?`<button class="film-action-icon danger" id="filmUnmarkSeen" title="Remover dos vistos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>`:''}<button class="film-action-icon" id="filmSaveList" title="Salvar no Repertório"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button></div>`:''}<div class="rate-hint">Toque numa estrela para avaliar · metade esquerda = avaliação ,5 · arraste antes da 1ª estrela para apagar</div>
+    <div class="lbl">Sua avaliação</div><div class="rating-row">${starWidget(r.r||0,k)}${!r.wl?`<button class="rw-icon${(r.rw||0)>=1?' on':''}" id="rwToggle" title="${(r.rw||0)>=1?'Revisto '+r.rw+'× · toque e segure para zerar':'Marcar como revisto'}">↺${(r.rw||0)>1?`<span class="rw-badge">${r.rw}</span>`:''}</button>`:''}</div>${!r.wl?`<div class="date-action-row"><input type="date" id="filmDate" class="film-date-mini" value="${r.ts?new Date(r.ts).toISOString().slice(0,10):''}" title="Data que assisti"/><button class="rw-b" id="filmDateClear" title="Limpar data" style="padding:0 8px;font-size:16px">×</button><div class="date-divider"></div>${r.r!=null?`<button class="film-action-icon danger" id="filmUnmarkSeen" title="Remover dos vistos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>`:''}<button class="film-action-icon" id="filmSaveList" title="Salvar no Repertório"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button></div>`:''}${rateHint}
     ${_filmExtrasHtml(r)}
-    ${cast?`<div class="lbl">Elenco principal</div><div class="cast">${cast}</div>`:(r.id?'<div class="note">Elenco ainda sendo baixado…</div>':'')}`,k);
+    ${cast?`<div class="lbl">Elenco principal</div><div class="cast-wrap"><div class="cast">${cast}</div><div class="cast-fade"></div></div>`:(r.id?'<div class="note">Elenco ainda sendo baixado…</div>':'')}`,k);
   if(r.ov){const ovEl=$('#filmOv');if(ovEl)renderExpandable(ovEl,r.ov,200);}
   _wireFilmExtras(k);
   // lazy-load credits (directors, cast, runtime) if not yet cached
@@ -4116,7 +4122,8 @@ function _filmExtrasHtml(r){
   // rewatch, date and share moved to openFilm rating row
 
   const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const noteSection=`<div class="lbl">Anotação / mini-review</div><textarea class="film-note" id="filmNote" placeholder="o que achou? (opcional)">${esc(r.note)}</textarea>`;
+  const hasNote=!!(r.note&&r.note.trim());
+  const noteSection=`<div class="lbl">Notas</div>${hasNote?'':'<button class="notebtn" id="filmNoteOpen" type="button">+ anotação</button>'}<textarea class="film-note" id="filmNote" placeholder="o que achou? (opcional)" style="${hasNote?'':'display:none'}">${esc(r.note)}</textarea>`;
   const tags=(r.tags||[]);
   const tagsSection=`<div class="lbl">Tags</div><div class="film-tags" id="filmTags">${tags.map(t=>`<span class="ftag" data-t="${(t||'').replace(/"/g,'&quot;')}">${t} <i>×</i></span>`).join('')}<input class="ftag-in" id="filmTagIn" placeholder="+ tag" autocomplete="off"/></div>`;
   return listSection+noteSection+tagsSection;
@@ -4143,6 +4150,7 @@ function _wireFilmExtras(k){
     picker.querySelectorAll('img').forEach(img=>{img.onclick=()=>{const r2=cache[k];if(!r2)return;r2.po=img.dataset.path;put(k,r2);const pi2=$('#filmPosterImg');if(pi2)pi2.src=`${IMG}/w342${r2.po}`;picker.querySelectorAll('img').forEach(i=>i.style.borderColor='var(--line)');img.style.borderColor='var(--acc1)';toast('Pôster atualizado');};});
   };}
   const nt=$('#filmNote');if(nt)nt.onblur=()=>{const rec=cache[k];if(!rec)return;const v=nt.value.trim();if(v)rec.note=v;else delete rec.note;put(k,rec);};
+  const nbtn=$('#filmNoteOpen');if(nbtn)nbtn.onclick=()=>{nbtn.style.display='none';if(nt){nt.style.display='';nt.focus();}};
   const ti=$('#filmTagIn');if(ti)ti.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();const v=ti.value.trim().toLowerCase();if(v){const rec=cache[k];if(rec){rec.tags=[...new Set([...(rec.tags||[]),v])];put(k,rec);openFilm(k);}}}};
   const fd=$('#filmDate');if(fd){const _applyDate=()=>{const rec=cache[k];if(!rec||rec.wl)return;const v=fd.value;if(!v){delete rec.ts;put(k,rec);toast('Data removida');render();return;}const d=new Date(v+'T12:00:00');if(!isNaN(d)){rec.ts=d.getTime();put(k,rec);toast('Data atualizada');render();}};fd.onchange=_applyDate;fd.oninput=_applyDate;}
   const fdc=$('#filmDateClear');if(fdc)fdc.onclick=()=>{const fd2=$('#filmDate');if(fd2)fd2.value='';const rec=cache[k];if(rec&&!rec.wl){delete rec.ts;put(k,rec);toast('Data removida');render();}};
@@ -4190,6 +4198,7 @@ function _commitStar(info){
   }
   const wasWl=!!rec.wl;const hadRating=rec.r!=null&&!wasWl;
   rec.r=val;delete rec.wl;delete rec._stub;rec.s=1;if(!hadRating&&!rec.ts)rec.ts=Date.now();
+  localStorage.setItem('cs_rate_hint_seen','1');
   put(k,rec);PEOPLE=null;
   _removeFromAllLists(k);
   if(rec.id!=null)_reconcileWatchedDupes(rec.id,k);
