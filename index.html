@@ -1731,15 +1731,15 @@ function renderRanking(){
    if(rYr==null&&_y.length)rYr=_y[0];if(rDec==null&&_d.length)rDec=_d[0];}
   const ctrl=_fBar();
   let body;
-  if(!r.length)body=`<div class="empty">Ninguém com 3 ou mais filmes nesse recorte.</div>`;
+  if(!r.length)body=`<div class="empty">Ninguém${rScope==='all'?' com 3 ou mais filmes':''} nesse recorte.</div>`;
   else{
     const cards=top.map((p,i)=>{const {mini,bf}=personDetail(p);const ph=p.pic?`<img loading="lazy" src="${IMG}/w185${p.pic}"/>`:`<div class="ini">${initials(p.n)}</div>`;
       return `<div class="pc"><div class="ph"><span class="rk">${i+1}</span>${ph}</div><div class="bd"><div class="nm">${p.n}</div>
         <div class="st"><b>${p.n_}</b> filme${p.n_>1?'s':''}${p.avg!=null?' · '+star(+p.avg.toFixed(2)):''}</div>
         ${bf?`<div class="st" style="color:var(--dim)">Top: ${bf.t} ${star(bf.r)}</div>`:''}<div class="mini">${mini}</div></div></div>`;}).join('');
-    let note=(rankSort==='avg'?'Ordenado pela sua avaliação média (mín. 3 filmes vistos, 2 avaliados). ':'')+`Top ${Math.min(50,r.length)} de ${fmt(r.length)} pessoas com 3 ou mais filmes neste recorte.`;
+    let note=(rankSort==='avg'?'Ordenado pela sua avaliação média (mín. 3 filmes vistos, 2 avaliados). ':'')+`Top ${Math.min(50,r.length)} de ${fmt(r.length)} pessoas${rScope==='all'?' com 3 ou mais filmes':''} neste recorte.`;
     if(tab==='actor'||tab==='actress')note+=' Divisão por gênero vem do TMDB e pode falhar.';
-    if(tab!=='dir')note+=' "Ator" = elenco principal (top 8).';
+    if(tab!=='dir')note+=' "Ator" = elenco principal (top 24).';
     body=`<div class="podium">${cards}</div><div class="note">${note}</div>`;
   }
   $('#view').innerHTML=ctrl+body;
@@ -2425,14 +2425,8 @@ async function _renderCuraStream(){
   const needsChips=provEntries.length>5;
   const showTodos=provEntries.length>1;
   const chipBar=needsChips?`<div id="curaStreamChips" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:10px">
-    ${showTodos?`<button class="cura-stream-chip on" data-cprov="all" style="border:1px solid ${T1};background:${T1}18;color:${T1};border-radius:18px;padding:5px 12px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">Todos · ${totalUniq}</button>`:''}
+    ${showTodos?`<button class="cura-stream-chip on" data-cprov="all" style="border:1px solid ${T1};background:${T1}18;color:${T1};border-radius:18px;padding:5px 12px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">Todos</button>`:''}
     ${provEntries.map(([pn,pf])=>`<button class="cura-stream-chip${!showTodos?' on':''}" data-cprov="${pn}" style="border:1px solid ${!showTodos?T1:'var(--line)'};background:${!showTodos?T1+'18':'var(--p2)'};color:${!showTodos?T1:'var(--mut)'};border-radius:18px;padding:5px 12px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">${pn} · ${pf.length}</button>`).join('')}
-  </div>`:'';
-
-  // Live counter — only needed alongside chips, since the header already states the static total
-  const totalBar=needsChips?`<div id="curaStreamTotal" style="font-size:12px;color:var(--dim);margin-bottom:12px;line-height:1.5">
-    <span id="curaStreamTotalN" style="font-size:18px;font-weight:800;color:var(--acc1)">${totalUniq}</span>
-    <span style="margin-left:6px">filme${totalUniq!==1?'s':''} disponíveis${myP.length?' nos seus streamings':' no streaming BR'}</span>
   </div>`:'';
 
   // Build provider sections
@@ -2459,7 +2453,7 @@ async function _renderCuraStream(){
 
   const disclaimer='<div style="font-size:11px;color:var(--dim);margin-top:8px">Dados via TMDB · JustWatch · atualização diária</div>';
 
-  el.innerHTML=hdrLine(hdrText(totalUniq,provEntries.length))+hint+totalBar+chipBar+sectionsHtml+disclaimer;
+  el.innerHTML=hdrLine(hdrText(totalUniq,provEntries.length))+hint+chipBar+sectionsHtml+disclaimer;
 
   // Wire poster clicks
   $$('#curaViewStream .cura-sf').forEach(d=>d.onclick=()=>openFilm(d.dataset.filmkey));
@@ -2482,20 +2476,6 @@ async function _renderCuraStream(){
       $$('#curaViewStream .cura-prov-section').forEach(sec=>{
         sec.style.display=(prov==='all'||sec.dataset.section===prov)?'':'none';
       });
-      // Update total counter
-      const totalEl=$('#curaStreamTotalN');
-      if(totalEl){
-        if(prov==='all'){
-          totalEl.textContent=String(totalUniq);
-          const parent=totalEl.parentElement;
-          if(parent){const span=parent.querySelectorAll('span')[1];if(span)span.textContent=' filme'+( totalUniq!==1?'s':'')+' disponíveis'+(myP.length?' nos seus streamings':' no streaming BR');}
-        } else {
-          const pf=byP[prov]||[];
-          totalEl.textContent=String(pf.length);
-          const parent=totalEl.parentElement;
-          if(parent){const span=parent.querySelectorAll('span')[1];if(span)span.textContent=' filme'+(pf.length!==1?'s':'')+' em '+prov;}
-        }
-      }
     };
   });
 }
