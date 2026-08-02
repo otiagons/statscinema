@@ -1715,7 +1715,7 @@ function rankList(){const P=people();let arr;
   if(tab==='dir')arr=P.D;else if(tab==='actor')arr=P.A.filter(p=>p.g===2);else if(tab==='actress')arr=P.A.filter(p=>p.g===1);else arr=P.A;
   const inS=f=>rScope==='all'?true:rScope==='dec'?Math.floor(f.y/10)*10===rDec:f.y===rYr;
   const out=[];arr.forEach(p=>{const fl=p.f.filter(inS);if(!fl.length)return;const rd=fl.filter(f=>f.r!=null);const avg=rd.length?rd.reduce((s,f)=>s+f.r,0)/rd.length:null;out.push({...p,fl,n_:fl.length,avg,nr:rd.length});});
-  const qualified=out.filter(x=>x.n_>=3); // v6.1: mínimo de 3 filmes sempre, não só na ordenação por nota
+  const qualified=rScope==='all'?out.filter(x=>x.n_>=3):out; // piso de 3 só no ranking geral (evita 1 filme isolado dominando); por ano/década exige menos, senão a tela fica vazia
   if(rankSort==='avg'){qualified.sort((a,b)=>{const aa=a.nr>=2?a.avg:-1,bb=b.nr>=2?b.avg:-1;return bb-aa||b.n_-a.n_||a.n.localeCompare(b.n);});}
   else qualified.sort((a,b)=>b.n_-a.n_||(b.avg||0)-(a.avg||0)||a.n.localeCompare(b.n));
   return qualified;}
