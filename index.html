@@ -251,6 +251,18 @@
 --acc1:#1ec98a;--acc2:#ff2e43}
 #bootLoader{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s ease}
 #bootLoader.hide{opacity:0;pointer-events:none}
+.boot-mark-wrap{position:relative;width:min(56vw,210px);height:min(56vw,210px)}
+.boot-flash{position:absolute;inset:-14px;border-radius:50%;background:radial-gradient(circle, rgba(30,201,138,.9), rgba(255,46,67,.5) 40%, transparent 70%);opacity:0;pointer-events:none}
+.boot-draw{stroke-dasharray:1000;stroke-dashoffset:0}
+@media(prefers-reduced-motion:no-preference){
+  .boot-draw{stroke-dashoffset:1000;animation:bootDraw .9s cubic-bezier(.76,0,.24,1) forwards}
+  .boot-draw.p2{animation-delay:.15s}
+  .boot-spin{animation:bootSpin 4.2s linear infinite;animation-delay:.9s}
+  .boot-flash{animation:bootFlash .9s ease forwards;animation-delay:.7s}
+}
+@keyframes bootDraw{to{stroke-dashoffset:0}}
+@keyframes bootSpin{to{transform:rotate(-360deg)}}
+@keyframes bootFlash{0%{opacity:0;transform:scale(.3)}32%{opacity:.85;transform:scale(.55)}100%{opacity:0;transform:scale(1.75)}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Arial,sans-serif;font-size:15px;line-height:1.4}
 .wrap{max-width:680px;margin:0 auto;padding:0 13px;padding-bottom:env(safe-area-inset-bottom)}
@@ -4966,7 +4978,11 @@ async function saveHTML(){
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopSpiralAnim();else if(tab==='bio')render();});
 
 /* ---------- boot ---------- */
-{const bs=document.getElementById('bootSpiral');if(bs)bs.innerHTML=_miniVertigoSpiral(64,true);}
+{const bs=document.getElementById('bootSpiral');if(bs)bs.innerHTML=
+  '<div class="boot-mark-wrap"><div class="boot-flash"></div><svg class="boot-spin" viewBox="0 0 48 48" width="100%" height="100%" fill="none" aria-hidden="true">'
+  +'<path class="boot-draw" pathLength="1000" d="'+_SP1+'" stroke="var(--acc1)" stroke-width="1.9" stroke-linecap="round"/>'
+  +'<path class="boot-draw p2" pathLength="1000" d="'+_SP2+'" stroke="var(--acc2)" stroke-width="1.9" stroke-linecap="round"/>'
+  +'</svg></div>';}
 function _hideBootLoader(){
   const el=document.getElementById('bootLoader');if(!el)return;
   el.classList.add('hide');
