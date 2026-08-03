@@ -2637,25 +2637,17 @@ function _curaOpenList(listId){
   const lWatched=items.filter(({r})=>r.r!=null&&!r.wl).length;
   const lPct=lTotal?Math.round(lWatched/lTotal*100):0;
   const progLine=lTotal?`<div class="cura-list-prog" style="margin:-6px 0 12px"><div class="cura-list-prog-bar"><div style="width:${lPct}%"></div></div><div class="cura-list-prog-txt"><b>${lPct}%</b><span>${lWatched}/${lTotal} assistidos</span></div></div>`:'';
-  const viewCtrl=lTotal?`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+  const viewCtrl=lTotal?`<div style="margin-bottom:12px">
       <div class="seg" id="curaListViewSeg">
         <button data-lv="rows" class="${view==='rows'?'on':''}">Lista</button><button data-lv="grid" class="${view==='grid'?'on':''}">Grade</button><button data-lv="rank" class="${view==='rank'?'on':''}">Ranking</button>
       </div>
-      <select id="curaListSortSel" style="flex:none">
-        <option value="order"${sortMode==='order'?' selected':''}>Ordem da lista</option>
-        <option value="name"${sortMode==='name'?' selected':''}>Nome do filme</option>
-        <option value="random"${sortMode==='random'?' selected':''}>Aleatório</option>
-        <option value="pop"${sortMode==='pop'?' selected':''}>Popularidade</option>
-      </select>
     </div>`:'';
-  showSheet(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="color:var(--acc1)">${ic}</span><h3 style="margin:0;flex:1">${list.name}</h3><button id="curaLEdit" style="background:none;border:1px solid var(--line);color:var(--mut);border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;margin-right:6px">Editar</button><button id="curaLDel" style="background:none;border:1px solid var(--line);color:var(--mut);border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer">Excluir</button></div>${progLine}${viewCtrl}${rows||'<div style="color:var(--dim);text-align:center;padding:24px;line-height:1.5">Lista vazia.<br>Salve filmes das recomendações ou fichas.</div>'}`,null);
+  showSheet(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="color:var(--acc1)">${ic}</span><h3 style="margin:0;flex:1">${list.name}</h3><button id="curaLEdit" style="background:none;border:1px solid var(--line);color:var(--mut);border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer">Editar</button></div>${progLine}${viewCtrl}${rows||'<div style="color:var(--dim);text-align:center;padding:24px;line-height:1.5">Lista vazia.<br>Salve filmes das recomendações ou fichas.</div>'}`,null);
   $$('#sheet .cura-fl-o').forEach(el=>el.onclick=()=>openFilm(el.dataset.filmkey));
   $$('#sheet .cura-fl-rem').forEach(btn=>btn.onclick=(e)=>{e.stopPropagation();const ls=_getLists();const l=ls.find(x=>x.id===btn.dataset.listid);if(!l)return;l.films=(l.films||[]).filter(k=>k!==btn.dataset.filmkey);_saveLists(ls);toast('Removido da lista');_curaOpenList(btn.dataset.listid);});
   $$('#sheet .drag-handle').forEach(h=>h.onclick=e=>e.stopPropagation());
-  const dBtn=$('#curaLDel');if(dBtn)dBtn.onclick=()=>{if(!confirm('Excluir "'+list.name+'"?'))return;_saveLists(_getLists().filter(l=>l.id!==listId));$('#modal').classList.remove('show');_renderCuraAll();_renderCuraStats();toast('Lista excluída');};
   const eBtn=$('#curaLEdit');if(eBtn)eBtn.onclick=()=>_curaEditList(listId);
   const vs=$('#curaListViewSeg');if(vs)vs.onclick=e=>{const b=e.target.closest('button[data-lv]');if(!b)return;const ls=_getLists();const l=ls.find(x=>x.id===listId);if(!l)return;l.view=b.dataset.lv;_saveLists(ls);_curaOpenList(listId);};
-  const ss=$('#curaListSortSel');if(ss)ss.onchange=()=>{const ls=_getLists();const l=ls.find(x=>x.id===listId);if(!l)return;l.sort=ss.value;_saveLists(ls);_curaOpenList(listId);};
   if(dragRowSel)_curaWireDragReorder('curaListRows',dragRowSel,listId);
 }
 function _curaApplyDragOrder(listId,newOrder){
@@ -2703,7 +2695,6 @@ function _curaWireDragReorder(containerId,rowSel,listId){
       const order=Array.from(cont.querySelectorAll(rowSel)).map(r=>r.dataset.filmkey);
       _curaApplyDragOrder(listId,order);
       cont.querySelectorAll('.rank-num').forEach((el,i)=>{el.textContent=(i+1);});
-      const sel=$('#curaListSortSel');if(sel)sel.value='order';
       toast('Ordem atualizada');
     }
     dragEl=null;pid=null;
@@ -2714,18 +2705,28 @@ function _curaWireDragReorder(containerId,rowSel,listId){
 function _curaEditList(listId){
   const ls=_getLists();const list=ls.find(x=>x.id===listId);if(!list)return;
   let selIc=list.icon||'list';
+  const sortMode=list.sort||'order';
   const picker=ICON_KEYS_PICKER.map(k=>`<button class="cura-ic-btn${k===selIc?' sel':''}" data-ic="${k}">${_icon(k,18)}</button>`).join('');
   showSheet(`<h3 style="margin:0 0 12px">Editar lista</h3>
     <div style="margin-bottom:10px"><label style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:5px">Nome</label><input id="curaLEditName" type="text" value="${(list.name||'').replace(/"/g,'&quot;')}" maxlength="40" style="width:100%;box-sizing:border-box;background:var(--p2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);font-size:14px;outline:none"/></div>
     <div style="margin-bottom:14px"><label style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:7px">Ícone</label><div id="curaIconGrid" style="display:flex;gap:7px;flex-wrap:wrap">${picker}</div></div>
-    <button id="curaLEditSave" style="width:100%;background:var(--acc1);border:none;color:#0a1a0a;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer">Salvar</button>`,null);
+    <div style="margin-bottom:18px"><label style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:5px">Ordenar por</label><select id="curaLEditSort" style="width:100%;box-sizing:border-box">
+        <option value="order"${sortMode==='order'?' selected':''}>Ordem da lista</option>
+        <option value="name"${sortMode==='name'?' selected':''}>Nome do filme</option>
+        <option value="random"${sortMode==='random'?' selected':''}>Aleatório</option>
+        <option value="pop"${sortMode==='pop'?' selected':''}>Popularidade</option>
+      </select></div>
+    <button id="curaLEditSave" style="width:100%;background:var(--acc1);border:none;color:#0a1a0a;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer">Salvar</button>
+    <button id="curaLDel" style="width:100%;background:none;border:1px solid color-mix(in srgb,var(--acc2) 45%,var(--line));color:var(--acc2);border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;margin-top:10px">Excluir lista</button>`,null);
   $$('#sheet .cura-ic-btn').forEach(btn=>{btn.onclick=()=>{selIc=btn.dataset.ic;$$('#sheet .cura-ic-btn').forEach(b=>b.classList.toggle('sel',b.dataset.ic===selIc));};});
   const sv=$('#curaLEditSave');if(sv)sv.onclick=()=>{
     const nameEl=$('#curaLEditName');const name=nameEl?nameEl.value.trim():'';if(!name){toast('Dê um nome para a lista');return;}
-    list.name=name;list.icon=selIc;_saveLists(ls);
+    const sortEl=$('#curaLEditSort');
+    list.name=name;list.icon=selIc;list.sort=sortEl?sortEl.value:list.sort;_saveLists(ls);
     toast('Lista atualizada');
     _curaOpenList(listId);
   };
+  const dBtn=$('#curaLDel');if(dBtn)dBtn.onclick=()=>{if(!confirm('Excluir "'+list.name+'"?'))return;_saveLists(_getLists().filter(l=>l.id!==listId));$('#modal').classList.remove('show');_renderCuraAll();_renderCuraStats();toast('Lista excluída');};
 }
 function _curaPickList(filmKey){
   const lists=_getLists();const r=cache[filmKey];const titleD=r?r.ot||r.t:'';
