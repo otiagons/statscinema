@@ -851,8 +851,6 @@ select{color-scheme:dark}
 .bio-hero-btns{position:absolute;top:8px;right:0;display:flex;gap:8px}
 /* ── Destaque (Perfil): último visto + resumo de conquistas ── */
 .destaque-mod{margin-top:14px;background:linear-gradient(135deg,#0d1a14,#0a0a14);border:1px solid color-mix(in srgb,var(--acc1) 25%,var(--line));border-radius:14px;padding:12px}
-.destaque-mod .dm-lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--acc1);font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:5px}
-.destaque-mod .dm-lbl svg{width:12px;height:12px;flex:none}
 .d-row{display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer}
 .d-row+.d-row{border-top:1px solid var(--line)}
 .d-po{width:30px;height:44px;border-radius:5px;object-fit:cover;background:var(--p2);flex:none;display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--dim);font-weight:800}
@@ -2057,7 +2055,7 @@ function _destaqueHTML(){
     const done=items.filter(a=>a.done).length;
     return '<div class="d-ach-badge" data-achcat="'+c+'">'+(AICON[ic]||'')+'<div class="frac">'+done+'/'+items.length+'</div><div class="cat">'+c+'</div></div>';
   }).join('');
-  return '<div class="destaque-mod"><div class="dm-lbl">'+_miniIconSpiral(12)+' Destaque</div>'
+  return '<div class="destaque-mod">'
     +lastRow
     +'<div class="d-ach-head" id="destAchAll"><div class="num">'+totalDone+'<span>/'+totalAll+' conquistas</span></div><div class="lbl">ver todas ›</div></div>'
     +'<div class="d-ach-badges">'+badges+'</div>'
