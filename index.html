@@ -506,6 +506,8 @@ details ol{padding-left:18px;line-height:1.6}details a{color:var(--cyan)}
 .strow{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:11px 0 6px}
 .strow2{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:0 0 10px}
 .stbox{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 4px;text-align:center}
+.stbox-nav{cursor:pointer}
+.stbox-nav:active{background:var(--p2)}
 .sv{font-size:14px;font-weight:800;color:var(--acc1);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .sl{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin-top:2px}
 .dist-chart{display:flex;align-items:flex-end;justify-content:center;gap:2px;height:96px;margin:10px 0 0}
@@ -2132,6 +2134,11 @@ function renderBio(){
   {const dl=$('#destLastRow');if(dl)dl.onclick=()=>openFilm(dl.dataset.k);}
   {const da=$('#destAchAll');if(da)da.onclick=()=>_goToAchCat('Todas');}
   $$('.d-ach-badge').forEach(b=>b.onclick=()=>_goToAchCat(b.dataset.achcat));
+  $$('.stbox-nav').forEach(b=>b.onclick=()=>{
+    const n=b.dataset.nav;
+    if(n==='idioma')_goToIdiomaFilter();
+    else _goToTab(n);
+  });
 }
 
 // ── REPERTÓRIO ─────────────────────────────────────────────────────────────
@@ -2971,30 +2978,36 @@ function computeStats(){
   const dist={};for(let v=0.5;v<=5;v+=0.5)dist[+v.toFixed(1)]=0;
   rated.forEach(r=>{if(r.r>=0.5&&r.r<=5)dist[+r.r.toFixed(1)]=(dist[+r.r.toFixed(1)]||0)+1;});
   const demanding=rated.length?Math.round(rated.filter(r=>r.r>=4).length/rated.length*100):0;
-  return{total:all.length,rated:rated.length,avg,totalHours:Math.round(totalMin/60),topDecade:topDec?+topDec[0]:null,topGenre:topGenL[0]?topGenL[0][0]:null,topGenres:topGenL.slice(0,3).map(([g])=>g),countries:coSet.size,topCountry:topCo?displayCountry(topCo[0]):null,dist,demanding};
+  const P=people();
+  const nDir=P.D.length,nActor=P.A.filter(p=>p.g===2).length,nActress=P.A.filter(p=>p.g===1).length;
+  const langSet=new Set();all.forEach(r=>{if(r.lang)langSet.add(r.lang);});
+  return{total:all.length,rated:rated.length,avg,totalHours:Math.round(totalMin/60),topDecade:topDec?+topDec[0]:null,topGenre:topGenL[0]?topGenL[0][0]:null,topGenres:topGenL.slice(0,3).map(([g])=>g),countries:coSet.size,topCountry:topCo?displayCountry(topCo[0]):null,dist,demanding,nDir,nActor,nActress,nGenres:topGenL.length,nLangs:langSet.size};
+}
+function _goToTab(t){document.body.classList.add('tabs-mode');_setTab(t);}
+function _goToIdiomaFilter(){
+  document.body.classList.add('tabs-mode');
+  _setTab('films');
+  _gavLevel='idioma';
+  showSheet(_gavetaDrillHtml(),null);
+  _wireGaveta();
 }
 function statsBioHTML(){
   if(!films().length)return'';
   const st=computeStats();
-  const genT=st.topGenre?(st.topGenre.length>10?st.topGenre.slice(0,10)+'\u2026':st.topGenre):'\u2014';
-  const avgT=st.avg!=null?(st.avg.toFixed(2).replace('.',',')+' \u2605'):'\u2014';
-  const horasT=st.totalHours?fmt(st.totalHours)+'\u2009h':'\u2014';
-  const decT=st.topDecade?(st.topDecade+'s'):'\u2014';
+  const horasT=st.totalHours?fmt(st.totalHours):'\u2014';
   const paisesT=st.countries?fmt(st.countries):'\u2014';
-  const wlT=fmt(watchlist().length);
-  const listasT=fmt(_getLists().length);
   return'<span class="eyb" style="margin-top:16px">Estat\u00edsticas</span>'
     +'<div class="strow">'
-      +'<div class="stbox"><div class="sv">'+fmt(st.total)+'</div><div class="sl">filmes</div></div>'
-      +'<div class="stbox"><div class="sv">'+wlT+'</div><div class="sl">quero ver</div></div>'
-      +'<div class="stbox"><div class="sv">'+listasT+'</div><div class="sl">listas</div></div>'
-      +'<div class="stbox"><div class="sv">'+avgT+'</div><div class="sl">avalia\u00e7\u00e3o m\u00e9dia</div></div>'
+      +'<div class="stbox stbox-nav" data-nav="films"><div class="sv">'+fmt(st.total)+'</div><div class="sl">filmes</div></div>'
+      +'<div class="stbox stbox-nav" data-nav="dir"><div class="sv">'+fmt(st.nDir)+'</div><div class="sl">diretores</div></div>'
+      +'<div class="stbox stbox-nav" data-nav="actor"><div class="sv">'+fmt(st.nActor)+'</div><div class="sl">atores</div></div>'
+      +'<div class="stbox stbox-nav" data-nav="actress"><div class="sv">'+fmt(st.nActress)+'</div><div class="sl">atrizes</div></div>'
     +'</div>'
     +'<div class="strow" style="margin-top:0">'
-      +'<div class="stbox"><div class="sv">'+horasT+'</div><div class="sl">na poltrona</div></div>'
-      +'<div class="stbox"><div class="sv" style="font-size:11px">'+genT+'</div><div class="sl">g\u00eanero</div></div>'
-      +'<div class="stbox"><div class="sv">'+decT+'</div><div class="sl">d\u00e9cada</div></div>'
-      +'<div class="stbox"><div class="sv">'+paisesT+'</div><div class="sl">pa\u00edses</div></div>'
+      +'<div class="stbox stbox-nav" data-nav="genre"><div class="sv">'+fmt(st.nGenres)+'</div><div class="sl">g\u00eaneros</div></div>'
+      +'<div class="stbox stbox-nav" data-nav="films"><div class="sv">'+horasT+'</div><div class="sl">horas</div></div>'
+      +'<div class="stbox stbox-nav" data-nav="idioma"><div class="sv">'+fmt(st.nLangs)+'</div><div class="sl">idiomas</div></div>'
+      +'<div class="stbox stbox-nav" data-nav="films"><div class="sv">'+paisesT+'</div><div class="sl">pa\u00edses</div></div>'
     +'</div>'
 }
 function ratingDistHTML(){
@@ -3934,13 +3947,11 @@ function _setProgress(list,idx){let c=0;for(const it of list){if(_achMatch(idx,i
 // tamanho — garante que Conquistas, Perfil, loader de abertura e o ícone da aba Stats usem
 // exatamente o mesmo desenho.
 function _vertigoSpiralSVG(size){
-  const sw=(1.7*size/48).toFixed(2),r=(1.8*size/48).toFixed(1);
-  return '<svg class="vspiral" viewBox="0 0 48 48" width="'+size+'" height="'+size+'" fill="none" aria-hidden="true"><path d="'+_SP1+'" stroke="var(--acc1)" stroke-width="'+sw+'" stroke-linecap="round"/><path d="'+_SP2+'" stroke="var(--acc2)" stroke-width="'+sw+'" stroke-linecap="round"/><circle cx="24" cy="24" r="'+r+'" fill="var(--ink)"/></svg>';
+  return '<svg class="vspiral" viewBox="0 0 48 48" width="'+size+'" height="'+size+'" fill="none" aria-hidden="true"><path d="'+_SP1+'" stroke="var(--acc1)" stroke-width="1.7" stroke-linecap="round"/><path d="'+_SP2+'" stroke="var(--acc2)" stroke-width="1.7" stroke-linecap="round"/><circle cx="24" cy="24" r="1.8" fill="var(--ink)"/></svg>';
 }
 // versão mini da espiral Vertigo (mesmo formato/geração das conquistas) — usada no cabeçalho do perfil, acima do @usuário
 function _miniVertigoSpiral(size,spin){
-  const sw=(1.7*size/48).toFixed(2),r=(1.8*size/48).toFixed(1);
-  return '<svg class="bio-hero-spiral'+(spin?' spin':'')+'" viewBox="0 0 48 48" width="'+size+'" height="'+size+'" fill="none" aria-hidden="true"><path d="'+_SP1+'" stroke="var(--acc1)" stroke-width="'+sw+'" stroke-linecap="round"/><path d="'+_SP2+'" stroke="var(--acc2)" stroke-width="'+sw+'" stroke-linecap="round"/><circle cx="24" cy="24" r="'+r+'" fill="var(--ink)"/></svg>';
+  return '<svg class="bio-hero-spiral'+(spin?' spin':'')+'" viewBox="0 0 48 48" width="'+size+'" height="'+size+'" fill="none" aria-hidden="true"><path d="'+_SP1+'" stroke="var(--acc1)" stroke-width="1.7" stroke-linecap="round"/><path d="'+_SP2+'" stroke="var(--acc2)" stroke-width="1.7" stroke-linecap="round"/><circle cx="24" cy="24" r="1.8" fill="var(--ink)"/></svg>';
 }
 function openAchievement(i){
   const a=ACH_SETS[i];if(!a)return;const idx=_watchedIndex();
