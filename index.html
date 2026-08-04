@@ -1348,13 +1348,12 @@ function _srIndicator(isRated,onWl,cur,ek,seenElsewhere){
 const ICON_SPARK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-3px;margin-right:5px"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 4v3M17 5.5h3"/></svg>';
 let KEY=null, cache={}, db=null, tab='stats', busy=false, PEOPLE=null, _demoMode=false;
 const _filmoCache={};
-let pSort='rt', pDec=null, pYr=null, pWatchYr=null, rScope='all', rDec=null, rYr=null, gSort='count', expanded={};
+let pSort='rt', pDec=null, pYr=null, pWatchYr=null, rScope='all', rDec=null, rYr=null, rPais=null, gSort='count', gPais='', expanded={};
 let fView='list', rView='list', gView='list';  // 'list' or 'country'
-let fMode='all', fLang='', fTag='', fGenre='';  // filtros da aba Filmes
+let fMode='all', fPais='', fTag='', fGenre='';  // filtros da aba Filmes
 let rankSort='count';                          // ranking: 'count' | 'avg'
 let statsYear=null;                            // ano selecionado no heatmap/aba Stats
 let _yyExpanded=false,_decExpanded=false; // drag-expand state
-const LANGS={en:'Inglês',ja:'Japonês',ko:'Coreano',fr:'Francês',it:'Italiano',de:'Alemão',es:'Espanhol',pt:'Português',ru:'Russo',zh:'Chinês',cn:'Chinês',sv:'Sueco',da:'Dinamarquês',fi:'Finlandês',no:'Norueguês',pl:'Polonês',cs:'Tcheco',hu:'Húngaro',nl:'Holandês',fa:'Persa',hi:'Hindi',ar:'Árabe',tr:'Turco',th:'Tailandês',el:'Grego',he:'Hebraico',ro:'Romeno',is:'Islandês',sr:'Sérvio',uk:'Ucraniano',vi:'Vietnamita',tl:'Filipino',id:'Indonésio',ka:'Georgiano',et:'Estoniano'};
 
 /* ---------- storage ---------- */
 const TMDB_KEY_DEFAULT='a68b6662c54f35231df684dceef9c8ef';
@@ -1592,12 +1591,15 @@ function _fActive(){
     if(pDec!=null)out.push(['dec',pDec+'s']);
     if(pYr!=null)out.push(['yr',String(pYr)]);
     if(pWatchYr!=null)out.push(['wyr','vistos em '+pWatchYr]);
-    if(fLang)out.push(['lang',LANGS[fLang]||fLang.toUpperCase()]);
+    if(fPais)out.push(['pais',displayCountry(fPais)]);
     if(fTag)out.push(['tag',fTag]);
     if(fGenre)out.push(['genre',fGenre]);
   }else if(_fIsRank()){
     if(rScope==='dec')out.push(['dec',rDec+'s']);
     else if(rScope==='yr')out.push(['yr',String(rYr)]);
+    else if(rScope==='pais')out.push(['pais',displayCountry(rPais)]);
+  }else if(tab==='genre'){
+    if(gPais)out.push(['pais',displayCountry(gPais)]);
   }
   return out;
 }
@@ -1605,7 +1607,7 @@ function _fClear(kind){
   if(kind==='wyr'){pWatchYr=null;}
   else if(kind==='dec'){pDec=null;if(_fIsRank())rScope='all';}
   else if(kind==='yr'){pYr=null;if(_fIsRank())rScope='all';}
-  else if(kind==='lang'){fLang='';}
+  else if(kind==='pais'){if(tab==='films')fPais='';else if(_fIsRank()){rScope='all';rPais=null;}else if(tab==='genre')gPais='';}
   else if(kind==='tag'){fTag='';}
   else if(kind==='genre'){fGenre='';}
   render();
@@ -1657,19 +1659,26 @@ function _gavetaMainHtml(){
     const all=films();
     const decs=[...new Set(all.map(r=>Math.floor(r.y/10)*10))].filter(d=>d).sort((a,b)=>b-a);
     const yrs=[...new Set(all.map(r=>r.y))].filter(Boolean).sort((a,b)=>b-a);
-    const lc={};all.forEach(r=>{if(r.lang)lc[r.lang]=(lc[r.lang]||0)+1;});
+    const pc=_paisCounts(all);
     const tc={};all.forEach(r=>(r.tags||[]).forEach(tg=>tc[tg]=(tc[tg]||0)+1));
     h+='<div class="grp-lbl">Conteúdo</div><div class="grp">'
       +(yrs.length?'<button class="gr" data-lvl="ano"><span class="lb">Ano</span><span class="vl'+(pYr!=null?' set':'')+'">'+(pYr!=null?pYr:'Todos')+'</span><span class="cv">›</span></button>':'')
       +(decs.length?'<button class="gr" data-lvl="decada"><span class="lb">Década</span><span class="vl'+(pDec!=null?' set':'')+'">'+(pDec!=null?pDec+'s':'Todas')+'</span><span class="cv">›</span></button>':'')
-      +(Object.keys(lc).length?'<button class="gr" data-lvl="idioma"><span class="lb">Idioma</span><span class="vl'+(fLang?' set':'')+'">'+(fLang?(LANGS[fLang]||fLang.toUpperCase()):'Todos')+'</span><span class="cv">›</span></button>':'')
+      +(Object.keys(pc).length?'<button class="gr" data-lvl="pais"><span class="lb">País</span><span class="vl'+(fPais?' set':'')+'">'+(fPais?displayCountry(fPais):'Todos')+'</span><span class="cv">›</span></button>':'')
       +(Object.keys(tc).length?'<button class="gr" data-lvl="tag"><span class="lb">Tag</span><span class="vl'+(fTag?' set':'')+'">'+(fTag?fTag:'Todas')+'</span><span class="cv">›</span></button>':'')
       +'</div>';
   }else if(_fIsRank()){
     const decs=decadesOf(),years=[...new Set(films().map(x=>x.y))].filter(Boolean).sort((a,b)=>b-a);
+    const pc=_paisCounts(films());
     h+='<div class="grp-lbl">Conteúdo</div><div class="grp">'
       +(years.length?'<button class="gr" data-lvl="ano"><span class="lb">Ano</span><span class="vl'+(rScope==='yr'?' set':'')+'">'+(rScope==='yr'?rYr:'Todos')+'</span><span class="cv">›</span></button>':'')
       +(decs.length?'<button class="gr" data-lvl="decada"><span class="lb">Década</span><span class="vl'+(rScope==='dec'?' set':'')+'">'+(rScope==='dec'?rDec+'s':'Todas')+'</span><span class="cv">›</span></button>':'')
+      +(Object.keys(pc).length?'<button class="gr" data-lvl="pais"><span class="lb">País</span><span class="vl'+(rScope==='pais'?' set':'')+'">'+(rScope==='pais'?displayCountry(rPais):'Todos')+'</span><span class="cv">›</span></button>':'')
+      +'</div>';
+  }else if(tab==='genre'){
+    const pc=_paisCounts(films());
+    h+='<div class="grp-lbl">Conteúdo</div><div class="grp">'
+      +(Object.keys(pc).length?'<button class="gr" data-lvl="pais"><span class="lb">País</span><span class="vl'+(gPais?' set':'')+'">'+(gPais?displayCountry(gPais):'Todos')+'</span><span class="cv">›</span></button>':'')
       +'</div>';
   }
   h+='<button class="fdone" id="fDone">Ver resultados</button>';
@@ -1700,12 +1709,13 @@ function _gavetaDrillHtml(){
       +decs.map(d=>'<button class="op'+(cur===d?' sel':'')+'" data-dec="'+d+'"><span class="ck">'+(cur===d?'✓':'')+'</span><span class="lb">'+d+'s</span></button>').join('')
       +'</div>';
   }
-  if(_gavLevel==='idioma'){
-    const all=films();const lc={};all.forEach(r=>{if(r.lang)lc[r.lang]=(lc[r.lang]||0)+1;});
-    const langOpts=Object.entries(lc).sort((a,b)=>b[1]-a[1]);
-    return back+'<h3 style="margin:0 0 10px;text-align:center;font-size:14px">Idioma</h3><div class="grp">'
-      +'<button class="op'+(!fLang?' sel':'')+'" data-lang=""><span class="ck">'+(!fLang?'✓':'')+'</span><span class="lb">Todos</span></button>'
-      +langOpts.map(([k,n])=>'<button class="op'+(fLang===k?' sel':'')+'" data-lang="'+k+'"><span class="ck">'+(fLang===k?'✓':'')+'</span><span class="lb">'+(LANGS[k]||k.toUpperCase())+'</span><span class="n">'+n+'</span></button>').join('')
+  if(_gavLevel==='pais'){
+    const pc=_paisCounts(films());
+    const paisOpts=Object.entries(pc).sort((a,b)=>b[1]-a[1]);
+    const cur=tab==='films'?fPais:(_fIsRank()?(rScope==='pais'?rPais:null):gPais);
+    return back+'<h3 style="margin:0 0 10px;text-align:center;font-size:14px">País</h3><div class="grp">'
+      +'<button class="op'+(!cur?' sel':'')+'" data-pais=""><span class="ck">'+(!cur?'✓':'')+'</span><span class="lb">Todos</span></button>'
+      +paisOpts.map(([k,n])=>'<button class="op'+(cur===k?' sel':'')+'" data-pais="'+k+'"><span class="ck">'+(cur===k?'✓':'')+'</span>'+flagImg(k,18)+'<span class="lb">'+displayCountry(k)+'</span><span class="n">'+n+'</span></button>').join('')
       +'</div>';
   }
   if(_gavLevel==='tag'){
@@ -1734,7 +1744,13 @@ function _wireGaveta(){
     else{pDec=v;pYr=null;}
     _gavLevel=null;_paintGavetaInPlace();
   });
-  $$('#sheet [data-lang]').forEach(b=>b.onclick=()=>{fLang=b.dataset.lang;_gavLevel=null;_paintGavetaInPlace();});
+  $$('#sheet [data-pais]').forEach(b=>b.onclick=()=>{
+    const v=b.dataset.pais||'';
+    if(tab==='films'){fPais=v;}
+    else if(_fIsRank()){rPais=v||null;rScope=v?'pais':'all';expanded={};}
+    else if(tab==='genre'){gPais=v;}
+    _gavLevel=null;_paintGavetaInPlace();
+  });
   $$('#sheet [data-tag]').forEach(b=>b.onclick=()=>{fTag=b.dataset.tag;_gavLevel=null;_paintGavetaInPlace();});
   const dn=$('#fDone');if(dn)dn.onclick=()=>{$('#modal').classList.remove('show');render();};
 }
@@ -1742,7 +1758,7 @@ function _wireGaveta(){
 function renderFilms(){
   // A separação Quero ver/Revistos/Sem nota saiu daqui — vive só no Repertório agora.
   let base=films();
-  let list=base.filter(r=>(!fLang||r.lang===fLang)&&(!fTag||(r.tags&&r.tags.includes(fTag)))&&(!fGenre||(r.gids||[]).some(id=>GENRES[id]===fGenre))).map(r=>({t:r.t,y:r.y,r:r.r,rec:r}));
+  let list=base.filter(r=>(!fPais||_filmPais(r)===fPais)&&(!fTag||(r.tags&&r.tags.includes(fTag)))&&(!fGenre||(r.gids||[]).some(id=>GENRES[id]===fGenre))).map(r=>({t:r.t,y:r.y,r:r.r,rec:r}));
   if(pDec!=null)list=list.filter(x=>Math.floor(x.y/10)*10===pDec);
   if(pYr!=null)list=list.filter(x=>x.y===pYr);
   if(pWatchYr!=null)list=list.filter(x=>x.rec&&x.rec.ts&&new Date(x.rec.ts).getFullYear()===pWatchYr);
@@ -1759,7 +1775,7 @@ function renderFilms(){
       const badge=x.r!=null?`<span class="rt">${star(x.r)}</span>`:'';
       const rwb=(r&&(r.rw||0)>=1)?`<span class="po-rw" title="revisto ${r.rw}×">↺${r.rw>1?r.rw:''}</span>`:'';
       return `<div class="po" data-k="${(x.t+'|'+x.y).replace(/"/g,'&quot;')}">${po}${badge}${rwb}</div>`;}).join('');
-    body=`<div class="grid">${cells}</div><div class="note">${fmt(list.length)} filmes${pWatchYr!=null?' vistos em '+pWatchYr:pYr!=null?' · '+pYr:pDec!=null?' nos '+pDec+'s':''}${fLang?' · '+(LANGS[fLang]||fLang.toUpperCase()):''}${fTag?' · '+fTag:''}${fGenre?' · '+fGenre:''}. Toque num pôster para detalhes.</div>`;
+    body=`<div class="grid">${cells}</div><div class="note">${fmt(list.length)} filmes${pWatchYr!=null?' vistos em '+pWatchYr:pYr!=null?' · '+pYr:pDec!=null?' nos '+pDec+'s':''}${fPais?' · '+displayCountry(fPais):''}${fTag?' · '+fTag:''}${fGenre?' · '+fGenre:''}. Toque num pôster para detalhes.</div>`;
   }
   $('#view').innerHTML=ctrl+body;
   _fWire();
@@ -1769,7 +1785,7 @@ function renderFilms(){
 /* ---------- RANKING (dir/actor/actress) ---------- */
 function rankList(){const P=people();let arr;
   if(tab==='dir')arr=P.D;else if(tab==='actor')arr=P.A.filter(p=>p.g===2);else if(tab==='actress')arr=P.A.filter(p=>p.g===1);else arr=P.A;
-  const inS=f=>rScope==='all'?true:rScope==='dec'?Math.floor(f.y/10)*10===rDec:f.y===rYr;
+  const inS=f=>rScope==='all'?true:rScope==='dec'?Math.floor(f.y/10)*10===rDec:rScope==='pais'?_filmPais(f)===rPais:f.y===rYr;
   const out=[];arr.forEach(p=>{const fl=p.f.filter(inS);if(!fl.length)return;const rd=fl.filter(f=>f.r!=null);const avg=rd.length?rd.reduce((s,f)=>s+f.r,0)/rd.length:null;out.push({...p,fl,n_:fl.length,avg,nr:rd.length});});
   const qualified=rScope==='all'?out.filter(x=>x.n_>=3):out; // piso de 3 só no ranking geral (evita 1 filme isolado dominando); por ano/década exige menos, senão a tela fica vazia
   if(rankSort==='avg'){qualified.sort((a,b)=>{const aa=a.nr>=2?a.avg:-1,bb=b.nr>=2?b.avg:-1;return bb-aa||b.n_-a.n_||a.n.localeCompare(b.n);});}
@@ -1805,14 +1821,16 @@ function renderRanking(){
 
 /* ---------- GÊNERO ---------- */
 function _goToGenreFilter(g){
-  fGenre=g;pDec=null;pYr=null;pWatchYr=null;fLang='';fTag='';
+  fGenre=g;pDec=null;pYr=null;pWatchYr=null;fPais='';fTag='';
   const m=$('#modal');if(m)m.classList.remove('show');
   document.body.classList.add('tabs-mode');
   _setTab('films');
 }
 function renderGenre(){
-  const fl=films().filter(r=>r.gids&&r.gids.length);
-  if(fl.length<20){$('#view').innerHTML=`<div class="empty">Os gêneros são carregados junto com os pôsteres.<br>Deixe a sincronização avançar e volte aqui.</div>`;return;}
+  const flAll=films().filter(r=>r.gids&&r.gids.length);
+  if(flAll.length<20){$('#view').innerHTML=`<div class="empty">Os gêneros são carregados junto com os pôsteres.<br>Deixe a sincronização avançar e volte aqui.</div>`;return;}
+  const fl=gPais?flAll.filter(r=>_filmPais(r)===gPais):flAll;
+  if(gPais&&!fl.length){$('#view').innerHTML=_fBar()+`<div class="empty">Nenhum filme visto desse país tem gênero identificado ainda.</div>`;_fWire();return;}
   const agg={};fl.forEach(r=>r.gids.forEach(id=>{const g=GENRES[id]||('#'+id);(agg[g]=agg[g]||{n:0,s:0,c:0});agg[g].n++;if(r.r!=null){agg[g].s+=r.r;agg[g].c++;}}));
   let arr=Object.entries(agg).map(([g,v])=>({g,n:v.n,avg:v.c?v.s/v.c:null}));
   let note;
@@ -1871,6 +1889,10 @@ function displayCountry(c){
 }
 // Chave normalizada (ISO) para agrupamento
 function normalizeKey(c){return extractIso(c)||c;}
+// País principal de um filme (1º da lista de produção do TMDB) — mesmo critério já usado
+// em computeStats()/openCountry(); coprodução não é contada em mais de um país.
+function _filmPais(r){const co=r.co&&(Array.isArray(r.co)?r.co[0]:r.co);return co?(normalizeKey(co)||co):null;}
+function _paisCounts(all){const pc={};(all||films()).forEach(r=>{const k=_filmPais(r);if(k)pc[k]=(pc[k]||0)+1;});return pc;}
 // Bandeiras via flagcdn — onerror chama flagErr() (sem aspas duplas no atributo)
 function flagErr(img){
   var iso=img.dataset.iso||'?',lg=img.classList.contains('cflag-img');
@@ -2135,7 +2157,7 @@ function renderBio(){
   $$('.d-ach-badge').forEach(b=>b.onclick=()=>_goToAchCat(b.dataset.achcat));
   $$('.stbox-nav').forEach(b=>b.onclick=()=>{
     const n=b.dataset.nav;
-    if(n==='idioma')_goToIdiomaFilter();
+    if(n==='pais')_goToPaisFilter();
     else _goToTab(n);
   });
 }
@@ -2983,10 +3005,10 @@ function computeStats(){
   return{total:all.length,rated:rated.length,avg,totalHours:Math.round(totalMin/60),topDecade:topDec?+topDec[0]:null,topGenre:topGenL[0]?topGenL[0][0]:null,topGenres:topGenL.slice(0,3).map(([g])=>g),countries:coSet.size,topCountry:topCo?displayCountry(topCo[0]):null,dist,demanding,nDir,nActor,nActress,nGenres:topGenL.length,nLangs:langSet.size};
 }
 function _goToTab(t){document.body.classList.add('tabs-mode');_setTab(t);}
-function _goToIdiomaFilter(){
+function _goToPaisFilter(){
   document.body.classList.add('tabs-mode');
   _setTab('films');
-  _gavLevel='idioma';
+  _gavLevel='pais';
   showSheet(_gavetaDrillHtml(),null);
   _wireGaveta();
 }
@@ -3005,8 +3027,8 @@ function statsBioHTML(){
     +'<div class="strow" style="margin-top:0">'
       +'<div class="stbox stbox-nav" data-nav="genre"><div class="sv">'+fmt(st.nGenres)+'</div><div class="sl">g\u00eaneros</div></div>'
       +'<div class="stbox stbox-nav" data-nav="films"><div class="sv">'+horasT+'</div><div class="sl">horas</div></div>'
-      +'<div class="stbox stbox-nav" data-nav="idioma"><div class="sv">'+fmt(st.nLangs)+'</div><div class="sl">idiomas</div></div>'
-      +'<div class="stbox stbox-nav" data-nav="films"><div class="sv">'+paisesT+'</div><div class="sl">pa\u00edses</div></div>'
+      +'<div class="stbox stbox-nav" data-nav="films"><div class="sv">'+fmt(st.nLangs)+'</div><div class="sl">idiomas</div></div>'
+      +'<div class="stbox stbox-nav" data-nav="pais"><div class="sv">'+paisesT+'</div><div class="sl">pa\u00edses</div></div>'
     +'</div>'
 }
 function ratingDistHTML(){
@@ -4045,7 +4067,7 @@ function renderStats(){
     const kind=b.dataset.tl,v=+b.dataset.tlv;
     if(kind==='wyr'){pWatchYr=v;pDec=null;pYr=null;}
     else{pDec=v;pYr=null;pWatchYr=null;}
-    fLang='';fTag='';fGenre='';
+    fPais='';fTag='';fGenre='';
     document.body.classList.add('tabs-mode');
     _setTab('films');
   });
