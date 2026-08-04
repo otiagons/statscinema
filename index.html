@@ -252,17 +252,14 @@
 #bootLoader{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s ease}
 #bootLoader.hide{opacity:0;pointer-events:none}
 .boot-mark-wrap{position:relative;width:min(56vw,210px);height:min(56vw,210px)}
-.boot-flash{position:absolute;inset:-14px;border-radius:50%;background:radial-gradient(circle, rgba(30,201,138,.9), rgba(255,46,67,.5) 40%, transparent 70%);opacity:0;pointer-events:none}
 .boot-draw{stroke-dasharray:1000;stroke-dashoffset:0}
 @media(prefers-reduced-motion:no-preference){
-  .boot-draw{stroke-dashoffset:1000;animation:bootDraw .9s cubic-bezier(.76,0,.24,1) forwards}
-  .boot-draw.p2{animation-delay:.15s}
-  .boot-spin{animation:bootSpin 4.2s linear infinite;animation-delay:.9s}
-  .boot-flash{animation:bootFlash .9s ease forwards;animation-delay:.7s}
+  .boot-draw{stroke-dashoffset:1000;animation:bootDraw .72s cubic-bezier(.76,0,.24,1) forwards}
+  .boot-draw.p2{animation-delay:.12s}
+  .boot-spin{animation:bootSpin 3.36s linear infinite;animation-delay:.72s}
 }
 @keyframes bootDraw{to{stroke-dashoffset:0}}
 @keyframes bootSpin{to{transform:rotate(-360deg)}}
-@keyframes bootFlash{0%{opacity:0;transform:scale(.3)}32%{opacity:.85;transform:scale(.55)}100%{opacity:0;transform:scale(1.75)}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Arial,sans-serif;font-size:15px;line-height:1.4}
 .wrap{max-width:680px;margin:0 auto;padding:0 13px;padding-bottom:env(safe-area-inset-bottom)}
@@ -759,9 +756,11 @@ select{color-scheme:dark}
 .ach-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc1))}
 .ach-p{font-size:9.5px;color:var(--dim);margin-top:3px;font-variant-numeric:tabular-nums}
 /* hero espiral Vertigo + modal de conquista */
-.ach-hero{position:relative;display:flex;align-items:center;justify-content:center;height:190px;margin:6px 0 12px;border-radius:16px;overflow:hidden;background:#000 url(ach-hero-bg.gif) center 38% / cover}
-@media(prefers-reduced-motion:reduce){.ach-hero{background-image:url(ach-hero-bg-poster.jpg)}}
-.ach-hero::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.15) 38%,rgba(0,0,0,.15) 62%,rgba(0,0,0,.75) 100%)}
+.ach-hero{position:relative;display:flex;align-items:center;justify-content:center;height:190px;margin:6px 0 12px;border-radius:16px;overflow:hidden;isolation:isolate;background:#000}
+.ach-hero-bg{position:absolute;inset:0;background:url(ach-hero-bg.gif) center 38% / cover;filter:grayscale(1) contrast(1.15) brightness(.8)}
+@media(prefers-reduced-motion:reduce){.ach-hero-bg{background-image:url(ach-hero-bg-poster.jpg)}}
+.ach-hero-tint{position:absolute;inset:0;background:linear-gradient(135deg,var(--acc1),var(--acc2));mix-blend-mode:color;opacity:.9}
+.ach-hero-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.15) 38%,rgba(0,0,0,.15) 62%,rgba(0,0,0,.75) 100%)}
 @keyframes vspin{to{transform:rotate(-360deg)}}
 .ach-hero-c{position:relative;text-align:center;z-index:1;text-shadow:0 2px 14px rgba(0,0,0,.85),0 0 30px rgba(0,0,0,.6)}
 .ach-hero-num{font-size:40px;font-weight:800;color:var(--ink);line-height:1}
@@ -3939,10 +3938,13 @@ function _achMatch(idx,title,year){
 }
 function _setProgress(list,idx){let c=0;for(const it of list){if(_achMatch(idx,it[0],it[1]))c++;}return c;}
 // v7.0: hero de Conquistas trocou a espiral SVG por um GIF real (olho + espiral vermelha,
-// estilo abertura de Vertigo/1958) como fundo pleno de .ach-hero — arquivo externo
-// ach-hero-bg.gif (raiz do repo, mesmo esquema dos ícones apple-touch-icon/icon-192/icon-512).
-// ach-hero-bg-poster.jpg é o 1º frame estático, usado como fundo quando
-// prefers-reduced-motion:reduce está ativo (GIF não pode ser pausado só com CSS).
+// estilo abertura de Vertigo/1958) como fundo de .ach-hero — arquivo externo ach-hero-bg.gif
+// (raiz do repo, mesmo esquema dos ícones apple-touch-icon/icon-192/icon-512).
+// ach-hero-bg-poster.jpg é o 1º frame estático, usado quando prefers-reduced-motion:reduce
+// está ativo (GIF não pode ser pausado só com CSS).
+// v7.1: GIF vinculado ao tema (Ajustes → Cor da espiral) via duotone puro CSS — .ach-hero-bg
+// fica em grayscale, .ach-hero-tint sobrepõe um gradiente var(--acc1)/var(--acc2) com
+// mix-blend-mode:color. Recolore ao vivo ao trocar de tema, sem gerar GIF por tema.
 // _vertigoSpiralSVG()/.vspiral foram removidos por ficarem órfãos — não use em outro lugar.
 // versão mini da espiral Vertigo (mesmo formato/geração das conquistas) — usada no cabeçalho do perfil, acima do @usuário
 function _miniVertigoSpiral(size,spin){
@@ -4162,7 +4164,7 @@ function _achievementsHTML(){
   if(_achCat==='Concluídas')shown=ach.filter(a=>a.done);
   else if(_achCat!=='Todas')shown=ach.filter(a=>a.cat===_achCat);
   const heroN=shown.filter(a=>a.done).length,heroT=shown.length;
-  let html='<div class="ach-hero"><div class="ach-hero-c"><div class="ach-hero-num">'+heroN+'<span>/'+heroT+'</span></div><div class="ach-hero-lbl">'+(_achCat==='Todas'?'conquistas':_achCat.toLowerCase())+'</div></div></div>';
+  let html='<div class="ach-hero"><div class="ach-hero-bg"></div><div class="ach-hero-tint"></div><div class="ach-hero-scrim"></div><div class="ach-hero-c"><div class="ach-hero-num">'+heroN+'<span>/'+heroT+'</span></div><div class="ach-hero-lbl">'+(_achCat==='Todas'?'conquistas':_achCat.toLowerCase())+'</div></div></div>';
   html+='<button class="chip" id="achCatBtn" style="margin:0 0 10px">'+_achCat+' ›</button>';
   shown=shown.slice().sort((a,b)=>(b.done-a.done)||(b.pct-a.pct)||(b.v-a.v)||a.n.localeCompare(b.n));
   html+='<div class="ach-grid">'+(shown.length?shown.map(a=>'<div class="ach '+(a.done?'on':'')+'"'+(a.setIdx!=null?' data-ai="'+a.setIdx+'"':'')+'><div class="ach-ic">'+(AICON[a.icon]||AICON.star)+'</div><div class="ach-bd"><div class="ach-n">'+a.n+(a.done?' '+ICON_CHECK:'')+'</div><div class="ach-d">'+a.d+'</div><div class="ach-bar"><i style="width:'+a.pct+'%"></i></div><div class="ach-p">'+fmt(Math.min(a.v,a.goal))+'/'+fmt(a.goal)+(a.setIdx!=null?' · ver filmes':'')+'</div></div></div>').join(''):'<div class="note">Nenhuma conquista neste filtro ainda.</div>')+'</div>';
@@ -4985,7 +4987,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopSpiralA
 
 /* ---------- boot ---------- */
 {const bs=document.getElementById('bootSpiral');if(bs)bs.innerHTML=
-  '<div class="boot-mark-wrap"><div class="boot-flash"></div><svg class="boot-spin" viewBox="0 0 48 48" width="100%" height="100%" fill="none" aria-hidden="true">'
+  '<div class="boot-mark-wrap"><svg class="boot-spin" viewBox="0 0 48 48" width="100%" height="100%" fill="none" aria-hidden="true">'
   +'<path class="boot-draw" pathLength="1000" d="'+_SP1+'" stroke="var(--acc1)" stroke-width="1.9" stroke-linecap="round"/>'
   +'<path class="boot-draw p2" pathLength="1000" d="'+_SP2+'" stroke="var(--acc2)" stroke-width="1.9" stroke-linecap="round"/>'
   +'</svg></div>';}
@@ -4994,7 +4996,7 @@ function _hideBootLoader(){
   el.classList.add('hide');
   setTimeout(()=>{el.remove();},420);
 }
-setTimeout(_hideBootLoader,8000); // rede de segurança: nunca trava na tela de carregamento
+setTimeout(_hideBootLoader,6400); // rede de segurança: nunca trava na tela de carregamento
 (async()=>{
   try{db=await openDB();cache=await loadAll();}catch(e){cache={};}
   await authRefresh();
