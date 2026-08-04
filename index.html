@@ -759,11 +759,11 @@ select{color-scheme:dark}
 .ach-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc1))}
 .ach-p{font-size:9.5px;color:var(--dim);margin-top:3px;font-variant-numeric:tabular-nums}
 /* hero espiral Vertigo + modal de conquista */
-.ach-hero{position:relative;display:flex;align-items:center;justify-content:center;height:170px;margin:6px 0 12px}
-.vspiral{position:absolute;inset:0;margin:auto;opacity:.5;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--acc1) 30%,transparent))}
-@media(prefers-reduced-motion:no-preference){.vspiral{animation:vspin 28s linear infinite}}
+.ach-hero{position:relative;display:flex;align-items:center;justify-content:center;height:190px;margin:6px 0 12px;border-radius:16px;overflow:hidden;background:#000 url(ach-hero-bg.gif) center 38% / cover}
+@media(prefers-reduced-motion:reduce){.ach-hero{background-image:url(ach-hero-bg-poster.jpg)}}
+.ach-hero::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.15) 38%,rgba(0,0,0,.15) 62%,rgba(0,0,0,.75) 100%)}
 @keyframes vspin{to{transform:rotate(-360deg)}}
-.ach-hero-c{position:relative;text-align:center;z-index:1}
+.ach-hero-c{position:relative;text-align:center;z-index:1;text-shadow:0 2px 14px rgba(0,0,0,.85),0 0 30px rgba(0,0,0,.6)}
 .ach-hero-num{font-size:40px;font-weight:800;color:var(--ink);line-height:1}
 .ach-hero-num span{font-size:20px;color:var(--mut);font-weight:700}
 .ach-hero-lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-top:3px}
@@ -3938,17 +3938,12 @@ function _achMatch(idx,title,year){
   return false;
 }
 function _setProgress(list,idx){let c=0;for(const it of list){if(_achMatch(idx,it[0],it[1]))c++;}return c;}
-// espiral dupla estilo Vertigo (1958) — motivo visual das conquistas
-// v6.9: usa o MESMO desenho (_SP1/_SP2) já validado e publicado como ícone real do app
-// (apple-touch-icon.png/icon-192.png/icon-512.png, gerado por _iconSVG) — antes essa função
-// recalculava um traçado próprio por trigonometria, o que divergia visualmente do ícone salvo.
-// Agora é só o path fixo escalado (viewBox 48x48 + width/height do tamanho pedido), com o
-// stroke-width ajustado na mesma proporção pra manter a espessura visual correta em qualquer
-// tamanho — garante que Conquistas, Perfil, loader de abertura e o ícone da aba Stats usem
-// exatamente o mesmo desenho.
-function _vertigoSpiralSVG(size){
-  return '<svg class="vspiral" viewBox="0 0 48 48" width="'+size+'" height="'+size+'" fill="none" aria-hidden="true"><path d="'+_SP1+'" stroke="var(--acc1)" stroke-width="1.7" stroke-linecap="round"/><path d="'+_SP2+'" stroke="var(--acc2)" stroke-width="1.7" stroke-linecap="round"/><circle cx="24" cy="24" r="1.8" fill="var(--ink)"/></svg>';
-}
+// v7.0: hero de Conquistas trocou a espiral SVG por um GIF real (olho + espiral vermelha,
+// estilo abertura de Vertigo/1958) como fundo pleno de .ach-hero — arquivo externo
+// ach-hero-bg.gif (raiz do repo, mesmo esquema dos ícones apple-touch-icon/icon-192/icon-512).
+// ach-hero-bg-poster.jpg é o 1º frame estático, usado como fundo quando
+// prefers-reduced-motion:reduce está ativo (GIF não pode ser pausado só com CSS).
+// _vertigoSpiralSVG()/.vspiral foram removidos por ficarem órfãos — não use em outro lugar.
 // versão mini da espiral Vertigo (mesmo formato/geração das conquistas) — usada no cabeçalho do perfil, acima do @usuário
 function _miniVertigoSpiral(size,spin){
   return '<svg class="bio-hero-spiral'+(spin?' spin':'')+'" viewBox="0 0 48 48" width="'+size+'" height="'+size+'" fill="none" aria-hidden="true"><path d="'+_SP1+'" stroke="var(--acc1)" stroke-width="1.7" stroke-linecap="round"/><path d="'+_SP2+'" stroke="var(--acc2)" stroke-width="1.7" stroke-linecap="round"/><circle cx="24" cy="24" r="1.8" fill="var(--ink)"/></svg>';
@@ -4167,7 +4162,7 @@ function _achievementsHTML(){
   if(_achCat==='Concluídas')shown=ach.filter(a=>a.done);
   else if(_achCat!=='Todas')shown=ach.filter(a=>a.cat===_achCat);
   const heroN=shown.filter(a=>a.done).length,heroT=shown.length;
-  let html='<div class="ach-hero">'+_vertigoSpiralSVG(154)+'<div class="ach-hero-c"><div class="ach-hero-num">'+heroN+'<span>/'+heroT+'</span></div><div class="ach-hero-lbl">'+(_achCat==='Todas'?'conquistas':_achCat.toLowerCase())+'</div></div></div>';
+  let html='<div class="ach-hero"><div class="ach-hero-c"><div class="ach-hero-num">'+heroN+'<span>/'+heroT+'</span></div><div class="ach-hero-lbl">'+(_achCat==='Todas'?'conquistas':_achCat.toLowerCase())+'</div></div></div>';
   html+='<button class="chip" id="achCatBtn" style="margin:0 0 10px">'+_achCat+' ›</button>';
   shown=shown.slice().sort((a,b)=>(b.done-a.done)||(b.pct-a.pct)||(b.v-a.v)||a.n.localeCompare(b.n));
   html+='<div class="ach-grid">'+(shown.length?shown.map(a=>'<div class="ach '+(a.done?'on':'')+'"'+(a.setIdx!=null?' data-ai="'+a.setIdx+'"':'')+'><div class="ach-ic">'+(AICON[a.icon]||AICON.star)+'</div><div class="ach-bd"><div class="ach-n">'+a.n+(a.done?' '+ICON_CHECK:'')+'</div><div class="ach-d">'+a.d+'</div><div class="ach-bar"><i style="width:'+a.pct+'%"></i></div><div class="ach-p">'+fmt(Math.min(a.v,a.goal))+'/'+fmt(a.goal)+(a.setIdx!=null?' · ver filmes':'')+'</div></div></div>').join(''):'<div class="note">Nenhuma conquista neste filtro ainda.</div>')+'</div>';
