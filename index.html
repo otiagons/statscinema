@@ -1348,7 +1348,41 @@ function _srIndicator(isRated,onWl,cur,ek,seenElsewhere){
 const ICON_SPARK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-3px;margin-right:5px"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 4v3M17 5.5h3"/></svg>';
 let KEY=null, cache={}, db=null, tab='stats', busy=false, PEOPLE=null, _demoMode=false;
 const _filmoCache={};
-let pSort='rt', pDec=null, pYr=null, pWatchYr=null, rScope='all', rDec=null, rYr=null, rPais=null, gSort='count', gPais='', expanded={};
+let pSort='rt', pDec=null, pYr=null, pWatchYr=null, rScope='all', rDec=null, rYr=null, rPais=null, rNac='', gSort='count', gPais='', expanded={};
+// Nacionalidade (place_of_birth) é por PESSOA, não por filme — por isso não entra no rScope
+// (que só governa quais filmes contam pro recorte). Fica independente, combinável com ano/década/país.
+let PPL_PAIS=(()=>{try{return JSON.parse(localStorage.getItem('cs_pplPais')||'{}');}catch(e){return{};}})();
+function _savePplPais(){try{localStorage.setItem('cs_pplPais',JSON.stringify(PPL_PAIS));}catch(e){}}
+// Aliases que aparecem em place_of_birth mas não em production_countries (texto livre do TMDB)
+const POB_ALIAS={USA:'US','U.S.A.':'US','U.S.':'US',UK:'GB','U.K.':'GB',England:'GB',Scotland:'GB',Wales:'GB','Northern Ireland':'GB',USSR:'SU','West Germany':'DE','East Germany':'DE'};
+function _birthIso(pob){
+  if(!pob)return null;
+  const parts=pob.split(',').map(s=>s.trim()).filter(Boolean);
+  if(!parts.length)return null;
+  const last=parts[parts.length-1];
+  if(POB_ALIAS[last])return POB_ALIAS[last];
+  const iso=extractIso(last);
+  return iso||null;
+}
+function _curPeopleList(){
+  const P=people();
+  if(tab==='dir')return P.D;
+  if(tab==='actor')return P.A.filter(p=>p.g===2);
+  if(tab==='actress')return P.A.filter(p=>p.g===1);
+  return P.A;
+}
+// Busca /person/{id} só de quem ainda não está em cache — 1x por pessoa, pra sempre (localStorage)
+async function _syncNacionalidades(ids,onProg){
+  const todo=[...new Set(ids)].filter(id=>PPL_PAIS[id]===undefined);
+  if(!todo.length)return;
+  let done=0;
+  await runPool(todo,async id=>{
+    try{const j=await tmdb('/person/'+id,{language:'pt-BR'});PPL_PAIS[id]=(j&&_birthIso(j.place_of_birth))||'';}
+    catch(e){PPL_PAIS[id]='';}
+    done++;if(onProg)onProg(done,todo.length);
+  },6);
+  _savePplPais();
+}
 let fView='list', rView='list', gView='list';  // 'list' or 'country'
 let fMode='all', fPais='', fTag='', fGenre='';  // filtros da aba Filmes
 let rankSort='count';                          // ranking: 'count' | 'avg'
@@ -1570,7 +1604,7 @@ async function sync(){
 /* ---------- aggregation ---------- */
 function buildPeople(){const A={},D={};
   const add=(S,id,name,pic,g,film)=>{if(!S[id])S[id]={id,n:name,g,pic,f:{}};S[id].f[film.t+'|'+film.y]=film;if(pic&&!S[id].pic)S[id].pic=pic;};
-  films().forEach(r=>{if(!r.cc)return;const film={t:r.ti||r.t,y:+(r.ye||r.y),r:r.r,p:r.po};
+  films().forEach(r=>{if(!r.cc)return;const film={t:r.ti||r.t,y:+(r.ye||r.y),r:r.r,p:r.po,co:r.co};
     (r.ca||[]).forEach(c=>add(A,c[0],c[1],c[3],c[2],film));(r.di||[]).forEach(c=>add(D,c[0],c[1],c[2],0,film));});
   const fin=S=>Object.values(S).map(p=>({id:p.id,n:p.n,g:p.g,pic:p.pic,f:Object.values(p.f)}));
   return {A:fin(A),D:fin(D)};}
@@ -1598,6 +1632,7 @@ function _fActive(){
     if(rScope==='dec')out.push(['dec',rDec+'s']);
     else if(rScope==='yr')out.push(['yr',String(rYr)]);
     else if(rScope==='pais')out.push(['pais',displayCountry(rPais)]);
+    if(rNac)out.push(['nac',displayCountry(rNac)]);
   }else if(tab==='genre'){
     if(gPais)out.push(['pais',displayCountry(gPais)]);
   }
@@ -1608,6 +1643,7 @@ function _fClear(kind){
   else if(kind==='dec'){pDec=null;if(_fIsRank())rScope='all';}
   else if(kind==='yr'){pYr=null;if(_fIsRank())rScope='all';}
   else if(kind==='pais'){if(tab==='films')fPais='';else if(_fIsRank()){rScope='all';rPais=null;}else if(tab==='genre')gPais='';}
+  else if(kind==='nac'){rNac='';}
   else if(kind==='tag'){fTag='';}
   else if(kind==='genre'){fGenre='';}
   render();
@@ -1670,10 +1706,12 @@ function _gavetaMainHtml(){
   }else if(_fIsRank()){
     const decs=decadesOf(),years=[...new Set(films().map(x=>x.y))].filter(Boolean).sort((a,b)=>b-a);
     const pc=_paisCounts(films());
+    const hasPeople=_curPeopleList().length>0;
     h+='<div class="grp-lbl">Conteúdo</div><div class="grp">'
       +(years.length?'<button class="gr" data-lvl="ano"><span class="lb">Ano</span><span class="vl'+(rScope==='yr'?' set':'')+'">'+(rScope==='yr'?rYr:'Todos')+'</span><span class="cv">›</span></button>':'')
       +(decs.length?'<button class="gr" data-lvl="decada"><span class="lb">Década</span><span class="vl'+(rScope==='dec'?' set':'')+'">'+(rScope==='dec'?rDec+'s':'Todas')+'</span><span class="cv">›</span></button>':'')
       +(Object.keys(pc).length?'<button class="gr" data-lvl="pais"><span class="lb">País</span><span class="vl'+(rScope==='pais'?' set':'')+'">'+(rScope==='pais'?displayCountry(rPais):'Todos')+'</span><span class="cv">›</span></button>':'')
+      +(hasPeople?'<button class="gr" data-lvl="nacionalidade"><span class="lb">Nacionalidade</span><span class="vl'+(rNac?' set':'')+'">'+(rNac?displayCountry(rNac):'Todas')+'</span><span class="cv">›</span></button>':'')
       +'</div>';
   }else if(tab==='genre'){
     const pc=_paisCounts(films());
@@ -1715,7 +1753,20 @@ function _gavetaDrillHtml(){
     const cur=tab==='films'?fPais:(_fIsRank()?(rScope==='pais'?rPais:null):gPais);
     return back+'<h3 style="margin:0 0 10px;text-align:center;font-size:14px">País</h3><div class="grp">'
       +'<button class="op'+(!cur?' sel':'')+'" data-pais=""><span class="ck">'+(!cur?'✓':'')+'</span><span class="lb">Todos</span></button>'
-      +paisOpts.map(([k,n])=>'<button class="op'+(cur===k?' sel':'')+'" data-pais="'+k+'"><span class="ck">'+(cur===k?'✓':'')+'</span>'+flagImg(k,18)+'<span class="lb">'+displayCountry(k)+'</span><span class="n">'+n+'</span></button>').join('')
+      +paisOpts.map(([k,n])=>'<button class="op'+(cur===k?' sel':'')+'" data-pais="'+k+'"><span class="ck">'+(cur===k?'✓':'')+'</span><span class="lb">'+displayCountry(k)+'</span><span class="n">'+n+'</span></button>').join('')
+      +'</div>';
+  }
+  if(_gavLevel==='nacionalidade'){
+    const list=_curPeopleList();
+    const pending=list.some(p=>PPL_PAIS[p.id]===undefined);
+    const h3='<h3 style="margin:0 0 10px;text-align:center;font-size:14px">Nacionalidade</h3>';
+    if(pending)return back+h3+'<div class="note" style="text-align:center;padding:24px 14px">Buscando nacionalidades pela primeira vez…</div>';
+    const nc={};list.forEach(p=>{const iso=PPL_PAIS[p.id];if(iso)nc[iso]=(nc[iso]||0)+1;});
+    const nacOpts=Object.entries(nc).sort((a,b)=>b[1]-a[1]);
+    return back+h3+'<div class="grp">'
+      +'<button class="op'+(!rNac?' sel':'')+'" data-nac=""><span class="ck">'+(!rNac?'✓':'')+'</span><span class="lb">Todas</span></button>'
+      +nacOpts.map(([k,n])=>'<button class="op'+(rNac===k?' sel':'')+'" data-nac="'+k+'"><span class="ck">'+(rNac===k?'✓':'')+'</span><span class="lb">'+displayCountry(k)+'</span><span class="n">'+n+'</span></button>').join('')
+      +(nacOpts.length?'':'<div class="note" style="padding:14px">TMDB não tem local de nascimento pra ninguém desse recorte ainda.</div>')
       +'</div>';
   }
   if(_gavLevel==='tag'){
@@ -1729,7 +1780,19 @@ function _gavetaDrillHtml(){
   return '';
 }
 function _wireGaveta(){
-  $$('#sheet [data-lvl]').forEach(b=>b.onclick=()=>{_gavLevel=b.dataset.lvl;_paintGavetaInPlace();});
+  $$('#sheet [data-lvl]').forEach(b=>{
+    if(b.dataset.lvl==='nacionalidade'){
+      b.onclick=async()=>{
+        _gavLevel='nacionalidade';_paintGavetaInPlace(); // pinta o estado "buscando..." na hora
+        const ids=_curPeopleList().map(p=>p.id);
+        await _syncNacionalidades(ids,(d,t)=>showProg('Buscando nacionalidades '+fmt(d)+'/'+fmt(t),d/t));
+        hideProg();
+        if(_gavLevel==='nacionalidade')_paintGavetaInPlace(); // repinta já com os dados prontos (isso já re-wireia sozinho)
+      };
+    }else{
+      b.onclick=()=>{_gavLevel=b.dataset.lvl;_paintGavetaInPlace();};
+    }
+  });
   const back=$('#sheet [data-back]');if(back)back.onclick=()=>{_gavLevel=null;_paintGavetaInPlace();};
   $$('#sheet [data-sort]').forEach(b=>b.onclick=()=>{_setSort(b.dataset.sort);_gavLevel=null;_paintGavetaInPlace();});
   $$('#sheet [data-yr]').forEach(b=>b.onclick=()=>{
@@ -1751,6 +1814,7 @@ function _wireGaveta(){
     else if(tab==='genre'){gPais=v;}
     _gavLevel=null;_paintGavetaInPlace();
   });
+  $$('#sheet [data-nac]').forEach(b=>b.onclick=()=>{rNac=b.dataset.nac||'';_gavLevel=null;_paintGavetaInPlace();});
   $$('#sheet [data-tag]').forEach(b=>b.onclick=()=>{fTag=b.dataset.tag;_gavLevel=null;_paintGavetaInPlace();});
   const dn=$('#fDone');if(dn)dn.onclick=()=>{$('#modal').classList.remove('show');render();};
 }
@@ -1785,6 +1849,7 @@ function renderFilms(){
 /* ---------- RANKING (dir/actor/actress) ---------- */
 function rankList(){const P=people();let arr;
   if(tab==='dir')arr=P.D;else if(tab==='actor')arr=P.A.filter(p=>p.g===2);else if(tab==='actress')arr=P.A.filter(p=>p.g===1);else arr=P.A;
+  if(rNac)arr=arr.filter(p=>PPL_PAIS[p.id]===rNac);
   const inS=f=>rScope==='all'?true:rScope==='dec'?Math.floor(f.y/10)*10===rDec:rScope==='pais'?_filmPais(f)===rPais:f.y===rYr;
   const out=[];arr.forEach(p=>{const fl=p.f.filter(inS);if(!fl.length)return;const rd=fl.filter(f=>f.r!=null);const avg=rd.length?rd.reduce((s,f)=>s+f.r,0)/rd.length:null;out.push({...p,fl,n_:fl.length,avg,nr:rd.length});});
   const qualified=rScope==='all'?out.filter(x=>x.n_>=3):out; // piso de 3 só no ranking geral (evita 1 filme isolado dominando); por ano/década exige menos, senão a tela fica vazia
