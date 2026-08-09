@@ -757,10 +757,10 @@ select{color-scheme:dark}
 .ach-p{font-size:9.5px;color:var(--dim);margin-top:3px;font-variant-numeric:tabular-nums}
 /* hero espiral Vertigo + modal de conquista */
 .ach-hero{position:relative;display:flex;align-items:center;justify-content:center;height:190px;margin:6px 0 12px;border-radius:16px;overflow:hidden;isolation:isolate;background:#000}
-.ach-hero-bg{position:absolute;inset:0;background:url(ach-hero-bg.gif) center 38% / cover;filter:grayscale(1) contrast(1.15) brightness(.8)}
+.ach-hero-bg{position:absolute;inset:0;background:url(ach-hero-bg.gif) center 38% / cover;filter:grayscale(1) contrast(1.05) brightness(.65);opacity:.42}
 @media(prefers-reduced-motion:reduce){.ach-hero-bg{background-image:url(ach-hero-bg-poster.jpg)}}
-.ach-hero-tint{position:absolute;inset:0;background:linear-gradient(135deg,var(--acc1),var(--acc2));mix-blend-mode:color;opacity:.9}
-.ach-hero-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.15) 38%,rgba(0,0,0,.15) 62%,rgba(0,0,0,.75) 100%)}
+.ach-hero-tint{position:absolute;inset:0;background:linear-gradient(135deg,var(--acc1),var(--acc2));mix-blend-mode:color;opacity:.55}
+.ach-hero-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.72) 0%,rgba(0,0,0,.35) 38%,rgba(0,0,0,.35) 62%,rgba(0,0,0,.85) 100%)}
 @keyframes vspin{to{transform:rotate(-360deg)}}
 .ach-hero-c{position:relative;text-align:center;z-index:1;text-shadow:0 2px 14px rgba(0,0,0,.85),0 0 30px rgba(0,0,0,.6)}
 .ach-hero-num{font-size:40px;font-weight:800;color:var(--ink);line-height:1}
@@ -1589,14 +1589,21 @@ async function sync(){
     const n1=allRecords().filter(r=>!r.id&&!r.nf);
     if(n1.length){let n=0;await runPool(n1,async r=>{const m=await searchFilm(r.t,r.y);if(m)Object.assign(r,m);else r.nf=1;r.s=1;put(key(r.t,r.y),r);if(++n%18===0&&tab==='films')renderFilms();},6,(d,t)=>showProg('Buscando pôsteres '+fmt(d)+'/'+fmt(t),d/t*0.5));if(tab==='films')renderFilms();}
     const n2=allRecords().filter(r=>r.id&&!r.cc);
-    if(n2.length){let n=0;await runPool(n2,async r=>{const c=await credits(r.id);if(c){r.ca=c.ca;r.di=c.di;r.co=c.co;if(c.rt)r.rt=c.rt;r.lang=c.lang;}r.cc=1;r.cc24=1;put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0&&tab!=='films'&&tab!=='genre')render();},6,(d,t)=>showProg('Buscando elenco '+fmt(d)+'/'+fmt(t),0.5+d/t*0.55));}
+    if(n2.length){let n=0;await runPool(n2,async r=>{const c=await credits(r.id);if(c){r.ca=c.ca;r.di=c.di;r.co=c.co;if(c.rt)r.rt=c.rt;r.lang=c.lang;}r.cc=1;r.cc24=1;r.ccYr=new Date().getFullYear();put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0&&tab!=='films'&&tab!=='genre')render();},6,(d,t)=>showProg('Buscando elenco '+fmt(d)+'/'+fmt(t),0.5+d/t*0.55));}
     // backfill: filmes sincronizados antes de país/estúdio/idioma/duração
     const n3=allRecords().filter(r=>r.id&&r.cc&&(r.co===undefined||r.lang===undefined||r.rt===undefined));
-    if(n3.length){let n=0;await runPool(n3,async r=>{const c=await credits(r.id);if(c){r.co=c.co;if(c.rt)r.rt=c.rt;r.lang=c.lang;if(!r.ca){r.ca=c.ca;r.cc24=1;}if(!r.di)r.di=c.di;}else{if(r.co===undefined)r.co=[];}put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0&&(rView==='country'||fView==='country'||gView==='country'||tab==='stats'))render();},6,(d,t)=>showProg('Completando dados (país/idioma/duração) '+fmt(d)+'/'+fmt(t),0.55+d/t*0.45));}
+    if(n3.length){let n=0;await runPool(n3,async r=>{const c=await credits(r.id);if(c){r.co=c.co;if(c.rt)r.rt=c.rt;r.lang=c.lang;if(!r.ca){r.ca=c.ca;r.cc24=1;r.ccYr=new Date().getFullYear();}if(!r.di)r.di=c.di;}else{if(r.co===undefined)r.co=[];}put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0&&(rView==='country'||fView==='country'||gView==='country'||tab==='stats'))render();},6,(d,t)=>showProg('Completando dados (país/idioma/duração) '+fmt(d)+'/'+fmt(t),0.55+d/t*0.45));}
     // backfill: elenco ampliado de 8 p/ 24 pessoas — filmes já sincronizados antes disso recarregam os créditos 1x,
     // pra que a contagem de filmes vistos por ator/diretor (Diretores/Atores/Atrizes) passe a considerar o elenco todo
     const n4=allRecords().filter(r=>r.id&&r.cc&&!r.cc24);
-    if(n4.length){let n=0;await runPool(n4,async r=>{const c=await credits(r.id);if(c)r.ca=c.ca;r.cc24=1;put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0)render();},6,(d,t)=>showProg('Ampliando elenco '+fmt(d)+'/'+fmt(t),d/t));}
+    if(n4.length){let n=0;await runPool(n4,async r=>{const c=await credits(r.id);if(c)r.ca=c.ca;r.cc24=1;r.ccYr=new Date().getFullYear();put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0)render();},6,(d,t)=>showProg('Ampliando elenco '+fmt(d)+'/'+fmt(t),d/t));}
+    // backfill: elenco de lançamentos recentes/futuros muda no TMDB conforme o filme é finalizado
+    // (elenco anunciado aos poucos) — filmes com ano de lançamento no ano atual ou anterior recarregam
+    // os créditos 1x por ano corrente até estabilizarem. Corrige atores/atrizes que só entraram no
+    // TMDB depois da 1ª sincronização do filme (ex.: elenco confirmado após o filme já estar na lista).
+    const curYr=new Date().getFullYear();
+    const n5=allRecords().filter(r=>r.id&&r.cc&&(+(r.ye||r.y)||0)>=curYr-1&&r.ccYr!==curYr);
+    if(n5.length){let n=0;await runPool(n5,async r=>{const c=await credits(r.id);if(c){r.ca=c.ca;r.di=c.di;r.co=c.co;if(c.rt)r.rt=c.rt;r.lang=c.lang;}r.ccYr=curYr;put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0)render();},6,(d,t)=>showProg('Atualizando elenco de lançamentos recentes '+fmt(d)+'/'+fmt(t),d/t));}
     hideProg();PEOPLE=null;render();_checkMilestone();
   }catch(e){hideProg();if(e&&e.code===401)openOnb('Chave recusada pelo TMDB. Cole de novo.');}
   finally{busy=false;}
@@ -2110,7 +2117,7 @@ function _wlFilmoBtn(list,labelSuffix){
   list.querySelectorAll('.wl-btn[data-id]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();const k=key(b.dataset.t,+b.dataset.y);
     if(cache[k]&&cache[k].wl){del(k);PEOPLE=null;b.textContent='+ ver depois';b.classList.remove('on');toast('Removido da lista');return;}
     const rec={t:b.dataset.t,y:+b.dataset.y,r:null,wl:1,id:+b.dataset.id||undefined,po:b.dataset.po||null,ti:b.dataset.t,ye:b.dataset.y,src:'user'};cache[k]=rec;put(k,rec);PEOPLE=null;b.textContent='✓ ver depois';b.classList.add('on');toast('Quero ver: '+b.dataset.t);
-    if(rec.id){credits(rec.id).then(cr=>{if(cr){rec.ca=cr.ca;rec.di=cr.di;rec.co=cr.co;if(cr.rt)rec.rt=cr.rt;rec.lang=cr.lang;}rec.cc=1;put(k,rec);PEOPLE=null;});}});
+    if(rec.id){credits(rec.id).then(cr=>{if(cr){rec.ca=cr.ca;rec.di=cr.di;rec.co=cr.co;if(cr.rt)rec.rt=cr.rt;rec.lang=cr.lang;}rec.cc=1;rec.ccYr=new Date().getFullYear();put(k,rec);PEOPLE=null;});}});
 }
 async function fillActorFilmography(p){
   const list=await actorFilmography(p.id);
@@ -4029,6 +4036,9 @@ function _setProgress(list,idx){let c=0;for(const it of list){if(_achMatch(idx,i
 // v7.1: GIF vinculado ao tema (Ajustes → Cor da espiral) via duotone puro CSS — .ach-hero-bg
 // fica em grayscale, .ach-hero-tint sobrepõe um gradiente var(--acc1)/var(--acc2) com
 // mix-blend-mode:color. Recolore ao vivo ao trocar de tema, sem gerar GIF por tema.
+// v7.2: GIF mais discreto — opacity:.42 no .ach-hero-bg (era só filter, sem opacity),
+// tint reduzido pra .55 (era .9) e scrim reforçado (.72/.35/.35/.85, era .55/.15/.15/.75).
+// Fundo vira textura ambiente em vez de protagonista; número e label ficam mais legíveis.
 // _vertigoSpiralSVG()/.vspiral foram removidos por ficarem órfãos — não use em outro lugar.
 // versão mini da espiral Vertigo (mesmo formato/geração das conquistas) — usada no cabeçalho do perfil, acima do @usuário
 function _miniVertigoSpiral(size,spin){
@@ -4275,8 +4285,8 @@ async function openFilm(k){_curFilmKey=k;const r=cache[k];if(!r)return;const t=r
   if(r.ov){const ovEl=$('#filmOv');if(ovEl)renderExpandable(ovEl,r.ov,200);}
   _wireFilmExtras(k);
   // lazy-load credits (directors, cast, runtime) if not yet cached
-  if(r.id&&!r.cc){credits(r.id).then(c=>{if(c){r.ca=c.ca;r.di=c.di;r.co=c.co;if(c.rt&&!r.rt)r.rt=c.rt;r.lang=c.lang;}r.cc=1;r.cc24=1;put(k,r);PEOPLE=null;if(_curFilmKey===k&&$('#modal').classList.contains('show'))openFilm(k);});}
-  else if(r.id&&r.cc&&!r.cc24){credits(r.id).then(c=>{if(c)r.ca=c.ca;r.cc24=1;put(k,r);PEOPLE=null;if(_curFilmKey===k&&$('#modal').classList.contains('show'))openFilm(k);});}
+  if(r.id&&!r.cc){credits(r.id).then(c=>{if(c){r.ca=c.ca;r.di=c.di;r.co=c.co;if(c.rt&&!r.rt)r.rt=c.rt;r.lang=c.lang;}r.cc=1;r.cc24=1;r.ccYr=new Date().getFullYear();put(k,r);PEOPLE=null;if(_curFilmKey===k&&$('#modal').classList.contains('show'))openFilm(k);});}
+  else if(r.id&&r.cc&&!r.cc24){credits(r.id).then(c=>{if(c)r.ca=c.ca;r.cc24=1;r.ccYr=new Date().getFullYear();put(k,r);PEOPLE=null;if(_curFilmKey===k&&$('#modal').classList.contains('show'))openFilm(k);});}
 }
 function _filmExtrasHtml(r){
   const isWl=!!r.wl;
@@ -4608,7 +4618,7 @@ $('#searchRes').addEventListener('click',async e=>{
     if(rec&&rec.wl){delete rec.wl;cache[k]=rec;put(k,rec);toast('Tirado da watchlist');}
     else if(rec&&rec.r!=null){toast('Esse você já assistiu');}
     else{rec=rec||{t:m.t,y:m.y};rec.wl=1;rec.r=null;rec.id=m.id;rec.po=m.po;rec.gids=m.gids;rec.lang=m.lang;rec.ti=m.t;rec.ot=m.ot||m.t;rec.ye=String(m.y);rec.src='user';cache[k]=rec;put(k,rec);PEOPLE=null;toast('Quero ver: '+m.t);
-      if(rec.id&&!rec.cc){credits(rec.id).then(c=>{if(c){rec.ca=c.ca;rec.di=c.di;rec.co=c.co;if(c.rt)rec.rt=c.rt;rec.lang=c.lang;}rec.cc=1;put(k,rec);PEOPLE=null;});}}
+      if(rec.id&&!rec.cc){credits(rec.id).then(c=>{if(c){rec.ca=c.ca;rec.di=c.di;rec.co=c.co;if(c.rt)rec.rt=c.rt;rec.lang=c.lang;}rec.cc=1;rec.ccYr=new Date().getFullYear();put(k,rec);PEOPLE=null;});}}
     doSearch($('#searchIn').value);return;}
   const row=e.target.closest('.sr-row');if(!row)return;
   const k=row.dataset.k;const m=window._sres&&window._sres[k];if(!m)return;
