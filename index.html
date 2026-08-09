@@ -1526,10 +1526,16 @@ async function searchFilm(t,y){
     const m=await pickMatch(res,t,y); if(m)return _toFilmRecord(m,t,y);
   } return null;
 }
+// CC_VER: versão do formato de elenco salvo em r.ca. Sobe toda vez que credits() muda o que
+// busca/retorna (tamanho do elenco, novos campos etc.) — um único backfill (n4) recarrega
+// qualquer filme com r.ccVer desatualizado, em vez de acumular uma flag booleana por mudança.
+// v2: top 40 (era 24). v3: 6º campo por pessoa = 1 se for dublagem (detectado via "(voice)"/"(voz)"
+// no character do TMDB) — usado pra excluir dublagens de animação do ranking Atores/Atrizes.
+const CC_VER=3;
 async function credits(id){
   const j=await tmdb('/movie/'+id,{append_to_response:'credits'}); if(!j)return null;
   const cr=j.credits||{};
-  const ca=(cr.cast||[]).slice().sort((a,b)=>(a.order??999)-(b.order??999)).slice(0,40).map(c=>[c.id,c.name,c.gender||0,c.profile_path||null,c.character||'']);
+  const ca=(cr.cast||[]).slice().sort((a,b)=>(a.order??999)-(b.order??999)).slice(0,40).map(c=>[c.id,c.name,c.gender||0,c.profile_path||null,c.character||'',/\(voz|\(voice/i.test(c.character||'')?1:0]);
   const di=(cr.crew||[]).filter(c=>c.job==='Director').map(c=>[c.id,c.name,c.profile_path||null]);
   const co=(j.production_countries||[]).map(c=>c.iso_3166_1);
   return {ca,di,co,rt:j.runtime||null,lang:j.original_language||null};
@@ -1589,15 +1595,14 @@ async function sync(){
     const n1=allRecords().filter(r=>!r.id&&!r.nf);
     if(n1.length){let n=0;await runPool(n1,async r=>{const m=await searchFilm(r.t,r.y);if(m)Object.assign(r,m);else r.nf=1;r.s=1;put(key(r.t,r.y),r);if(++n%18===0&&tab==='films')renderFilms();},6,(d,t)=>showProg('Buscando pôsteres '+fmt(d)+'/'+fmt(t),d/t*0.5));if(tab==='films')renderFilms();}
     const n2=allRecords().filter(r=>r.id&&!r.cc);
-    if(n2.length){let n=0;await runPool(n2,async r=>{const c=await credits(r.id);if(c){r.ca=c.ca;r.di=c.di;r.co=c.co;if(c.rt)r.rt=c.rt;r.lang=c.lang;}r.cc=1;r.cc24=1;r.cc40=1;r.ccYr=new Date().getFullYear();put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0&&tab!=='films'&&tab!=='genre')render();},6,(d,t)=>showProg('Buscando elenco '+fmt(d)+'/'+fmt(t),0.5+d/t*0.55));}
+    if(n2.length){let n=0;await runPool(n2,async r=>{const c=await credits(r.id);if(c){r.ca=c.ca;r.di=c.di;r.co=c.co;if(c.rt)r.rt=c.rt;r.lang=c.lang;}r.cc=1;r.ccVer=CC_VER;r.ccYr=new Date().getFullYear();put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0&&tab!=='films'&&tab!=='genre')render();},6,(d,t)=>showProg('Buscando elenco '+fmt(d)+'/'+fmt(t),0.5+d/t*0.55));}
     // backfill: filmes sincronizados antes de país/estúdio/idioma/duração
     const n3=allRecords().filter(r=>r.id&&r.cc&&(r.co===undefined||r.lang===undefined||r.rt===undefined));
-    if(n3.length){let n=0;await runPool(n3,async r=>{const c=await credits(r.id);if(c){r.co=c.co;if(c.rt)r.rt=c.rt;r.lang=c.lang;if(!r.ca){r.ca=c.ca;r.cc24=1;r.cc40=1;r.ccYr=new Date().getFullYear();}if(!r.di)r.di=c.di;}else{if(r.co===undefined)r.co=[];}put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0&&(rView==='country'||fView==='country'||gView==='country'||tab==='stats'))render();},6,(d,t)=>showProg('Completando dados (país/idioma/duração) '+fmt(d)+'/'+fmt(t),0.55+d/t*0.45));}
-    // backfill: elenco ampliado de 8→24→40 pessoas — filmes já sincronizados antes de cada expansão
-    // recarregam os créditos 1x, pra que a contagem por ator/diretor (Diretores/Atores/Atrizes)
-    // considere elenco completo mesmo em filmes com ensemble grande (ex.: billing além da posição 24)
-    const n4=allRecords().filter(r=>r.id&&r.cc&&!r.cc40);
-    if(n4.length){let n=0;await runPool(n4,async r=>{const c=await credits(r.id);if(c)r.ca=c.ca;r.cc24=1;r.cc40=1;r.ccYr=new Date().getFullYear();put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0)render();},6,(d,t)=>showProg('Ampliando elenco '+fmt(d)+'/'+fmt(t),d/t));}
+    if(n3.length){let n=0;await runPool(n3,async r=>{const c=await credits(r.id);if(c){r.co=c.co;if(c.rt)r.rt=c.rt;r.lang=c.lang;if(!r.ca){r.ca=c.ca;r.ccVer=CC_VER;r.ccYr=new Date().getFullYear();}if(!r.di)r.di=c.di;}else{if(r.co===undefined)r.co=[];}put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0&&(rView==='country'||fView==='country'||gView==='country'||tab==='stats'))render();},6,(d,t)=>showProg('Completando dados (país/idioma/duração) '+fmt(d)+'/'+fmt(t),0.55+d/t*0.45));}
+    // backfill: qualquer filme com elenco em versão desatualizada (ver CC_VER) recarrega os
+    // créditos 1x — cobre expansões de tamanho de elenco e novos campos (ex.: flag de dublagem)
+    const n4=allRecords().filter(r=>r.id&&r.cc&&(r.ccVer||0)<CC_VER);
+    if(n4.length){let n=0;await runPool(n4,async r=>{const c=await credits(r.id);if(c)r.ca=c.ca;r.ccVer=CC_VER;r.ccYr=new Date().getFullYear();put(key(r.t,r.y),r);PEOPLE=null;if(++n%30===0)render();},6,(d,t)=>showProg('Atualizando elenco '+fmt(d)+'/'+fmt(t),d/t));}
     // backfill: elenco de lançamentos recentes/futuros muda no TMDB conforme o filme é finalizado
     // (elenco anunciado aos poucos) — filmes com ano de lançamento no ano atual ou anterior recarregam
     // os créditos 1x por ano corrente até estabilizarem. Corrige atores/atrizes que só entraram no
@@ -1614,7 +1619,7 @@ async function sync(){
 function buildPeople(){const A={},D={};
   const add=(S,id,name,pic,g,film)=>{if(!S[id])S[id]={id,n:name,g,pic,f:{}};S[id].f[film.t+'|'+film.y]=film;if(pic&&!S[id].pic)S[id].pic=pic;};
   films().forEach(r=>{if(!r.cc)return;const film={t:r.ti||r.t,y:+(r.ye||r.y),r:r.r,p:r.po,co:r.co};
-    (r.ca||[]).forEach(c=>add(A,c[0],c[1],c[3],c[2],film));(r.di||[]).forEach(c=>add(D,c[0],c[1],c[2],0,film));});
+    (r.ca||[]).forEach(c=>{if(c[5])return;add(A,c[0],c[1],c[3],c[2],film);});(r.di||[]).forEach(c=>add(D,c[0],c[1],c[2],0,film));});
   const fin=S=>Object.values(S).map(p=>({id:p.id,n:p.n,g:p.g,pic:p.pic,f:Object.values(p.f)}));
   return {A:fin(A),D:fin(D)};}
 function people(){if(!PEOPLE)PEOPLE=buildPeople();return PEOPLE;}
@@ -1881,6 +1886,7 @@ function renderRanking(){
         ${bf?`<div class="st" style="color:var(--dim)">Top: ${bf.t} ${star(bf.r)}</div>`:''}<div class="mini">${mini}</div></div></div>`;}).join('');
     let note=(rankSort==='avg'?'Ordenado pela sua avaliação média (mín. 3 filmes vistos, 2 avaliados). ':'')+`Top ${Math.min(50,r.length)} de ${fmt(r.length)} pessoas${rScope==='all'?' com 3 ou mais filmes':''} neste recorte.`;
     if(tab==='actor'||tab==='actress')note+=' Divisão por gênero vem do TMDB e pode falhar.';
+    if(tab==='actor'||tab==='actress')note+=' Dublagem em animação não entra na contagem.';
     if(tab!=='dir')note+=' "Ator" = elenco principal (top 40).';
     body=`<div class="podium">${cards}</div><div class="note">${note}</div>`;
   }
@@ -2118,7 +2124,7 @@ function _wlFilmoBtn(list,labelSuffix){
   list.querySelectorAll('.wl-btn[data-id]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();const k=key(b.dataset.t,+b.dataset.y);
     if(cache[k]&&cache[k].wl){del(k);PEOPLE=null;b.textContent='+ ver depois';b.classList.remove('on');toast('Removido da lista');return;}
     const rec={t:b.dataset.t,y:+b.dataset.y,r:null,wl:1,id:+b.dataset.id||undefined,po:b.dataset.po||null,ti:b.dataset.t,ye:b.dataset.y,src:'user'};cache[k]=rec;put(k,rec);PEOPLE=null;b.textContent='✓ ver depois';b.classList.add('on');toast('Quero ver: '+b.dataset.t);
-    if(rec.id){credits(rec.id).then(cr=>{if(cr){rec.ca=cr.ca;rec.di=cr.di;rec.co=cr.co;if(cr.rt)rec.rt=cr.rt;rec.lang=cr.lang;}rec.cc=1;rec.cc24=1;rec.cc40=1;rec.ccYr=new Date().getFullYear();put(k,rec);PEOPLE=null;});}});
+    if(rec.id){credits(rec.id).then(cr=>{if(cr){rec.ca=cr.ca;rec.di=cr.di;rec.co=cr.co;if(cr.rt)rec.rt=cr.rt;rec.lang=cr.lang;}rec.cc=1;rec.ccVer=CC_VER;rec.ccYr=new Date().getFullYear();put(k,rec);PEOPLE=null;});}});
 }
 async function fillActorFilmography(p){
   const list=await actorFilmography(p.id);
@@ -3141,7 +3147,7 @@ function _recapStats(year){
   const d={};fl.forEach(r=>(r.di||[]).forEach(x=>{d[x[1]]=(d[x[1]]||0)+1;}));
   const co=new Set();fl.forEach(r=>{const c=r.co&&(Array.isArray(r.co)?r.co[0]:r.co);if(c)co.add(normalizeKey(c)||c);});
   const mon=Array(12).fill(0);fl.forEach(r=>mon[new Date(r.ts).getMonth()]++);
-  const ac={},at={};fl.forEach(r=>(r.ca||[]).forEach(c=>{if(c[2]===2)ac[c[1]]=(ac[c[1]]||0)+1;else if(c[2]===1)at[c[1]]=(at[c[1]]||0)+1;}));
+  const ac={},at={};fl.forEach(r=>(r.ca||[]).forEach(c=>{if(c[5])return;if(c[2]===2)ac[c[1]]=(ac[c[1]]||0)+1;else if(c[2]===1)at[c[1]]=(at[c[1]]||0)+1;}));
   return {year,n:fl.length,avg,hours:Math.round(mins/60),
     topGenre:Object.entries(g).sort((a,b)=>b[1]-a[1])[0],
     topDir:Object.entries(d).sort((a,b)=>b[1]-a[1])[0],
@@ -4043,11 +4049,20 @@ function _setProgress(list,idx){let c=0;for(const it of list){if(_achMatch(idx,i
 // _vertigoSpiralSVG()/.vspiral foram removidos por ficarem órfãos — não use em outro lugar.
 // v7.3: dois bugs de elenco corrigidos (achado com Zendaya sumindo de Odisseia/Homem-Aranha 2026):
 // 1) credits() cortava em top 24 por 'order' do TMDB — insuficiente pra ensembles grandes (Nolan,
-//    Altman, Wes Anderson...). Subiu pra top 40. Flag cc40 (paralela à cc24) marca quem já tem o
-//    elenco ampliado; backfill (n4) e refetch ao reabrir a ficha (openFilm) cobrem o catálogo todo.
+//    Altman, Wes Anderson...). Subiu pra top 40.
 // 2) elenco de filmes com lançamento no ano atual/anterior nunca era rebuscado, então atores
 //    anunciados no TMDB depois da 1ª sincronização ficavam de fora pra sempre. Campo ccYr (ano da
 //    última busca) + passo n5 no sync() recarregam esses créditos 1x por ano corrente.
+// Introduzido CC_VER (const, perto de credits()): versão do formato salvo em r.ca. Substitui as
+// flags booleanas cc24/cc40 por um contador — um único backfill (n4) recarrega qualquer filme
+// desatualizado, sem acumular uma flag nova a cada mudança no formato do elenco.
+// v7.4: dublagem de animação não conta mais pra Atores/Atrizes. credits() marca cada pessoa do
+// elenco com um 6º campo (1 = dublagem, detectado via "(voice)"/"(voz)" no character do TMDB, que
+// é o padrão usado pra papéis de voz). buildPeople() e o resumo do ano (topActor/topActress)
+// ignoram esse campo ao contar. O elenco continua aparecendo normalmente na ficha do filme —
+// só é excluído do ranking. CC_VER subiu pra 3, então o backfill (n4) recarrega o catálogo todo.
+// Limitação conhecida: a detecção depende do TMDB marcar "(voice)" no character — não é 100%
+// garantido pra todo filme, e captura performances de motion capture que também usam "(voice)".
 // versão mini da espiral Vertigo (mesmo formato/geração das conquistas) — usada no cabeçalho do perfil, acima do @usuário
 function _miniVertigoSpiral(size,spin){
   return '<svg class="bio-hero-spiral'+(spin?' spin':'')+'" viewBox="0 0 48 48" width="'+size+'" height="'+size+'" fill="none" aria-hidden="true"><path d="'+_SP1+'" stroke="var(--acc1)" stroke-width="1.7" stroke-linecap="round"/><path d="'+_SP2+'" stroke="var(--acc2)" stroke-width="1.7" stroke-linecap="round"/><circle cx="24" cy="24" r="1.8" fill="var(--ink)"/></svg>';
@@ -4293,8 +4308,8 @@ async function openFilm(k){_curFilmKey=k;const r=cache[k];if(!r)return;const t=r
   if(r.ov){const ovEl=$('#filmOv');if(ovEl)renderExpandable(ovEl,r.ov,200);}
   _wireFilmExtras(k);
   // lazy-load credits (directors, cast, runtime) if not yet cached
-  if(r.id&&!r.cc){credits(r.id).then(c=>{if(c){r.ca=c.ca;r.di=c.di;r.co=c.co;if(c.rt&&!r.rt)r.rt=c.rt;r.lang=c.lang;}r.cc=1;r.cc24=1;r.cc40=1;r.ccYr=new Date().getFullYear();put(k,r);PEOPLE=null;if(_curFilmKey===k&&$('#modal').classList.contains('show'))openFilm(k);});}
-  else if(r.id&&r.cc&&!r.cc40){credits(r.id).then(c=>{if(c)r.ca=c.ca;r.cc24=1;r.cc40=1;r.ccYr=new Date().getFullYear();put(k,r);PEOPLE=null;if(_curFilmKey===k&&$('#modal').classList.contains('show'))openFilm(k);});}
+  if(r.id&&!r.cc){credits(r.id).then(c=>{if(c){r.ca=c.ca;r.di=c.di;r.co=c.co;if(c.rt&&!r.rt)r.rt=c.rt;r.lang=c.lang;}r.cc=1;r.ccVer=CC_VER;r.ccYr=new Date().getFullYear();put(k,r);PEOPLE=null;if(_curFilmKey===k&&$('#modal').classList.contains('show'))openFilm(k);});}
+  else if(r.id&&r.cc&&(r.ccVer||0)<CC_VER){credits(r.id).then(c=>{if(c)r.ca=c.ca;r.ccVer=CC_VER;r.ccYr=new Date().getFullYear();put(k,r);PEOPLE=null;if(_curFilmKey===k&&$('#modal').classList.contains('show'))openFilm(k);});}
 }
 function _filmExtrasHtml(r){
   const isWl=!!r.wl;
@@ -4626,7 +4641,7 @@ $('#searchRes').addEventListener('click',async e=>{
     if(rec&&rec.wl){delete rec.wl;cache[k]=rec;put(k,rec);toast('Tirado da watchlist');}
     else if(rec&&rec.r!=null){toast('Esse você já assistiu');}
     else{rec=rec||{t:m.t,y:m.y};rec.wl=1;rec.r=null;rec.id=m.id;rec.po=m.po;rec.gids=m.gids;rec.lang=m.lang;rec.ti=m.t;rec.ot=m.ot||m.t;rec.ye=String(m.y);rec.src='user';cache[k]=rec;put(k,rec);PEOPLE=null;toast('Quero ver: '+m.t);
-      if(rec.id&&!rec.cc){credits(rec.id).then(c=>{if(c){rec.ca=c.ca;rec.di=c.di;rec.co=c.co;if(c.rt)rec.rt=c.rt;rec.lang=c.lang;}rec.cc=1;rec.cc24=1;rec.cc40=1;rec.ccYr=new Date().getFullYear();put(k,rec);PEOPLE=null;});}}
+      if(rec.id&&!rec.cc){credits(rec.id).then(c=>{if(c){rec.ca=c.ca;rec.di=c.di;rec.co=c.co;if(c.rt)rec.rt=c.rt;rec.lang=c.lang;}rec.cc=1;rec.ccVer=CC_VER;rec.ccYr=new Date().getFullYear();put(k,rec);PEOPLE=null;});}}
     doSearch($('#searchIn').value);return;}
   const row=e.target.closest('.sr-row');if(!row)return;
   const k=row.dataset.k;const m=window._sres&&window._sres[k];if(!m)return;
