@@ -2458,6 +2458,54 @@ async function _importPesadosList(){
   if($('#recoOver')&&$('#recoOver').classList.contains('show')){_renderCuraAll();_renderCuraStats();}
   toast('Lista "Filmes Mais Difíceis de Assistir" criada: '+matchedExisting+' já vistos, '+addedNew+' adicionados'+(notFound?', '+notFound+' não encontrados':''),4500);
 }
+// ── Lista curada "Os 100 Maiores Épicos do Cinema" (importação única) ──
+const EPICOS_LIST_ID='cl_epicos_2026';
+const EPICOS_TITLES=[
+["Lawrence of Arabia",1962],["Seven Samurai",1954],["The Godfather Part II",1974],["Ran",1985],["2001: A Space Odyssey",1968],
+["Andrei Rublev",1966],["The Lord of the Rings: The Return of the King",2003],["The Good, the Bad and the Ugly",1966],["The Leopard",1963],["Apocalypse Now",1979],
+["Ben-Hur",1959],["The Lord of the Rings: The Fellowship of the Ring",2001],["The Lord of the Rings: The Two Towers",2002],["The Godfather",1972],["Doctor Zhivago",1965],
+["Barry Lyndon",1975],["A Brighter Summer Day",1991],["Once Upon a Time in the West",1968],["The Ten Commandments",1956],["The Bridge on the River Kwai",1957],
+["The Human Condition I: No Greater Love",1959],["The Human Condition II: Road to Eternity",1959],["The Human Condition III: A Soldier's Prayer",1961],["Napoleon",1927],["The Last Emperor",1987],
+["Gone with the Wind",1939],["The Deer Hunter",1978],["Gandhi",1982],["War and Peace",1966],["Once Upon a Time in America",1984],
+["The Battle of Algiers",1966],["The Travelling Players",1975],["Satantango",1994],["The Sacrifice",1986],["Fitzcarraldo",1982],
+["The Odyssey",2026],["Master and Commander: The Far Side of the World",2003],["Kingdom of Heaven",2005],["Gladiator",2000],["Crouching Tiger, Hidden Dragon",2000],
+["Hero",2002],["Red Cliff",2008],["A Touch of Zen",1971],["The Empress Dowager",1975],["The Last Temptation of Christ",1988],
+["The New World",2005],["El Cid",1961],["The Vikings",1958],["Mishima: A Life in Four Chapters",1985],["The Birth of a Nation",1915],
+["Intolerance",1916],["Metropolis",1927],["Alexander Nevsky",1938],["Ivan the Terrible, Part I",1944],["Ivan the Terrible, Part II",1958],
+["Quo Vadis",1951],["The Robe",1953],["The Alamo",1960],["The Message",1976],["The Last of the Mohicans",1992],
+["The Guns of Navarone",1961],["Patton",1970],["The Last Valley",1971],["Dersu Uzala",1975],["1900",1976],
+["Reds",1981],["The Right Stuff",1983],["Come and See",1985],["The General",1926],["The Passion of Joan of Arc",1928],
+["Stagecoach",1939],["Heaven's Gate",1980],["The Grapes of Wrath",1940],["The Magnificent Ambersons",1942],["The Treasure of the Sierra Madre",1948],
+["The Searchers",1956],["Paths of Glory",1957],["The Seventh Seal",1957],["The Hidden Fortress",1958],["The Naked Island",1960],
+["The Longest Day",1962],["The Great Escape",1963],["The Gospel According to St. Matthew",1964],["The Battle of the Bulge",1965],["The Wild Bunch",1969],
+["Zabriskie Point",1970],["The Conformist",1970],["The Last Picture Show",1971],["A Fistful of Dynamite",1971],["The Emigrants",1971],
+["The New Land",1972],["Spartacus",1960],["Aguirre, the Wrath of God",1972],["The Thin Red Line",1998],["Saving Private Ryan",1998],
+["Dances with Wolves",1990],["The Assassination of Jesse James by the Coward Robert Ford",2007],["Cloud Atlas",2012],["The English Patient",1996],["The Fall of the Roman Empire",1964]
+];
+async function _importEpicosList(){
+  if(localStorage.getItem('cs_epicos_done'))return;
+  if(!KEY)return; // sem chave TMDB configurada ainda — tenta de novo no próximo boot
+  let addedNew=0,matchedExisting=0,notFound=0;
+  const filmKeys=[];
+  await runPool(EPICOS_TITLES,async([t,y])=>{
+    const ek=_findExistingKey(t,y);
+    if(ek){filmKeys.push(ek);matchedExisting++;return;}
+    const sk=key(t,y);
+    if(cache[sk]){filmKeys.push(sk);return;}
+    const m=await _pesadosMatch(t,y);
+    if(m){const rec=Object.assign({t,y,src:'user',_stub:1},m);cache[sk]=rec;put(sk,rec);filmKeys.push(sk);addedNew++;}
+    else{const rec={t,y,src:'user',_stub:1,nf:1};cache[sk]=rec;put(sk,rec);filmKeys.push(sk);notFound++;}
+  },4);
+  const ls=_getLists();
+  let l=ls.find(x=>x.id===EPICOS_LIST_ID);
+  if(!l){l={id:EPICOS_LIST_ID,name:'Os 100 Maiores Épicos do Cinema',icon:'star',films:[],created:Date.now()};ls.push(l);}
+  l.films=[...new Set([...(l.films||[]),...filmKeys])];
+  _saveLists(ls);
+  localStorage.setItem('cs_epicos_done','1');
+  PEOPLE=null;
+  if($('#recoOver')&&$('#recoOver').classList.contains('show')){_renderCuraAll();_renderCuraStats();}
+  toast('Lista "Os 100 Maiores Épicos do Cinema" criada: '+matchedExisting+' já vistos, '+addedNew+' adicionados'+(notFound?', '+notFound+' não encontrados':''),4500);
+}
 function _getMyProviders(){try{return JSON.parse(localStorage.getItem('cs_streaming')||'[]');}catch(e){return[];}}
 function _saveMyProviders(ps){try{localStorage.setItem('cs_streaming',JSON.stringify(ps));}catch(e){}}
 function _icon(k,sz){return (CURA_ICONS[k]||CURA_ICONS.list).replace(/width="20" height="20"/g,`width="${sz}" height="${sz}"`).replace(/width="16" height="16"/g,`width="${sz}" height="${sz}"`).replace(/width="14" height="14"/g,`width="${sz}" height="${sz}"`);}
@@ -5137,6 +5185,7 @@ setTimeout(_hideBootLoader,5600); // rede de segurança: nunca trava na tela de 
   _hideBootLoader();
   sync();
   _importPesadosList();
+  _importEpicosList();
   _applyIconVer();
   if(!bio.icon||bio.icon==='dark'){bio.icon='green';saveBio();} // migração: default era dark, agora é green
   {const _m={vermelho:'prata',sonho:'cobalto',noir:'prata',classic:'cobalto'};if(bio.accent&&_m[bio.accent]){bio.accent=_m[bio.accent];saveBio();}} // migração: temas removidos
